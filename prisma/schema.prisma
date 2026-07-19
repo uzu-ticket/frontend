@@ -1,0 +1,1028 @@
+// =====================================================================
+// UzuTicket — Prisma schema
+// Mirrors uzuticket-schema.dbml table-for-table, enum-for-enum.
+// One deliberate addition beyond the DBML: SigningKeySecret — see its
+// doc comment below and src/modules/tickets/signing/README.md.
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------
+
+enum UserStatus {
+  active
+  suspended
+  deleted
+}
+
+enum OrgRole {
+  super_admin
+  admin
+  sales
+  promoter
+  ticket_scanner
+  customer_support
+}
+
+enum KybStatus {
+  unverified
+  pending
+  verified
+  rejected
+}
+
+enum EventStatus {
+  draft
+  pending_kyb
+  published
+  sales_closed
+  live
+  completed
+  cancelled
+}
+
+enum ScannerMeshMode {
+  android_mesh
+  iphone_mesh
+  shared_wifi
+}
+
+enum EventVisibility {
+  public
+  unlisted
+}
+
+enum TicketStatus {
+  valid
+  used
+  void
+  refunded
+}
+
+enum DeliveryChannel {
+  email
+  sms
+  whatsapp
+}
+
+enum DeliveryStatus {
+  pending
+  sent
+  failed
+  resent
+}
+
+enum OrderStatus {
+  pending
+  paid
+  partially_refunded
+  refunded
+  cancelled
+  failed
+}
+
+enum PaymentMethod {
+  card
+  bank_transfer
+  ussd
+}
+
+enum TransactionType {
+  ticket_purchase
+  settlement
+  refund
+}
+
+enum TransactionStatus {
+  initiated
+  processing
+  succeeded
+  failed
+  reversed
+}
+
+enum PspProvider {
+  paystack
+  flutterwave
+}
+
+enum WithdrawalStatus {
+  requested
+  processing
+  paid
+  failed
+}
+
+enum PayoutBeneficiaryType {
+  organisation
+  promoter
+}
+
+enum WalletOwnerType {
+  organisation
+  promoter
+}
+
+enum LedgerEntryType {
+  credit
+  debit
+}
+
+enum ScanMode {
+  online
+  offline
+}
+
+enum ScanResult {
+  admitted
+  duplicate
+  invalid
+  wrong_event
+}
+
+enum PromoterStatus {
+  invited
+  active
+  suspended
+}
+
+enum CommissionType {
+  percentage
+  fixed_per_ticket
+}
+
+enum CommissionStatus {
+  accrued
+  reversed
+  payable
+  paid
+}
+
+enum CampaignStatus {
+  draft
+  scheduled
+  sending
+  sent
+  cancelled
+}
+
+enum RecipientStatus {
+  queued
+  delivered
+  bounced
+  failed
+}
+
+enum EmbedChannel {
+  direct
+  embed
+  promoter
+  recommendation
+  search
+}
+
+// ---------------------------------------------------------------------
+// IDENTITY & ACCOUNTS
+// ---------------------------------------------------------------------
+
+model User {
+  id                String     @id @db.Uuid
+  email             String     @unique
+  phone             String?    @unique
+  passwordHash      String?    @map("password_hash")
+  fullName          String?    @map("full_name")
+  status            UserStatus @default(active)
+  isEmailVerified   Boolean    @default(false) @map("is_email_verified")
+  isPhoneVerified   Boolean    @default(false) @map("is_phone_verified")
+  city              String?
+  /// DEVIATION FROM DBML: TOTP secret for 2FA, gating withdrawal initiation
+  /// (PRD §3.8 "2FA required"). Not modeled in the original schema.
+  totpSecret        String?    @map("totp_secret")
+  isTotpEnabled     Boolean    @default(false) @map("is_totp_enabled")
+  lastLoginAt       DateTime?  @map("last_login_at")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  interests                 UserInterest[]
+  eventFollows               EventFollow[]
+  organisationsCreated       Organisation[]           @relation("OrganisationCreatedBy")
+  organisationMemberships    OrganisationMember[]     @relation("OrganisationMemberUser")
+  organisationInvitesSent    OrganisationMember[]     @relation("OrganisationMemberInvitedBy")
+  eventsCreated              Event[]                  @relation("EventCreatedBy")
+  ordersAsBuyer               Order[]                  @relation("OrderBuyer")
+  ticketDeliveriesResent      TicketDelivery[]         @relation("TicketDeliveryResentBy")
+  scannerDevices               ScannerDevice[]
+  eventScannerAssignmentsMade  EventScannerAssignment[] @relation("EventScannerAssignmentAssignedBy")
+  ticketScansPerformed         TicketScan[]             @relation("TicketScanScannedBy")
+  eventPromoterInvitesAsPromoter EventPromoter[]        @relation("EventPromoterUser")
+  eventPromoterInvitesSent        EventPromoter[]       @relation("EventPromoterInvitedBy")
+  walletsAsPromoter                Wallet[]              @relation("WalletPromoter")
+  withdrawalsAsPromoter             Withdrawal[]          @relation("WithdrawalPromoter")
+  withdrawalsRequested               Withdrawal[]         @relation("WithdrawalRequestedBy")
+  emailCampaignsCreated               EmailCampaign[]     @relation("EmailCampaignCreatedBy")
+  campaignRecipientRecords             CampaignRecipient[]
+  auditLogsAsActor                      AuditLog[]
+
+  @@map("users")
+}
+
+// A buyer's chosen interest categories (PRD §3.4) — many-to-many to categories
+model UserInterest {
+  userId     String   @map("user_id") @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User          @relation(fields: [userId], references: [id])
+  category EventCategory @relation(fields: [categoryId], references: [id])
+
+  @@id([userId, categoryId])
+  @@map("user_interests")
+}
+
+model EventCategory {
+  id        String   @id @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  userInterests  UserInterest[]
+  events         Event[]
+  emailCampaigns EmailCampaign[] @relation("EmailCampaignSegmentCategory")
+
+  @@map("event_categories")
+}
+
+// Registered buyers tracking events they care about (PRD §3.4)
+model EventFollow {
+  userId    String   @map("user_id") @db.Uuid
+  eventId   String   @map("event_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@id([userId, eventId])
+  @@map("event_follows")
+}
+
+// ---------------------------------------------------------------------
+// ORGANISATIONS, TEAMS & ROLES  (PRD §3.1)
+// ---------------------------------------------------------------------
+
+model Organisation {
+  id      String @id @db.Uuid
+  name    String
+  slug    String @unique
+  description String?
+  logoUrl String? @map("logo_url")
+  contactEmail String @map("contact_email")
+  contactPhone String? @map("contact_phone")
+
+  cacNumber                String?   @map("cac_number")
+  kybStatus                KybStatus @default(unverified) @map("kyb_status")
+  settlementBankCode       String?   @map("settlement_bank_code")
+  settlementAccountNumber  String?   @map("settlement_account_number")
+  settlementAccountName    String?   @map("settlement_account_name")
+
+  isPremium Boolean  @default(false) @map("is_premium")
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  creator             User                  @relation("OrganisationCreatedBy", fields: [createdBy], references: [id])
+  members              OrganisationMember[]
+  events                Event[]
+  scannerDevices         ScannerDevice[]
+  wallets                 Wallet[]
+  transactions             Transaction[]
+  withdrawals               Withdrawal[]
+  payoutHolds                 PayoutHold[]
+  emailCampaigns                EmailCampaign[]
+  emailSuppressions                EmailSuppression[]
+  apiKeys                            ApiKey[]
+  embedAllowedDomains                  EmbedAllowedDomain[]
+  webhookEndpoints                       WebhookEndpoint[]
+  auditLogs                                AuditLog[]
+
+  @@map("organisations")
+}
+
+// A user's membership + role(s) within an organisation.
+// One row per (org, user, role) so a user can hold multiple roles.
+model OrganisationMember {
+  id             String    @id @db.Uuid
+  organisationId String    @map("organisation_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  role           OrgRole
+  invitedBy      String?   @map("invited_by") @db.Uuid
+  acceptedAt     DateTime? @map("accepted_at")
+  revokedAt      DateTime? @map("revoked_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  user         User         @relation("OrganisationMemberUser", fields: [userId], references: [id])
+  inviter      User?        @relation("OrganisationMemberInvitedBy", fields: [invitedBy], references: [id])
+
+  @@unique([organisationId, userId, role])
+  @@index([organisationId])
+  @@index([userId])
+  @@map("organisation_members")
+}
+
+// ---------------------------------------------------------------------
+// EVENTS & TICKET TYPES  (PRD §3.2)
+// ---------------------------------------------------------------------
+
+model Event {
+  id             String   @id @db.Uuid
+  organisationId String   @map("organisation_id") @db.Uuid
+  categoryId     String?  @map("category_id") @db.Uuid
+  title          String
+  description    String?  @db.Text
+  status         EventStatus @default(draft)
+  visibility     EventVisibility @default(public)
+
+  isPaid Boolean @default(false) @map("is_paid")
+
+  scannerMeshMode ScannerMeshMode @default(android_mesh) @map("scanner_mesh_mode")
+
+  venueName    String?  @map("venue_name")
+  venueAddress String?  @map("venue_address")
+  latitude     Decimal? @db.Decimal(9, 6)
+  longitude    Decimal? @db.Decimal(9, 6)
+  city         String?
+
+  startsAt DateTime  @map("starts_at")
+  endsAt   DateTime? @map("ends_at")
+
+  salesCloseAt      DateTime  @map("sales_close_at")
+  manifestVersion   Int       @default(0) @map("manifest_version")
+  manifestSealedAt  DateTime? @map("manifest_sealed_at")
+
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  organisation Organisation   @relation(fields: [organisationId], references: [id])
+  category     EventCategory? @relation(fields: [categoryId], references: [id])
+  creator      User           @relation("EventCreatedBy", fields: [createdBy], references: [id])
+
+  images               EventImage[]
+  ticketTypes           TicketType[]
+  orders                  Order[]
+  tickets                   Ticket[]
+  signingKeys                 EventSigningKey[]
+  scannerAssignments            EventScannerAssignment[]
+  ticketScans                     TicketScan[]
+  promoters                          EventPromoter[]
+  payoutHolds                          PayoutHold[]
+  follows                                EventFollow[]
+  segmentedCampaigns                       EmailCampaign[]  @relation("EmailCampaignSegmentEvent")
+
+  @@index([organisationId])
+  @@index([status, startsAt])
+  @@index([city, startsAt])
+  @@index([categoryId])
+  @@map("events")
+}
+
+// Cover / gallery images for an event
+model EventImage {
+  id        String   @id @db.Uuid
+  eventId   String   @map("event_id") @db.Uuid
+  url       String
+  position  Int      @default(0)
+  isCover   Boolean  @default(false) @map("is_cover")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@index([eventId])
+  @@map("event_images")
+}
+
+model TicketType {
+  id             String    @id @db.Uuid
+  eventId        String    @map("event_id") @db.Uuid
+  name           String
+  priceMinor     BigInt    @default(0) @map("price_minor")
+  currency       String    @default("NGN") @db.Char(3)
+  quantityTotal  Int       @map("quantity_total")
+  quantitySold   Int       @default(0) @map("quantity_sold")
+  perOrderLimit  Int?      @map("per_order_limit")
+  saleStartsAt   DateTime? @map("sale_starts_at")
+  saleEndsAt     DateTime? @map("sale_ends_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  event    Event           @relation(fields: [eventId], references: [id])
+  tickets  Ticket[]
+  promoterScopes EventPromoter[]
+
+  @@index([eventId])
+  @@map("ticket_types")
+}
+
+// ---------------------------------------------------------------------
+// ORDERS, TICKETS & DELIVERY  (PRD §3.3)
+// ---------------------------------------------------------------------
+
+model Order {
+  id      String @id @db.Uuid
+  eventId String @map("event_id") @db.Uuid
+
+  buyerUserId String? @map("buyer_user_id") @db.Uuid
+  buyerName   String  @map("buyer_name")
+  buyerEmail  String  @map("buyer_email")
+  buyerPhone  String? @map("buyer_phone")
+
+  status            OrderStatus @default(pending)
+  subtotalMinor     BigInt      @default(0) @map("subtotal_minor")
+  platformFeeMinor  BigInt      @default(0) @map("platform_fee_minor")
+  totalMinor        BigInt      @default(0) @map("total_minor")
+  currency          String      @default("NGN") @db.Char(3)
+
+  channel        EmbedChannel @default(direct)
+  promoterLinkId String?      @map("promoter_link_id") @db.Uuid
+
+  /// DEVIATION FROM DBML: holds the pending order's per-ticket-type
+  /// recipient assignments ({items:[{ticketTypeId,quantity,recipients:[...]}]})
+  /// between order creation and payment confirmation. Ticket rows (with
+  /// their qrCode/signature) are only created once payment is confirmed
+  /// (integrity doc §7 step 1) — until then there is nowhere else in the
+  /// DBML to park "who gets which of these N tickets". The stale-order
+  /// release cron also reads this to know how much inventory to give back.
+  metadata Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  event         Event          @relation(fields: [eventId], references: [id])
+  buyer         User?          @relation("OrderBuyer", fields: [buyerUserId], references: [id])
+  promoterLink  PromoterLink?  @relation(fields: [promoterLinkId], references: [id])
+
+  tickets      Ticket[]
+  transactions Transaction[]
+  commissions  Commission[]
+
+  @@index([eventId])
+  @@index([buyerUserId])
+  @@index([buyerEmail])
+  @@index([status])
+  @@map("orders")
+}
+
+// One row per issued ticket. Split delivery => each ticket can go to a
+// different recipient while all belong to the same order.
+model Ticket {
+  id           String @id @db.Uuid
+  orderId      String @map("order_id") @db.Uuid
+  eventId      String @map("event_id") @db.Uuid
+  ticketTypeId String @map("ticket_type_id") @db.Uuid
+
+  status TicketStatus @default(valid)
+
+  recipientName  String  @map("recipient_name")
+  recipientEmail String  @map("recipient_email")
+  recipientPhone String? @map("recipient_phone")
+
+  qrCode       String   @unique @map("qr_code")
+  signingKeyId String   @map("signing_key_id") @db.Uuid
+  signature    String
+  issuedAt     DateTime @default(now()) @map("issued_at")
+
+  usedAt        DateTime? @map("used_at")
+  usedByScanId  String?   @unique @map("used_by_scan_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order        Order            @relation(fields: [orderId], references: [id])
+  event        Event            @relation(fields: [eventId], references: [id])
+  ticketType   TicketType       @relation(fields: [ticketTypeId], references: [id])
+  signingKey   EventSigningKey  @relation(fields: [signingKeyId], references: [id])
+  usedByScan   TicketScan?      @relation("TicketUsedByScan", fields: [usedByScanId], references: [id])
+
+  deliveries TicketDelivery[]
+  scans      TicketScan[]      @relation("TicketScanTicket")
+
+  @@index([orderId])
+  @@index([eventId])
+  @@index([status])
+  @@map("tickets")
+}
+
+// Delivery attempts per ticket per channel, with resend audit
+model TicketDelivery {
+  id             String           @id @db.Uuid
+  ticketId       String           @map("ticket_id") @db.Uuid
+  channel        DeliveryChannel
+  destination    String
+  status         DeliveryStatus   @default(pending)
+  isResend       Boolean          @default(false) @map("is_resend")
+  resentBy       String?          @map("resent_by") @db.Uuid
+  resendReason   String?          @map("resend_reason")
+  providerMessageId String?       @map("provider_message_id")
+  sentAt         DateTime?        @map("sent_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+  resendBy User?  @relation("TicketDeliveryResentBy", fields: [resentBy], references: [id])
+
+  @@index([ticketId])
+  @@index([status])
+  @@map("ticket_deliveries")
+}
+
+// ---------------------------------------------------------------------
+// TICKET SIGNING KEYS  (PRD §4.1 / §4.2 — keys rotated per event)
+// ---------------------------------------------------------------------
+
+model EventSigningKey {
+  id        String   @id @db.Uuid
+  eventId   String   @map("event_id") @db.Uuid
+  publicKey String   @map("public_key")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event   Event              @relation(fields: [eventId], references: [id])
+  tickets Ticket[]
+  secret  SigningKeySecret?
+
+  @@index([eventId])
+  @@map("event_signing_keys")
+}
+
+/// DEVIATION FROM DBML: the design note (integrity doc §3) is explicit that
+/// private keys "live in a secrets manager / KMS, not in this table". This
+/// table is the local/dev-mode stand-in for that KMS, holding the
+/// AES-256-GCM-wrapped Ed25519 private key. It sits behind a KeyProvider
+/// interface (src/modules/tickets/signing) — swap in AwsKmsKeyProvider for
+/// production and this table goes unused, no schema change required.
+model SigningKeySecret {
+  id         String   @id @db.Uuid
+  ciphertext Bytes
+  iv         Bytes
+  authTag    Bytes    @map("auth_tag")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  eventSigningKey EventSigningKey @relation(fields: [id], references: [id])
+
+  @@map("signing_key_secrets")
+}
+
+// ---------------------------------------------------------------------
+// SCANNER APP & OFFLINE MODE  (PRD §3.9)
+// ---------------------------------------------------------------------
+
+model ScannerDevice {
+  id                 String   @id @db.Uuid
+  userId             String   @map("user_id") @db.Uuid
+  organisationId     String   @map("organisation_id") @db.Uuid
+  deviceLabel        String?  @map("device_label")
+  deviceFingerprint  String   @unique @map("device_fingerprint")
+  isRevoked          Boolean  @default(false) @map("is_revoked")
+  lastSyncedAt       DateTime? @map("last_synced_at")
+  /// DEVIATION FROM DBML (integrity doc §8 decision 3): a stable per-device
+  /// tie-break ordinal, assigned at registration, so first-scan-wins
+  /// reconciliation has a deterministic winner when two scans of the same
+  /// ticket carry an identical derived timestamp.
+  syncPriorityOrdinal Int     @default(autoincrement()) @map("sync_priority_ordinal")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  user         User         @relation(fields: [userId], references: [id])
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+
+  assignments EventScannerAssignment[]
+  scans       TicketScan[]
+
+  @@index([userId])
+  @@index([organisationId])
+  @@map("scanner_devices")
+}
+
+// Assignment of a device (and its operator) to a specific event's gate
+model EventScannerAssignment {
+  id                          String    @id @db.Uuid
+  eventId                     String    @map("event_id") @db.Uuid
+  scannerDeviceId             String    @map("scanner_device_id") @db.Uuid
+  assignedBy                  String    @map("assigned_by") @db.Uuid
+  manifestVersionDownloaded   Int?      @map("manifest_version_downloaded")
+  downloadedAt                DateTime? @map("downloaded_at")
+  /// DEVIATION FROM DBML (integrity doc §8 decision 3): the device's
+  /// monotonic clock reading at the moment of manifest download, paired
+  /// with `downloadedAt` (server wall-clock) as the shared reference point
+  /// used to translate that device's later scan monotonic readings into a
+  /// cross-device-comparable wall-clock estimate.
+  monotonicOffsetMs           BigInt?   @map("monotonic_offset_ms")
+  createdAt                   DateTime  @default(now()) @map("created_at")
+
+  event         Event         @relation(fields: [eventId], references: [id])
+  scannerDevice ScannerDevice @relation(fields: [scannerDeviceId], references: [id])
+  assigner      User          @relation("EventScannerAssignmentAssignedBy", fields: [assignedBy], references: [id])
+
+  @@unique([eventId, scannerDeviceId])
+  @@map("event_scanner_assignments")
+}
+
+// Every scan event. Offline scans are created locally then synced; conflicts
+// resolved first-scan-wins with later scans flagged.
+model TicketScan {
+  id               String     @id @db.Uuid
+  ticketId         String     @map("ticket_id") @db.Uuid
+  eventId          String     @map("event_id") @db.Uuid
+  scannerDeviceId  String     @map("scanner_device_id") @db.Uuid
+  scannedBy        String?    @map("scanned_by") @db.Uuid
+  mode             ScanMode
+  result           ScanResult
+  scannedAt        DateTime   @map("scanned_at")
+  /// DEVIATION FROM DBML (integrity doc §8 decision 3): the device-local
+  /// monotonic clock reading at scan time, persisted alongside the derived
+  /// wall-clock estimate (`scannedAt`) so reconciliation can order scans
+  /// from different devices via each device's EventScannerAssignment offset.
+  scannedAtMonotonicMs BigInt? @map("scanned_at_monotonic_ms")
+  syncedAt         DateTime?  @map("synced_at")
+  isConflict       Boolean    @default(false) @map("is_conflict")
+  createdAt        DateTime   @default(now()) @map("created_at")
+
+  ticket        Ticket        @relation("TicketScanTicket", fields: [ticketId], references: [id])
+  event         Event         @relation(fields: [eventId], references: [id])
+  scannerDevice ScannerDevice @relation(fields: [scannerDeviceId], references: [id])
+  scanner       User?         @relation("TicketScanScannedBy", fields: [scannedBy], references: [id])
+  winningForTicket Ticket?    @relation("TicketUsedByScan")
+
+  @@index([ticketId])
+  @@index([eventId])
+  @@index([scannerDeviceId])
+  @@map("ticket_scans")
+}
+
+// ---------------------------------------------------------------------
+// PROMOTERS & COMMISSIONS  (PRD §3.10) — STUB, not built in M1-M3
+// ---------------------------------------------------------------------
+
+model EventPromoter {
+  id             String         @id @db.Uuid
+  eventId        String         @map("event_id") @db.Uuid
+  userId         String         @map("user_id") @db.Uuid
+  invitedBy      String         @map("invited_by") @db.Uuid
+  status         PromoterStatus @default(invited)
+
+  commissionType  CommissionType @map("commission_type")
+  commissionValue BigInt         @map("commission_value")
+  ticketTypeId    String?        @map("ticket_type_id") @db.Uuid
+
+  payoutBankCode      String? @map("payout_bank_code")
+  payoutAccountNumber String? @map("payout_account_number")
+  payoutAccountName   String? @map("payout_account_name")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event      Event       @relation(fields: [eventId], references: [id])
+  user       User        @relation("EventPromoterUser", fields: [userId], references: [id])
+  inviter    User        @relation("EventPromoterInvitedBy", fields: [invitedBy], references: [id])
+  ticketType TicketType? @relation(fields: [ticketTypeId], references: [id])
+
+  links       PromoterLink[]
+  commissions Commission[]
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@map("event_promoters")
+}
+
+model PromoterLink {
+  id              String   @id @db.Uuid
+  eventPromoterId String   @map("event_promoter_id") @db.Uuid
+  code            String   @unique
+  clicks          Int      @default(0)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  eventPromoter EventPromoter @relation(fields: [eventPromoterId], references: [id])
+  clickEvents   PromoterLinkClick[]
+  orders        Order[]
+
+  @@index([eventPromoterId])
+  @@map("promoter_links")
+}
+
+model PromoterLinkClick {
+  id                 String   @id @db.Uuid
+  promoterLinkId     String   @map("promoter_link_id") @db.Uuid
+  visitorFingerprint String?  @map("visitor_fingerprint")
+  ipHash             String?  @map("ip_hash")
+  userAgent          String?  @map("user_agent")
+  clickedAt          DateTime @default(now()) @map("clicked_at")
+
+  promoterLink PromoterLink @relation(fields: [promoterLinkId], references: [id])
+
+  @@index([promoterLinkId])
+  @@index([clickedAt])
+  @@map("promoter_link_clicks")
+}
+
+model Commission {
+  id                  String            @id @db.Uuid
+  eventPromoterId     String            @map("event_promoter_id") @db.Uuid
+  orderId             String            @map("order_id") @db.Uuid
+  amountMinor         BigInt            @map("amount_minor")
+  currency            String            @default("NGN") @db.Char(3)
+  status              CommissionStatus  @default(accrued)
+  payoutTransactionId String?           @map("payout_transaction_id") @db.Uuid
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  eventPromoter    EventPromoter @relation(fields: [eventPromoterId], references: [id])
+  order            Order         @relation(fields: [orderId], references: [id])
+  payoutTransaction Transaction? @relation(fields: [payoutTransactionId], references: [id])
+
+  @@index([eventPromoterId])
+  @@index([orderId])
+  @@index([status])
+  @@map("commissions")
+}
+
+// ---------------------------------------------------------------------
+// WALLETS, TRANSACTIONS (LEDGER) & WITHDRAWALS  (PRD §3.8)
+// ---------------------------------------------------------------------
+
+model Wallet {
+  id              String          @id @db.Uuid
+  ownerType       WalletOwnerType @map("owner_type")
+  organisationId  String?         @map("organisation_id") @db.Uuid
+  promoterUserId  String?         @map("promoter_user_id") @db.Uuid
+  currency        String          @default("NGN") @db.Char(3)
+  balanceMinor    BigInt          @default(0) @map("balance_minor")
+  heldMinor       BigInt          @default(0) @map("held_minor")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  organisation Organisation? @relation(fields: [organisationId], references: [id])
+  promoter     User?         @relation("WalletPromoter", fields: [promoterUserId], references: [id])
+
+  transactions  Transaction[]
+  ledgerEntries LedgerEntry[]
+  withdrawals   Withdrawal[]
+
+  @@index([organisationId])
+  @@index([promoterUserId])
+  @@map("wallets")
+}
+
+// The unified money-movement ledger. Every financial event is one row here.
+model Transaction {
+  id              String             @id @db.Uuid
+  transactionType TransactionType    @map("transaction_type")
+  status          TransactionStatus  @default(initiated)
+
+  amountMinor BigInt @map("amount_minor")
+  currency    String @default("NGN") @db.Char(3)
+
+  orderId              String? @map("order_id") @db.Uuid
+  walletId             String? @map("wallet_id") @db.Uuid
+  organisationId       String? @map("organisation_id") @db.Uuid
+  withdrawalId         String? @map("withdrawal_id") @db.Uuid
+  parentTransactionId  String? @map("parent_transaction_id") @db.Uuid
+
+  pspProvider    PspProvider?   @map("psp_provider")
+  pspReference   String?        @map("psp_reference")
+  paymentMethod  PaymentMethod? @map("payment_method")
+
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  order              Order?        @relation(fields: [orderId], references: [id])
+  wallet             Wallet?       @relation(fields: [walletId], references: [id])
+  organisation       Organisation? @relation(fields: [organisationId], references: [id])
+  withdrawal         Withdrawal?   @relation(fields: [withdrawalId], references: [id])
+  parentTransaction  Transaction?  @relation("RefundParent", fields: [parentTransactionId], references: [id])
+  refunds            Transaction[] @relation("RefundParent")
+
+  ledgerEntries LedgerEntry[]
+  commissionPayouts Commission[]
+
+  @@index([transactionType])
+  @@index([status])
+  @@index([orderId])
+  @@index([walletId])
+  @@index([organisationId])
+  @@index([withdrawalId])
+  @@index([pspReference])
+  @@map("transactions")
+}
+
+// Double-entry postings against wallets, one or more per transaction.
+model LedgerEntry {
+  id                 String          @id @db.Uuid
+  transactionId      String          @map("transaction_id") @db.Uuid
+  walletId           String          @map("wallet_id") @db.Uuid
+  entryType          LedgerEntryType @map("entry_type")
+  amountMinor        BigInt          @map("amount_minor")
+  balanceAfterMinor  BigInt          @map("balance_after_minor")
+  createdAt          DateTime        @default(now()) @map("created_at")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  wallet      Wallet      @relation(fields: [walletId], references: [id])
+
+  @@index([transactionId])
+  @@index([walletId])
+  @@map("ledger_entries")
+}
+
+// Organiser-initiated withdrawal (payout) requests from the dashboard.
+model Withdrawal {
+  id              String                @id @db.Uuid
+  walletId        String                @map("wallet_id") @db.Uuid
+  beneficiaryType PayoutBeneficiaryType @map("beneficiary_type")
+  organisationId  String?               @map("organisation_id") @db.Uuid
+  promoterUserId  String?               @map("promoter_user_id") @db.Uuid
+
+  amountMinor BigInt            @map("amount_minor")
+  currency    String            @default("NGN") @db.Char(3)
+  status      WithdrawalStatus  @default(requested)
+
+  bankCode      String @map("bank_code")
+  accountNumber String @map("account_number")
+  accountName   String @map("account_name")
+
+  requestedBy           String    @map("requested_by") @db.Uuid
+  pspTransferReference  String?   @map("psp_transfer_reference")
+  failureReason         String?   @map("failure_reason")
+  requestedAt           DateTime  @default(now()) @map("requested_at")
+  processedAt           DateTime? @map("processed_at")
+
+  wallet       Wallet        @relation(fields: [walletId], references: [id])
+  organisation Organisation? @relation(fields: [organisationId], references: [id])
+  promoter     User?         @relation("WithdrawalPromoter", fields: [promoterUserId], references: [id])
+  requester    User          @relation("WithdrawalRequestedBy", fields: [requestedBy], references: [id])
+
+  transactions Transaction[]
+
+  @@index([walletId])
+  @@index([organisationId])
+  @@index([status])
+  @@map("withdrawals")
+}
+
+// Risk holds against organiser payouts: a % held until event end.
+model PayoutHold {
+  id             String    @id @db.Uuid
+  organisationId String    @map("organisation_id") @db.Uuid
+  eventId        String?   @map("event_id") @db.Uuid
+  amountMinor    BigInt    @map("amount_minor")
+  currency       String    @default("NGN") @db.Char(3)
+  reason         String?
+  releasedAt     DateTime? @map("released_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  event        Event?       @relation(fields: [eventId], references: [id])
+
+  @@index([organisationId])
+  @@index([eventId])
+  @@map("payout_holds")
+}
+
+// ---------------------------------------------------------------------
+// MARKETING EMAIL CAMPAIGNS — PREMIUM (PRD §3.7) — STUB, not built in M1-M3
+// ---------------------------------------------------------------------
+
+model EmailCampaign {
+  id             String         @id @db.Uuid
+  organisationId String         @map("organisation_id") @db.Uuid
+  subject        String
+  bodyHtml       String?        @map("body_html") @db.Text
+  status         CampaignStatus @default(draft)
+
+  segmentEventId    String? @map("segment_event_id") @db.Uuid
+  segmentCategoryId String? @map("segment_category_id") @db.Uuid
+  segmentCity       String? @map("segment_city")
+
+  scheduledAt     DateTime? @map("scheduled_at")
+  sentAt          DateTime? @map("sent_at")
+  totalRecipients Int       @default(0) @map("total_recipients")
+  createdBy       String    @map("created_by") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  organisation    Organisation   @relation(fields: [organisationId], references: [id])
+  segmentEvent    Event?         @relation("EmailCampaignSegmentEvent", fields: [segmentEventId], references: [id])
+  segmentCategory EventCategory? @relation("EmailCampaignSegmentCategory", fields: [segmentCategoryId], references: [id])
+  creator         User           @relation("EmailCampaignCreatedBy", fields: [createdBy], references: [id])
+
+  recipients CampaignRecipient[]
+
+  @@index([organisationId])
+  @@index([status])
+  @@map("email_campaigns")
+}
+
+model CampaignRecipient {
+  id          String           @id @db.Uuid
+  campaignId  String           @map("campaign_id") @db.Uuid
+  email       String
+  userId      String?          @map("user_id") @db.Uuid
+  status      RecipientStatus  @default(queued)
+  deliveredAt DateTime?        @map("delivered_at")
+  openedAt    DateTime?        @map("opened_at")
+  clickedAt   DateTime?        @map("clicked_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  campaign EmailCampaign @relation(fields: [campaignId], references: [id])
+  user     User?         @relation(fields: [userId], references: [id])
+
+  @@index([campaignId])
+  @@index([email])
+  @@map("campaign_recipients")
+}
+
+// Platform-wide unsubscribe / suppression list
+model EmailSuppression {
+  id             String   @id @db.Uuid
+  email          String   @unique
+  organisationId String?  @map("organisation_id") @db.Uuid
+  reason         String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organisation Organisation? @relation(fields: [organisationId], references: [id])
+
+  @@map("email_suppressions")
+}
+
+// ---------------------------------------------------------------------
+// WEB INTEGRATION — API & IFRAME EMBED (PRD §3.11) — STUB, not built in M1-M3
+// ---------------------------------------------------------------------
+
+model ApiKey {
+  id             String    @id @db.Uuid
+  organisationId String    @map("organisation_id") @db.Uuid
+  keyPrefix      String    @map("key_prefix")
+  keyHash        String    @map("key_hash")
+  label          String?
+  isActive       Boolean   @default(true) @map("is_active")
+  lastUsedAt     DateTime? @map("last_used_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  revokedAt      DateTime? @map("revoked_at")
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+
+  @@index([organisationId])
+  @@map("api_keys")
+}
+
+model EmbedAllowedDomain {
+  id             String   @id @db.Uuid
+  organisationId String   @map("organisation_id") @db.Uuid
+  domain         String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+
+  @@unique([organisationId, domain])
+  @@map("embed_allowed_domains")
+}
+
+model WebhookEndpoint {
+  id             String   @id @db.Uuid
+  organisationId String   @map("organisation_id") @db.Uuid
+  url            String
+  signingSecret  String   @map("signing_secret")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+
+  @@index([organisationId])
+  @@map("webhook_endpoints")
+}
+
+// ---------------------------------------------------------------------
+// AUDIT LOG (PRD §4.3)
+// ---------------------------------------------------------------------
+
+model AuditLog {
+  id             String   @id @db.Uuid
+  organisationId String?  @map("organisation_id") @db.Uuid
+  actorUserId    String?  @map("actor_user_id") @db.Uuid
+  action         String
+  entityType     String?  @map("entity_type")
+  entityId       String?  @map("entity_id") @db.Uuid
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organisation Organisation? @relation(fields: [organisationId], references: [id])
+  actor        User?         @relation(fields: [actorUserId], references: [id])
+
+  @@index([organisationId])
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}

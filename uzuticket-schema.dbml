@@ -1,0 +1,985 @@
+// =====================================================================
+// UzuTicket — Database Schema (DBML for dbdiagram.io)
+// Derived from PRD v1.0
+//
+// Paste this whole file into https://dbdiagram.io  ("Import > paste DBML"
+// or just clear the editor and paste).
+//
+// Design notes:
+//  - Primary keys are UUIDv7 (time-ordered, non-enumerable) per PRD §4.1.
+//  - Money is stored in integer minor units (kobo) to avoid float errors.
+//  - "transactions" is the single money-movement ledger. Every row is one
+//    of: ticket_purchase, settlement (payout), or refund (transaction_type).
+//    Ticket purchases link to an order; refunds link back to the original
+//    purchase transaction; settlements/payouts link to a withdrawal request.
+//  - Enums capture PRD-specified states (roles, ticket status, payout states).
+// =====================================================================
+
+
+// ---------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------
+
+Enum user_status {
+  active
+  suspended
+  deleted
+}
+
+Enum org_role {
+  super_admin
+  admin
+  sales
+  promoter
+  ticket_scanner
+  customer_support
+}
+
+Enum kyb_status {
+  unverified
+  pending
+  verified
+  rejected
+}
+
+Enum event_status {
+  draft
+  pending_kyb    // PAID event created but organisation KYB not yet verified; cannot publish
+  published
+  sales_closed   // ticket sales close time passed; manifest sealed
+  live           // event in progress
+  completed
+  cancelled
+}
+
+// Offline-scanning mesh transport, chosen per event by the organiser (see
+// ticket-integrity note §5.1.1). Direct modes can't mix iOS+Android within an
+// event; shared_wifi is platform-agnostic and allows mixed-device teams.
+Enum scanner_mesh_mode {
+  android_mesh   // Wi-Fi Direct / Wi-Fi Aware (default)
+  iphone_mesh    // Multipeer Connectivity
+  shared_wifi    // venue/travel router or Pro coordinator box; mixed devices OK
+}
+
+Enum event_visibility {
+  public
+  unlisted
+}
+
+Enum ticket_status {
+  valid
+  used            // scanned/admitted
+  void            // regenerated & voided, or cancelled
+  refunded
+}
+
+Enum delivery_channel {
+  email
+  sms
+  whatsapp
+}
+
+Enum delivery_status {
+  pending
+  sent
+  failed
+  resent
+}
+
+Enum order_status {
+  pending
+  paid
+  partially_refunded
+  refunded
+  cancelled
+  failed
+}
+
+Enum payment_method {
+  card
+  bank_transfer
+  ussd
+}
+
+// The unified money-movement ledger type
+Enum transaction_type {
+  ticket_purchase
+  settlement       // payout / withdrawal to organiser or promoter
+  refund
+}
+
+Enum transaction_status {
+  initiated
+  processing
+  succeeded
+  failed
+  reversed
+}
+
+Enum psp_provider {
+  paystack
+  flutterwave
+}
+
+Enum withdrawal_status {
+  requested
+  processing
+  paid
+  failed
+}
+
+Enum payout_beneficiary_type {
+  organisation
+  promoter
+}
+
+Enum wallet_owner_type {
+  organisation
+  promoter
+}
+
+Enum ledger_entry_type {
+  credit
+  debit
+}
+
+Enum scan_mode {
+  online
+  offline
+}
+
+Enum scan_result {
+  admitted
+  duplicate
+  invalid          // signature/ticket not recognised
+  wrong_event
+}
+
+Enum promoter_status {
+  invited
+  active
+  suspended
+}
+
+Enum commission_type {
+  percentage
+  fixed_per_ticket
+}
+
+Enum commission_status {
+  accrued          // on confirmed payment
+  reversed         // on refund
+  payable          // event completed, eligible for payout
+  paid
+}
+
+Enum campaign_status {
+  draft
+  scheduled
+  sending
+  sent
+  cancelled
+}
+
+Enum recipient_status {
+  queued
+  delivered
+  bounced
+  failed
+}
+
+Enum embed_channel {
+  direct
+  embed            // iframe / API on organiser's own site
+  promoter
+  recommendation
+  search
+}
+
+
+// ---------------------------------------------------------------------
+// IDENTITY & ACCOUNTS
+// ---------------------------------------------------------------------
+
+Table users {
+  id uuid [pk, note: 'UUIDv7']
+  email varchar [unique, not null]
+  phone varchar [unique]
+  password_hash varchar [note: 'null if OTP/social only']
+  full_name varchar
+  status user_status [not null, default: 'active']
+  is_email_verified boolean [not null, default: false]
+  is_phone_verified boolean [not null, default: false]
+  city varchar [note: 'manual location override for recommendations']
+  last_login_at timestamp
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    email
+    phone
+  }
+}
+
+// A buyer's chosen interest categories (PRD §3.4) — many-to-many to categories
+Table user_interests {
+  user_id uuid [not null]
+  category_id uuid [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (user_id, category_id) [pk]
+  }
+}
+
+Table event_categories {
+  id uuid [pk]
+  name varchar [unique, not null, note: 'e.g. concerts, comedy, tech, faith, sports, nightlife']
+  slug varchar [unique, not null]
+  created_at timestamp [not null, default: `now()`]
+}
+
+// Registered buyers tracking events they care about (PRD §3.4)
+Table event_follows {
+  user_id uuid [not null]
+  event_id uuid [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (user_id, event_id) [pk]
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// ORGANISATIONS, TEAMS & ROLES  (PRD §3.1)
+// ---------------------------------------------------------------------
+
+Table organisations {
+  id uuid [pk]
+  name varchar [not null]
+  slug varchar [unique, not null]
+  description text
+  logo_url varchar
+  contact_email varchar [not null]
+  contact_phone varchar
+
+  // Settlement / KYB.
+  // KYB is NOT required to create an organisation or to publish FREE events.
+  // It is required only before a PAID event can be published (and before any
+  // withdrawal). Organisations start 'unverified' and can operate free events
+  // indefinitely without ever submitting business details.
+  cac_number varchar [note: 'Corporate Affairs Commission reg number; needed only for paid events/payouts']
+  kyb_status kyb_status [not null, default: 'unverified']
+  settlement_bank_code varchar
+  settlement_account_number varchar
+  settlement_account_name varchar
+
+  is_premium boolean [not null, default: false, note: 'unlocks marketing emails etc.']
+  created_by uuid [not null, note: 'user who created org = first super_admin']
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+}
+
+// A user's membership + role(s) within an organisation.
+// One row per (org, user, role) so a user can hold multiple roles.
+Table organisation_members {
+  id uuid [pk]
+  organisation_id uuid [not null]
+  user_id uuid [not null]
+  role org_role [not null]
+  invited_by uuid [note: 'user_id of inviter']
+  accepted_at timestamp [note: 'null until invite accepted']
+  revoked_at timestamp
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (organisation_id, user_id, role) [unique]
+    organisation_id
+    user_id
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// EVENTS & TICKET TYPES  (PRD §3.2)
+// ---------------------------------------------------------------------
+
+Table events {
+  id uuid [pk]
+  organisation_id uuid [not null]
+  category_id uuid
+  title varchar [not null]
+  description text
+  status event_status [not null, default: 'draft']
+  visibility event_visibility [not null, default: 'public']
+
+  // Paid vs free gating (PRD §3.1 / §3.2).
+  // is_paid is derived from ticket_types: true if any ticket type has price > 0.
+  // PAID events require verified org KYB before they can be published
+  //   (draft -> pending_kyb -> published).
+  // FREE events (all ticket types price 0 / RSVP) may publish with NO KYB,
+  //   since no payment is processed or collected.
+  is_paid boolean [not null, default: false, note: 'true if any ticket type is priced > 0']
+
+  // Offline-scanning mesh transport chosen by the organiser (ticket-integrity §5.1.1)
+  scanner_mesh_mode scanner_mesh_mode [not null, default: 'android_mesh']
+
+  // Venue
+  venue_name varchar
+  venue_address varchar
+  latitude decimal
+  longitude decimal
+  city varchar [note: 'denormalised for location-based recommendations']
+
+  starts_at timestamp [not null]
+  ends_at timestamp
+
+  // Mandatory ticket sales close time (PRD §3.2). Manifest seals at this time.
+  sales_close_at timestamp [not null]
+  manifest_version int [not null, default: 0, note: 'bumped each time manifest is (re)sealed']
+  manifest_sealed_at timestamp
+
+  created_by uuid [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    organisation_id
+    (status, starts_at)
+    (city, starts_at) [note: 'recommendation queries']
+    category_id
+  }
+}
+
+// Cover / gallery images for an event (PRD §3.2 event fields: images)
+Table event_images {
+  id uuid [pk]
+  event_id uuid [not null]
+  url varchar [not null]
+  position int [not null, default: 0]
+  is_cover boolean [not null, default: false]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    event_id
+  }
+}
+
+Table ticket_types {
+  id uuid [pk]
+  event_id uuid [not null]
+  name varchar [not null]
+  price_minor bigint [not null, default: 0, note: 'kobo; 0 = free/RSVP']
+  currency char(3) [not null, default: 'NGN']
+  quantity_total int [not null]
+  quantity_sold int [not null, default: 0]
+  per_order_limit int [note: 'max tickets of this type per order']
+  sale_starts_at timestamp
+  sale_ends_at timestamp
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    event_id
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// ORDERS, TICKETS & DELIVERY  (PRD §3.3)
+// ---------------------------------------------------------------------
+
+Table orders {
+  id uuid [pk]
+  event_id uuid [not null]
+
+  // Buyer: registered user OR guest (name/email/phone captured inline)
+  buyer_user_id uuid [note: 'null for guest checkout']
+  buyer_name varchar [not null]
+  buyer_email varchar [not null]
+  buyer_phone varchar
+
+  status order_status [not null, default: 'pending']
+  subtotal_minor bigint [not null, default: 0]
+  platform_fee_minor bigint [not null, default: 0, note: '5% + fixed fee']
+  total_minor bigint [not null, default: 0]
+  currency char(3) [not null, default: 'NGN']
+
+  // Attribution (PRD §6, §3.10, §3.11)
+  channel embed_channel [not null, default: 'direct']
+  promoter_link_id uuid [note: 'set when channel = promoter']
+
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    event_id
+    buyer_user_id
+    buyer_email [note: 'links guest purchases to later registration']
+    status
+  }
+}
+
+// One row per issued ticket. Split delivery => each ticket can go to a
+// different recipient while all belong to the same order (PRD §3.3).
+Table tickets {
+  id uuid [pk, note: 'UUIDv7; encoded into the signed QR payload']
+  order_id uuid [not null]
+  event_id uuid [not null, note: 'denormalised for manifest/scan lookups']
+  ticket_type_id uuid [not null]
+
+  status ticket_status [not null, default: 'valid']
+
+  // Recipient (may differ from buyer for split delivery)
+  recipient_name varchar [not null]
+  recipient_email varchar [not null]
+  recipient_phone varchar
+
+  // Cryptographic ticket integrity (PRD §4.1 / §4.2): Ed25519-signed payload
+  qr_code varchar [unique, not null, note: 'opaque public token in the QR']
+  signing_key_id uuid [not null, note: 'which per-event key signed this ticket']
+  signature varchar [not null, note: 'Ed25519 signature over the QR payload']
+  issued_at timestamp [not null, default: `now()`]
+
+  // Scan state (authoritative server copy; offline scans reconcile into this)
+  used_at timestamp
+  used_by_scan_id uuid [note: 'winning scan under first-scan-wins']
+
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    order_id
+    event_id
+    qr_code
+    (event_id, status)
+  }
+}
+
+// Delivery attempts per ticket per channel, with resend audit (PRD §3.3, §3.6)
+Table ticket_deliveries {
+  id uuid [pk]
+  ticket_id uuid [not null]
+  channel delivery_channel [not null]
+  destination varchar [not null, note: 'email address or phone number used']
+  status delivery_status [not null, default: 'pending']
+  is_resend boolean [not null, default: false]
+  resent_by uuid [note: 'org member/user who triggered the resend']
+  resend_reason varchar
+  provider_message_id varchar
+  sent_at timestamp
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    ticket_id
+    status
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// TICKET SIGNING KEYS  (PRD §4.1 / §4.2 — keys rotated per event)
+// ---------------------------------------------------------------------
+
+Table event_signing_keys {
+  id uuid [pk]
+  event_id uuid [not null]
+  public_key varchar [not null, note: 'Ed25519 public key; distributed in the offline manifest']
+  // private key is stored in a secrets manager / KMS, not in this table
+  is_active boolean [not null, default: true]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    event_id
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// SCANNER APP & OFFLINE MODE  (PRD §3.9)
+// ---------------------------------------------------------------------
+
+// A physical/registered scanner device bound to a user (scanner role)
+Table scanner_devices {
+  id uuid [pk]
+  user_id uuid [not null, note: 'holder with ticket_scanner role']
+  organisation_id uuid [not null]
+  device_label varchar
+  device_fingerprint varchar [unique, not null]
+  is_revoked boolean [not null, default: false]
+  last_synced_at timestamp
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    user_id
+    organisation_id
+  }
+}
+
+// Assignment of a device (and its operator) to a specific event's gate
+Table event_scanner_assignments {
+  id uuid [pk]
+  event_id uuid [not null]
+  scanner_device_id uuid [not null]
+  assigned_by uuid [not null]
+  manifest_version_downloaded int [note: 'version currently on device']
+  downloaded_at timestamp
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (event_id, scanner_device_id) [unique]
+  }
+}
+
+// Every scan event. Offline scans are created locally then synced; conflicts
+// resolved first-scan-wins with later scans flagged (PRD §3.9).
+Table ticket_scans {
+  id uuid [pk]
+  ticket_id uuid [not null]
+  event_id uuid [not null]
+  scanner_device_id uuid [not null]
+  scanned_by uuid [note: 'operating user']
+  mode scan_mode [not null]
+  result scan_result [not null]
+  scanned_at timestamp [not null, note: 'device-local time of scan']
+  synced_at timestamp [note: 'when an offline scan reached the server']
+  is_conflict boolean [not null, default: false, note: 'lost a first-scan-wins race; flagged for supervisor']
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    ticket_id
+    event_id
+    scanner_device_id
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// PROMOTERS & COMMISSIONS  (PRD §3.10)
+// ---------------------------------------------------------------------
+
+// A user invited to promote a specific event, with a commission rule.
+Table event_promoters {
+  id uuid [pk]
+  event_id uuid [not null]
+  user_id uuid [not null, note: 'existing UzuTicket user acting as promoter']
+  invited_by uuid [not null]
+  status promoter_status [not null, default: 'invited']
+
+  commission_type commission_type [not null]
+  commission_value bigint [not null, note: 'percent basis points, or fixed minor units per ticket']
+  ticket_type_id uuid [note: 'optional: commission scoped to a ticket type']
+
+  // Promoter payout beneficiary details (verified bank account)
+  payout_bank_code varchar
+  payout_account_number varchar
+  payout_account_name varchar
+
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (event_id, user_id) [unique]
+    user_id
+  }
+}
+
+// Unique tracked link/QR per promoter per event
+Table promoter_links {
+  id uuid [pk]
+  event_promoter_id uuid [not null]
+  code varchar [unique, not null, note: 'slug used in the shareable URL/QR']
+  clicks int [not null, default: 0]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    event_promoter_id
+  }
+}
+
+// Individual click events for attribution windows (default 7d, last-click)
+Table promoter_link_clicks {
+  id uuid [pk]
+  promoter_link_id uuid [not null]
+  visitor_fingerprint varchar
+  ip_hash varchar
+  user_agent varchar
+  clicked_at timestamp [not null, default: `now()`]
+
+  indexes {
+    promoter_link_id
+    clicked_at
+  }
+}
+
+// Commission accrued per attributed order; reverses on refund, becomes
+// payable on event completion, then paid via a settlement transaction.
+Table commissions {
+  id uuid [pk]
+  event_promoter_id uuid [not null]
+  order_id uuid [not null]
+  amount_minor bigint [not null]
+  currency char(3) [not null, default: 'NGN']
+  status commission_status [not null, default: 'accrued']
+  payout_transaction_id uuid [note: 'settlement transaction that paid this out']
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    event_promoter_id
+    order_id
+    status
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// WALLETS, TRANSACTIONS (LEDGER) & WITHDRAWALS  (PRD §3.8)
+// ---------------------------------------------------------------------
+
+// A balance holder. Owned by an organisation (ticket revenue) or a
+// promoter (commission earnings).
+Table wallets {
+  id uuid [pk]
+  owner_type wallet_owner_type [not null]
+  organisation_id uuid [note: 'set when owner_type = organisation']
+  promoter_user_id uuid [note: 'set when owner_type = promoter']
+  currency char(3) [not null, default: 'NGN']
+  balance_minor bigint [not null, default: 0, note: 'available balance']
+  held_minor bigint [not null, default: 0, note: 'risk hold / pending settlement buffer']
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    organisation_id
+    promoter_user_id
+  }
+}
+
+// ============================================================
+// THE UNIFIED MONEY-MOVEMENT LEDGER.
+// Every financial event is one row here. transaction_type is one of:
+//   - ticket_purchase  (buyer pays; links to an order)
+//   - refund           (links back to original purchase transaction)
+//   - settlement       (payout to organiser or promoter; links to a
+//                       withdrawal request and/or commission)
+// ============================================================
+Table transactions {
+  id uuid [pk]
+  transaction_type transaction_type [not null]
+  status transaction_status [not null, default: 'initiated']
+
+  amount_minor bigint [not null, note: 'positive magnitude of money moved']
+  currency char(3) [not null, default: 'NGN']
+
+  // Relational context (nullable — only the ones relevant to the type are set)
+  order_id uuid [note: 'set for ticket_purchase and refund']
+  wallet_id uuid [note: 'wallet credited/debited by this transaction']
+  organisation_id uuid [note: 'owning org, for reporting']
+  withdrawal_id uuid [note: 'set for settlement transactions']
+  parent_transaction_id uuid [note: 'refund -> original ticket_purchase transaction']
+
+  // Payment processor details (PRD §4.1 dual-PSP)
+  psp_provider psp_provider
+  psp_reference varchar [note: 'processor transaction/charge/transfer reference']
+  payment_method payment_method [note: 'for ticket_purchase']
+
+  description varchar
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    transaction_type
+    status
+    order_id
+    wallet_id
+    organisation_id
+    withdrawal_id
+    psp_reference
+  }
+}
+
+// Double-entry postings against wallets, one or more per transaction.
+// Gives an immutable, auditable balance history (PRD §4.3 auditability).
+Table ledger_entries {
+  id uuid [pk]
+  transaction_id uuid [not null]
+  wallet_id uuid [not null]
+  entry_type ledger_entry_type [not null]
+  amount_minor bigint [not null]
+  balance_after_minor bigint [not null, note: 'running wallet balance after posting']
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    transaction_id
+    wallet_id
+  }
+}
+
+// Organiser-initiated withdrawal (payout) requests from the dashboard.
+// When processed, a settlement transaction is created to move the money.
+Table withdrawals {
+  id uuid [pk]
+  wallet_id uuid [not null]
+  beneficiary_type payout_beneficiary_type [not null]
+  organisation_id uuid [note: 'set when beneficiary is an organisation']
+  promoter_user_id uuid [note: 'set when beneficiary is a promoter']
+
+  amount_minor bigint [not null]
+  currency char(3) [not null, default: 'NGN']
+  status withdrawal_status [not null, default: 'requested']
+
+  // Destination bank snapshot at time of request
+  bank_code varchar [not null]
+  account_number varchar [not null]
+  account_name varchar [not null]
+
+  requested_by uuid [not null, note: 'super_admin (org) or promoter']
+  psp_transfer_reference varchar
+  failure_reason varchar
+  requested_at timestamp [not null, default: `now()`]
+  processed_at timestamp
+
+  indexes {
+    wallet_id
+    organisation_id
+    status
+  }
+}
+
+// Risk holds against organiser payouts (PRD §3.8): a % held until event end.
+Table payout_holds {
+  id uuid [pk]
+  organisation_id uuid [not null]
+  event_id uuid [note: 'hold tied to a specific event, if applicable']
+  amount_minor bigint [not null]
+  currency char(3) [not null, default: 'NGN']
+  reason varchar
+  released_at timestamp [note: 'null while active']
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    organisation_id
+    event_id
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// MARKETING EMAIL CAMPAIGNS — PREMIUM  (PRD §3.7)
+// ---------------------------------------------------------------------
+
+Table email_campaigns {
+  id uuid [pk]
+  organisation_id uuid [not null]
+  subject varchar [not null]
+  body_html text
+  status campaign_status [not null, default: 'draft']
+
+  // Audience segmentation (by past event / category / location)
+  segment_event_id uuid [note: 'optional: customers of a specific event']
+  segment_category_id uuid
+  segment_city varchar
+
+  scheduled_at timestamp
+  sent_at timestamp
+  total_recipients int [not null, default: 0]
+  created_by uuid [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    organisation_id
+    status
+  }
+}
+
+Table campaign_recipients {
+  id uuid [pk]
+  campaign_id uuid [not null]
+  email varchar [not null]
+  user_id uuid [note: 'if the recipient is a registered user']
+  status recipient_status [not null, default: 'queued']
+  delivered_at timestamp
+  opened_at timestamp
+  clicked_at timestamp
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    campaign_id
+    email
+  }
+}
+
+// Platform-wide unsubscribe / suppression list (PRD §3.7 compliance)
+Table email_suppressions {
+  id uuid [pk]
+  email varchar [unique, not null]
+  organisation_id uuid [note: 'null = global suppression across all orgs']
+  reason varchar
+  created_at timestamp [not null, default: `now()`]
+}
+
+
+// ---------------------------------------------------------------------
+// WEB INTEGRATION — API & IFRAME EMBED  (PRD §3.11)
+// ---------------------------------------------------------------------
+
+// Per-organisation API keys for the public REST API
+Table api_keys {
+  id uuid [pk]
+  organisation_id uuid [not null]
+  key_prefix varchar [not null, note: 'visible prefix for identification']
+  key_hash varchar [not null, note: 'hashed secret']
+  label varchar
+  is_active boolean [not null, default: true]
+  last_used_at timestamp
+  created_at timestamp [not null, default: `now()`]
+  revoked_at timestamp
+
+  indexes {
+    organisation_id
+  }
+}
+
+// Domains allowed to embed the iframe checkout for an organisation
+Table embed_allowed_domains {
+  id uuid [pk]
+  organisation_id uuid [not null]
+  domain varchar [not null]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (organisation_id, domain) [unique]
+  }
+}
+
+// Outbound webhook subscriptions for order events (PRD §3.11)
+Table webhook_endpoints {
+  id uuid [pk]
+  organisation_id uuid [not null]
+  url varchar [not null]
+  signing_secret varchar [not null]
+  is_active boolean [not null, default: true]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    organisation_id
+  }
+}
+
+
+// ---------------------------------------------------------------------
+// AUDIT LOG  (PRD §4.3 — resends, role changes, withdrawals)
+// ---------------------------------------------------------------------
+
+Table audit_logs {
+  id uuid [pk]
+  organisation_id uuid
+  actor_user_id uuid
+  action varchar [not null, note: 'e.g. ticket.resend, member.role_change, withdrawal.request']
+  entity_type varchar
+  entity_id uuid
+  metadata json
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    organisation_id
+    actor_user_id
+    (entity_type, entity_id)
+  }
+}
+
+
+// =====================================================================
+// RELATIONSHIPS
+// =====================================================================
+
+// Identity / interests
+Ref: user_interests.user_id > users.id
+Ref: user_interests.category_id > event_categories.id
+Ref: event_follows.user_id > users.id
+Ref: event_follows.event_id > events.id
+
+// Organisations & members
+Ref: organisations.created_by > users.id
+Ref: organisation_members.organisation_id > organisations.id
+Ref: organisation_members.user_id > users.id
+Ref: organisation_members.invited_by > users.id
+
+// Events
+Ref: events.organisation_id > organisations.id
+Ref: events.category_id > event_categories.id
+Ref: events.created_by > users.id
+Ref: event_images.event_id > events.id
+Ref: ticket_types.event_id > events.id
+
+// Orders / tickets / delivery
+Ref: orders.event_id > events.id
+Ref: orders.buyer_user_id > users.id
+Ref: orders.promoter_link_id > promoter_links.id
+Ref: tickets.order_id > orders.id
+Ref: tickets.event_id > events.id
+Ref: tickets.ticket_type_id > ticket_types.id
+Ref: tickets.signing_key_id > event_signing_keys.id
+Ref: tickets.used_by_scan_id > ticket_scans.id
+Ref: ticket_deliveries.ticket_id > tickets.id
+Ref: ticket_deliveries.resent_by > users.id
+
+// Signing keys
+Ref: event_signing_keys.event_id > events.id
+
+// Scanning
+Ref: scanner_devices.user_id > users.id
+Ref: scanner_devices.organisation_id > organisations.id
+Ref: event_scanner_assignments.event_id > events.id
+Ref: event_scanner_assignments.scanner_device_id > scanner_devices.id
+Ref: event_scanner_assignments.assigned_by > users.id
+Ref: ticket_scans.ticket_id > tickets.id
+Ref: ticket_scans.event_id > events.id
+Ref: ticket_scans.scanner_device_id > scanner_devices.id
+Ref: ticket_scans.scanned_by > users.id
+
+// Promoters & commissions
+Ref: event_promoters.event_id > events.id
+Ref: event_promoters.user_id > users.id
+Ref: event_promoters.invited_by > users.id
+Ref: event_promoters.ticket_type_id > ticket_types.id
+Ref: promoter_links.event_promoter_id > event_promoters.id
+Ref: promoter_link_clicks.promoter_link_id > promoter_links.id
+Ref: commissions.event_promoter_id > event_promoters.id
+Ref: commissions.order_id > orders.id
+Ref: commissions.payout_transaction_id > transactions.id
+
+// Wallets, transactions, ledger, withdrawals
+Ref: wallets.organisation_id > organisations.id
+Ref: wallets.promoter_user_id > users.id
+Ref: transactions.order_id > orders.id
+Ref: transactions.wallet_id > wallets.id
+Ref: transactions.organisation_id > organisations.id
+Ref: transactions.withdrawal_id > withdrawals.id
+Ref: transactions.parent_transaction_id > transactions.id
+Ref: ledger_entries.transaction_id > transactions.id
+Ref: ledger_entries.wallet_id > wallets.id
+Ref: withdrawals.wallet_id > wallets.id
+Ref: withdrawals.organisation_id > organisations.id
+Ref: withdrawals.promoter_user_id > users.id
+Ref: withdrawals.requested_by > users.id
+Ref: payout_holds.organisation_id > organisations.id
+Ref: payout_holds.event_id > events.id
+
+// Marketing
+Ref: email_campaigns.organisation_id > organisations.id
+Ref: email_campaigns.segment_event_id > events.id
+Ref: email_campaigns.segment_category_id > event_categories.id
+Ref: email_campaigns.created_by > users.id
+Ref: campaign_recipients.campaign_id > email_campaigns.id
+Ref: campaign_recipients.user_id > users.id
+Ref: email_suppressions.organisation_id > organisations.id
+
+// Web integration
+Ref: api_keys.organisation_id > organisations.id
+Ref: embed_allowed_domains.organisation_id > organisations.id
+Ref: webhook_endpoints.organisation_id > organisations.id
+
+// Audit
+Ref: audit_logs.organisation_id > organisations.id
+Ref: audit_logs.actor_user_id > users.id
