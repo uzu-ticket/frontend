@@ -112,6 +112,12 @@ const headerConfig = computed(() => {
       subtitle: 'Manage all your events from one place.',
     }
   }
+  if (path.startsWith('/orders')) {
+    return {
+      title: 'Orders',
+      subtitle: 'View and engage all ticket orders.',
+    }
+  }
   if (path.startsWith('/organizations')) {
     return {
       title: 'My Organization',
