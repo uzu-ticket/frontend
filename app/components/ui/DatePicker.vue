@@ -22,7 +22,7 @@
       <div v-if="isOpen" class="calendar-dropdown">
         <!-- Month/Year Navigation -->
         <div class="cal-header">
-          <button class="cal-nav-btn" @click="prevMonth">
+          <button type="button" class="cal-nav-btn" @click="prevMonth">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="nav-icon">
               <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
             </svg>
@@ -30,7 +30,7 @@
 
           <span class="cal-month-year">{{ monthYear }}</span>
 
-          <button class="cal-nav-btn" @click="nextMonth">
+          <button type="button" class="cal-nav-btn" @click="nextMonth">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="nav-icon">
               <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
             </svg>
@@ -47,6 +47,7 @@
           <button
             v-for="(cell, idx) in calendarCells"
             :key="idx"
+            type="button"
             class="cal-day"
             :class="{
               'cal-day--empty': !cell.day,
@@ -63,8 +64,8 @@
 
         <!-- Footer: Today shortcut -->
         <div class="cal-footer">
-          <button class="btn-today" @click="selectToday">Today</button>
-          <button class="btn-clear" @click="clearDate">Clear</button>
+          <button type="button" class="btn-today" @click="selectToday">Today</button>
+          <button type="button" class="btn-clear" @click="clearDate">Clear</button>
         </div>
       </div>
     </Transition>

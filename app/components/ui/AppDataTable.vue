@@ -19,7 +19,13 @@
         <!-- Body -->
         <tbody>
           <template v-if="paginatedItems && paginatedItems.length > 0">
-            <tr v-for="(item, index) in paginatedItems" :key="item.id || index" class="table-tr">
+            <tr
+              v-for="(item, index) in paginatedItems"
+              :key="item.id || index"
+              class="table-tr"
+              :class="{ 'table-tr--clickable': clickableRows }"
+              @click="handleRowClick(item, index)"
+            >
               <td
                 v-for="col in columns"
                 :key="col.key"
@@ -108,11 +114,23 @@ const props = withDefaults(
     columns: TableColumn[]
     items: Record<string, any>[]
     pageSize?: number
+    clickableRows?: boolean
   }>(),
   {
     pageSize: 5,
+    clickableRows: false,
   }
 )
+
+const emit = defineEmits<{
+  'row-click': [item: Record<string, any>, index: number]
+}>()
+
+function handleRowClick(item: Record<string, any>, index: number) {
+  if (props.clickableRows) {
+    emit('row-click', item, index)
+  }
+}
 
 const currentPage = ref(1)
 
@@ -170,6 +188,10 @@ const showingTo = computed(() => {
 /* Rows & Cells */
 .table-tr {
   transition: background 0.15s ease;
+}
+
+.table-tr--clickable {
+  cursor: pointer;
 }
 
 .table-tr:hover {

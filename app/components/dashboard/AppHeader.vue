@@ -106,6 +106,12 @@ onUnmounted(() => {
 
 const headerConfig = computed(() => {
   const path = route.path
+  if (path.startsWith('/scanner')) {
+    return {
+      title: 'Ticket Scanner',
+      subtitle: 'Monitor scanners, devices, and real-time scan activity.',
+    }
+  }
   if (path.startsWith('/events')) {
     return {
       title: 'Events',

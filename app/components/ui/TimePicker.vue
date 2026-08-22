@@ -31,6 +31,7 @@
             <button
               v-for="h in hours"
               :key="h"
+              type="button"
               class="time-cell"
               :class="{ 'time-cell--selected': selectedHour === h }"
               @click="selectedHour = h"
@@ -43,6 +44,7 @@
             <button
               v-for="m in minutes"
               :key="m"
+              type="button"
               class="time-cell"
               :class="{ 'time-cell--selected': selectedMinute === m }"
               @click="selectedMinute = m"
@@ -53,6 +55,7 @@
 
           <div class="period-col">
             <button
+              type="button"
               class="period-btn"
               :class="{ 'period-btn--selected': period === 'AM' }"
               @click="period = 'AM'"
@@ -60,6 +63,7 @@
               AM
             </button>
             <button
+              type="button"
               class="period-btn"
               :class="{ 'period-btn--selected': period === 'PM' }"
               @click="period = 'PM'"
@@ -71,8 +75,8 @@
 
         <!-- Footer -->
         <div class="time-footer">
-          <button class="btn-clear-time" @click="clearTime">Clear</button>
-          <button class="btn-apply-time" @click="applyTime">Apply</button>
+          <button type="button" class="btn-clear-time" @click="clearTime">Clear</button>
+          <button type="button" class="btn-apply-time" @click="applyTime">Apply</button>
         </div>
       </div>
     </Transition>
