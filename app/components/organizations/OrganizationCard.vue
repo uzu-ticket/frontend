@@ -17,12 +17,12 @@
       </div>
     </div>
 
-    <!-- Member Avatars Stack -->
-    <div class="org-members-stack">
+    <!-- Member Avatars Stack (Only show if real memberAvatars provided) -->
+    <div v-if="memberAvatars && memberAvatars.length > 0" class="org-members-stack">
       <div v-for="(avatar, index) in memberAvatars" :key="index" class="avatar-pill">
         <img :src="avatar" alt="Member Avatar" class="avatar-img" />
       </div>
-      <div v-if="extraMembersCount > 0" class="extra-members-badge">
+      <div v-if="extraMembersCount && extraMembersCount > 0" class="extra-members-badge">
         +{{ extraMembersCount }}
       </div>
     </div>
@@ -31,11 +31,11 @@
     <div class="org-metrics">
       <div class="metric-item">
         <span class="metric-value">{{ eventsCount }}</span>
-        <span class="metric-label">Event</span>
+        <span class="metric-label">Event{{ eventsCount === 1 ? '' : 's' }}</span>
       </div>
       <div class="metric-item">
         <span class="metric-value">{{ membersCount }}</span>
-        <span class="metric-label">Members</span>
+        <span class="metric-label">Member{{ membersCount === 1 ? '' : 's' }}</span>
       </div>
     </div>
 
@@ -65,13 +65,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   role: 'Owner',
   badgeBg: '#0E2615',
-  memberAvatars: () => [
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',
-    'https://images.unsplash.com/photo-1517841052170-8d343b6f8539?auto=format&fit=crop&w=100&q=80',
-    'https://images.unsplash.com/photo-1507003211137-389274604336?auto=format&fit=crop&w=100&q=80',
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a3b6?auto=format&fit=crop&w=100&q=80',
-  ],
-  extraMembersCount: 5,
+  memberAvatars: () => [],
+  extraMembersCount: 0,
 })
 
 const router = useRouter()

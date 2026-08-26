@@ -4,6 +4,7 @@ export const useEvents = () => {
   const { instance } = useApi()
   const { activeOrgId } = useOrgState()
 
+  const events = useState<Event[]>('events:list', () => [])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -46,13 +47,15 @@ export const useEvents = () => {
     }
   }
 
-  const fetchEvents = async (): Promise<Event[]> => {
+  const fetchEvents = async (force = false): Promise<Event[]> => {
+    if (!force && events.value.length > 0) return events.value
     try {
       loading.value = true
       error.value = null
       const res = await instance.get<Event[]>(
         `/organisations/${activeOrgId.value}/events`,
       )
+      events.value = res.data
       return res.data
     } catch (e) {
       error.value = extractErrorMessage(e, 'Failed to load events')
@@ -81,7 +84,9 @@ export const useEvents = () => {
         `/organisations/${activeOrgId.value}/events`,
         dto,
       )
-      return res.data
+      const newEvent = res.data
+      events.value = [newEvent, ...events.value]
+      return newEvent
     } catch (e) {
       error.value = extractErrorMessage(e, 'Failed to create event')
       throw e
@@ -98,7 +103,14 @@ export const useEvents = () => {
         `/organisations/${activeOrgId.value}/events/${eventId}/publish`,
         {},
       )
-      return res.data
+      const updated = res.data
+      const idx = events.value.findIndex((e) => e.id === eventId)
+      if (idx !== -1) {
+        events.value[idx] = updated
+      } else {
+        events.value.push(updated)
+      }
+      return updated
     } catch (e) {
       error.value = extractErrorMessage(e, 'Failed to publish event')
       throw e
@@ -108,6 +120,7 @@ export const useEvents = () => {
   }
 
   return {
+    events,
     loading,
     error,
     fetchEvent,

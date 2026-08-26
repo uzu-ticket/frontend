@@ -63,6 +63,7 @@ function computeInitials(user: User | null): string {
 export const useAuth = () => {
   const router = useRouter()
   const { instance, setAuthToken } = useApi()
+  const orgState = useOrgState()
 
   const accessToken = useCookie<string | null>('auth-token', {
     default: () => null,
@@ -104,9 +105,10 @@ export const useAuth = () => {
     try {
       loading.value = true
       error.value = null
-      const res = await instance.get<User>('/users/me')
+      const { instance: api } = useApi()
+      const res = await api.get<User>('/users/me')
       user.value = res.data
-      await useOrgState().loadOrganizations()
+      await orgState.loadOrganizations()
       return res.data
     } catch (e) {
       error.value = extractErrorMessage(e, 'Failed to fetch user')
@@ -184,7 +186,7 @@ export const useAuth = () => {
       refreshTokenCookie.value = null
       setAuthToken(null)
       user.value = null
-      useOrgState().clearActiveOrg()
+      orgState.clearActiveOrg()
       await router.push('/auth/signin')
     }
   }

@@ -8,12 +8,13 @@
     </div>
 
     <!-- Active Organization Switcher -->
-    <div v-if="hasActiveOrg" class="sidebar-org-switcher">
-      <div class="org-selector-pill" @click="toggleOrgDropdown">
+    <div class="sidebar-org-switcher">
+      <span class="org-section-title">ORGANIZATION</span>
+      <div class="org-selector-pill" @click.stop="toggleOrgDropdown">
         <div class="org-badge-dark">
-          {{ activeOrgInitials }}
+          {{ activeOrgInitials || 'U' }}
         </div>
-        <span class="org-name-text">{{ activeOrgName }}</span>
+        <span class="org-name-text">{{ activeOrgName || 'Select organization' }}</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="org-chevron" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>
@@ -25,6 +26,11 @@
           v-if="isOrgDropdownOpen"
           class="org-switcher-dropdown"
         >
+          <button class="org-switcher-item org-switcher-new-btn" @click.stop="createNewOrg">
+            <div class="org-badge-sm org-badge--plus">+</div>
+            <span class="org-switcher-name">+ Create New</span>
+          </button>
+
           <button
             v-for="org in organizations"
             :key="org.id"
@@ -79,8 +85,6 @@
 
       <!-- 2. ORGANIZATION MODE -->
       <div v-else class="nav-section">
-        <span class="section-title">ORGANIZATION</span>
-
         <!-- Full Organization Navigation List -->
         <nav class="nav-list org-nav-list">
           <NuxtLink to="/overview" class="nav-item" :class="{ 'nav-item--active': $route.path === '/overview' || $route.path === '/' }">
@@ -219,9 +223,13 @@ const {
   setActiveOrg,
 } = useOrgState()
 
+const router = useRouter()
+
 const isOrgDropdownOpen = ref(false)
 
-loadOrganizations()
+onMounted(() => {
+  loadOrganizations()
+})
 
 function toggleOrgDropdown() {
   isOrgDropdownOpen.value = !isOrgDropdownOpen.value
@@ -234,24 +242,33 @@ function closeOrgDropdown() {
 function switchOrg(org: { id: string; name: string; initials: string }) {
   setActiveOrg({ id: org.id, name: org.name, initials: org.initials })
   closeOrgDropdown()
+  if (router.currentRoute.value.path !== '/overview') {
+    router.push('/overview')
+  } else {
+    window.location.reload()
+  }
+}
+
+function createNewOrg() {
+  closeOrgDropdown()
+  router.push('/organizations/new')
 }
 
 function handleLogout() {
   emit('open-signout')
 }
 
-onMounted(() => {
-  const onDocClick = (e: MouseEvent) => {
-    if (!isOrgDropdownOpen.value) return
-    const target = e.target as HTMLElement | null
-    if (!target) return
-    if (!target.closest('.org-switcher-dropdown') && !target.closest('.org-selector-pill')) {
-      isOrgDropdownOpen.value = false
-    }
+function onDocClick(e: MouseEvent) {
+  if (!isOrgDropdownOpen.value) return
+  const target = e.target as HTMLElement | null
+  if (!target) return
+  if (!target.closest('.org-switcher-dropdown') && !target.closest('.org-selector-pill')) {
+    isOrgDropdownOpen.value = false
   }
-  window.addEventListener('click', onDocClick)
-  onUnmounted(() => window.removeEventListener('click', onDocClick))
-})
+}
+
+onMounted(() => window.addEventListener('click', onDocClick))
+onUnmounted(() => window.removeEventListener('click', onDocClick))
 </script>
 
 <style scoped>
@@ -271,7 +288,7 @@ onMounted(() => {
 
 /* Logo */
 .sidebar-logo {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.15rem;
   padding-left: 0.35rem;
 }
 .logo-link {
@@ -308,6 +325,26 @@ onMounted(() => {
   padding-left: 0.5rem;
 }
 
+/* Active Organization Switcher */
+.sidebar-org-switcher {
+  position: relative;
+  padding: 0.85rem 0.35rem;
+  margin-bottom: 1rem;
+  border-top: 1px solid #eef2ee;
+  border-bottom: 1px solid #eef2ee;
+  z-index: 50;
+}
+
+.org-section-title {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #9ca3af;
+  letter-spacing: 0.08em;
+  padding-left: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
 /* Organization Selector Pill */
 .org-selector-pill {
   display: flex;
@@ -317,7 +354,7 @@ onMounted(() => {
   padding: 0.5rem 0.75rem;
   border-radius: 9999px;
   cursor: pointer;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
   user-select: none;
   position: relative;
   transition: background 0.15s ease;
@@ -338,11 +375,6 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-.sidebar-org-switcher {
-  padding: 0 0.35rem 0.25rem;
-  margin-bottom: 0.5rem;
 }
 
 .org-name-text {
@@ -375,16 +407,17 @@ onMounted(() => {
 .org-switcher-dropdown {
   position: absolute;
   top: 100%;
-  right: 0;
+  left: 0.35rem;
+  right: 0.35rem;
   z-index: 100;
   margin-top: 0.4rem;
-  min-width: 200px;
-  max-width: calc(100% - 1rem);
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   padding: 0.5rem 0;
+  max-height: 280px;
+  overflow-y: auto;
 }
 .org-switcher-item {
   display: flex;
@@ -403,6 +436,17 @@ onMounted(() => {
 }
 .org-switcher-item:hover {
   background: #f4fbf4;
+}
+.org-switcher-new-btn {
+  font-weight: 700;
+  color: #3FD246;
+}
+.org-switcher-new-btn:hover {
+  background: #f0fdf4;
+}
+.org-badge--plus {
+  background: #3FD246;
+  font-size: 1.05rem;
 }
 .org-switcher-item--active {
   background: #ecfdf5;

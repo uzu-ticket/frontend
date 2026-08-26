@@ -96,11 +96,29 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="customer in paginatedCustomers"
-              :key="customer.id"
-              class="table-row"
-            >
+            <!-- Skeleton Rows -->
+            <template v-if="isLoading">
+              <tr v-for="i in 5" :key="i" class="table-row">
+                <td class="col-customer">
+                  <div class="customer-cell">
+                    <AppSkeleton variant="circle" width="36px" height="36px" />
+                    <AppSkeleton variant="text" width="110px" />
+                  </div>
+                </td>
+                <td class="col-email"><AppSkeleton variant="text" width="140px" /></td>
+                <td class="col-phone"><AppSkeleton variant="text" width="100px" /></td>
+                <td class="col-orders"><AppSkeleton variant="text" width="30px" /></td>
+                <td class="col-status"><AppSkeleton variant="text" width="60px" border-radius="999px" /></td>
+                <td class="col-actions"><AppSkeleton variant="circle" width="24px" height="24px" /></td>
+              </tr>
+            </template>
+
+            <template v-else>
+              <tr
+                v-for="customer in paginatedCustomers"
+                :key="customer.id"
+                class="table-row"
+              >
               <!-- Customer -->
               <td class="col-customer">
                 <div class="customer-cell">
@@ -160,6 +178,7 @@
                 </div>
               </td>
             </tr>
+            </template>
 
             <!-- Empty state -->
             <tr v-if="filteredCustomers.length === 0">
@@ -210,7 +229,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import AppSkeleton from '~/components/ui/AppSkeleton.vue'
 import type { Customer } from '~/types/customers'
+
+const isLoading = ref(false)
 
 definePageMeta({
   layout: 'dashboard',

@@ -1,27 +1,28 @@
-import axios, { type AxiosInstance, type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
-
-let sharedInstance: AxiosInstance | null = null
+import axios, { type AxiosInstance } from 'axios'
 
 export const useApi = () => {
   const config = useRuntimeConfig()
+  const tokenCookie = useCookie<string | null>('auth-token')
 
-  if (!sharedInstance) {
-    sharedInstance = axios.create({
-      baseURL: config.public.apiBase,
-      withCredentials: true,
-    })
+  const instance: AxiosInstance = axios.create({
+    baseURL: config.public.apiBase,
+    withCredentials: true,
+  })
+
+  if (tokenCookie.value) {
+    instance.defaults.headers.common['Authorization'] = `Bearer ${tokenCookie.value}`
   }
 
   const setAuthToken = (token: string | null) => {
     if (token) {
-      sharedInstance!.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      instance.defaults.headers.common['Authorization'] = `Bearer ${token}`
     } else {
-      delete sharedInstance!.defaults.headers.common['Authorization']
+      delete instance.defaults.headers.common['Authorization']
     }
   }
 
   return {
-    instance: sharedInstance!,
+    instance,
     setAuthToken,
     apiBase: config.public.apiBase,
   }

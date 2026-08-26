@@ -47,7 +47,7 @@ const submitError = ref('')
 const orgUrl = ref('')
 
 const orgData = ref<Record<string, unknown>>({})
-const { setActiveOrg } = useOrgState()
+const { setActiveOrg, loadOrganizations } = useOrgState()
 const { instance } = useApi()
 const toast = useToast()
 
@@ -121,6 +121,7 @@ async function handleStep4(data: unknown) {
       })
     }
 
+    await loadOrganizations(true)
     setActiveOrg({ id: orgId, name: step1?.name ?? '' })
     orgUrl.value = step1?.slug
       ? `https://${step1.slug}.uzuticet.com`

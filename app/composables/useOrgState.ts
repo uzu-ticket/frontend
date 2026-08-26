@@ -11,6 +11,17 @@ export interface Organization {
   badgeBg: string
 }
 
+export interface PendingInvite {
+  id: string
+  organisationId: string
+  orgName: string
+  invitedBy: string
+  role: string
+  initials: string
+  badgeBg: string
+  badgeColor: string
+}
+
 interface ActiveOrg {
   id: string
   name: string
@@ -94,12 +105,19 @@ export function useOrgState() {
   const activeOrgInitials = computed(() => activeOrgCookie.value?.initials ?? '')
 
   const organizations = useState<Organization[]>('organizations:list', () => [])
+  const pendingInvitations = useState<PendingInvite[]>('organizations:pending-invites', () => [])
 
   function setActiveOrg(org: { id?: string; name: string; initials?: string }) {
+    const newId = org.id ?? ''
+    const changed = activeOrgCookie.value?.id !== newId
     activeOrgCookie.value = {
-      id: org.id ?? '',
+      id: newId,
       name: org.name,
       initials: org.initials ?? initialsFromName(org.name),
+    }
+    if (changed) {
+      const eventsState = useState('events:list')
+      eventsState.value = []
     }
   }
 
@@ -108,10 +126,14 @@ export function useOrgState() {
   }
 
   function syncActiveOrg() {
-    if (hasActiveOrg.value && !organizations.value.some((o) => o.id === activeOrgId.value)) {
-      clearActiveOrg()
-    }
-    if (!hasActiveOrg.value && organizations.value.length > 0) {
+    if (organizations.value.length === 0) return
+
+    const currentId = activeOrgId.value
+    const found = organizations.value.find((o) => o.id === currentId)
+
+    if (found) {
+      setActiveOrg({ id: found.id, name: found.name, initials: found.initials })
+    } else {
       const first = organizations.value[0]
       setActiveOrg({ id: first.id, name: first.name, initials: first.initials })
     }
@@ -127,8 +149,9 @@ export function useOrgState() {
     try {
       const { instance } = useApi()
       const res = await instance.get('/organisations/mine')
-      const raw = res.data as ApiOrg[]
-      organizations.value = Array.isArray(raw) ? raw.map(mapOrg) : []
+      const rawData = res.data?.data ?? res.data
+      const raw = Array.isArray(rawData) ? rawData : []
+      organizations.value = raw.map(mapOrg)
     } catch (e) {
       orgsError.value = extractOrgError(e)
     } finally {
@@ -138,16 +161,114 @@ export function useOrgState() {
     return organizations.value
   }
 
+  async function loadPendingInvitations() {
+    try {
+      const { instance } = useApi()
+      const res = await instance.get('/organisations/invitations/mine')
+      const rawData = res.data?.data ?? res.data
+      pendingInvitations.value = Array.isArray(rawData) ? rawData : []
+    } catch (e) {
+      console.error('Failed to fetch pending invitations:', e)
+    }
+    return pendingInvitations.value
+  }
+
+  async function acceptInvitation(organisationId: string, memberId: string) {
+    try {
+      const { instance } = useApi()
+      await instance.post(`/organisations/${organisationId}/members/${memberId}/accept`)
+      await Promise.all([loadOrganizations(true), loadPendingInvitations()])
+    } catch (e) {
+      console.error('Failed to accept invitation:', e)
+      throw e
+    }
+  }
+
+  async function declineInvitation(organisationId: string, memberId: string) {
+    try {
+      const { instance } = useApi()
+      await instance.post(`/organisations/${organisationId}/members/${memberId}/decline`)
+      pendingInvitations.value = pendingInvitations.value.filter((inv) => inv.id !== memberId)
+    } catch (e) {
+      console.error('Failed to decline invitation:', e)
+      throw e
+    }
+  }
+
+  async function fetchMembers(organisationId: string) {
+    try {
+      const { instance } = useApi()
+      const res = await instance.get(`/organisations/${organisationId}/members`)
+      return res.data?.data ?? res.data
+    } catch (e) {
+      console.error('Failed to fetch members:', e)
+      throw e
+    }
+  }
+
+  async function inviteMember(organisationId: string, payload: { email: string; role: string }) {
+    try {
+      const { instance } = useApi()
+      const res = await instance.post(`/organisations/${organisationId}/members`, payload)
+      return res.data?.data ?? res.data
+    } catch (e) {
+      console.error('Failed to invite member:', e)
+      throw e
+    }
+  }
+
+  async function revokeMember(organisationId: string, memberId: string) {
+    try {
+      const { instance } = useApi()
+      await instance.post(`/organisations/${organisationId}/members/${memberId}/revoke`)
+    } catch (e) {
+      console.error('Failed to revoke member:', e)
+      throw e
+    }
+  }
+
+  async function resendInvite(organisationId: string, memberId: string) {
+    try {
+      const { instance } = useApi()
+      await instance.post(`/organisations/${organisationId}/members/${memberId}/resend`)
+    } catch (e) {
+      console.error('Failed to resend invite:', e)
+      throw e
+    }
+  }
+
+  async function searchUsers(query: string) {
+    if (!query || !query.trim()) return []
+    try {
+      const { instance } = useApi()
+      const res = await instance.get('/users/search', { params: { q: query } })
+      return res.data?.data ?? res.data ?? []
+    } catch (e) {
+      console.error('Failed to search users:', e)
+      return []
+    }
+  }
+
   return {
     hasActiveOrg,
     activeOrgId,
     activeOrgName,
     activeOrgInitials,
     organizations,
+    pendingInvitations,
     orgsLoading,
     orgsError,
     loadOrganizations,
+    loadPendingInvitations,
+    acceptInvitation,
+    declineInvitation,
+    fetchMembers,
+    inviteMember,
+    revokeMember,
+    resendInvite,
+    searchUsers,
     setActiveOrg,
     clearActiveOrg,
   }
 }
+

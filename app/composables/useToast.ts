@@ -24,9 +24,30 @@ export function useToast() {
     toasts.value = toasts.value.filter((t) => t.id !== id)
   }
 
+  function success(title: string, message?: string) {
+    show({ title, message, type: 'success' })
+  }
+
+  function error(title: string, message?: string) {
+    show({ title, message, type: 'error' })
+  }
+
+  function info(title: string, message?: string) {
+    show({ title, message, type: 'info' })
+  }
+
+  function warning(title: string, message?: string) {
+    show({ title, message, type: 'warning' })
+  }
+
   return {
     toasts,
     show,
     remove,
+    success,
+    error,
+    info,
+    warning,
   }
 }
+

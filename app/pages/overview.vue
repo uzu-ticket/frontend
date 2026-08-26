@@ -15,7 +15,13 @@
     <!-- 2. ACTIVE ORGANIZATION DATA STATE -->
     <template v-else>
       <!-- Top 4 Stat Cards Grid -->
-      <OverviewMetrics />
+      <OverviewMetrics
+        :loading="isOrgDashboardLoading"
+        :total-events="totalEventsCount"
+        :tickets-sold="3672"
+        :total-revenue="5742200"
+        :wallet-balance="1245600"
+      />
 
       <!-- Middle 2-Column Row: Sales Summary Chart & Upcoming Events -->
       <div class="data-grid-row margin-bottom-row">
@@ -41,6 +47,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, onMounted } from 'vue'
 import OverviewHero from '~/components/dashboard/OverviewHero.vue'
 import OverviewCapabilities from '~/components/dashboard/OverviewCapabilities.vue'
 import OverviewChecklist from '~/components/dashboard/OverviewChecklist.vue'
@@ -52,18 +59,48 @@ import OverviewRecentOrders from '~/components/dashboard/OverviewRecentOrders.vu
 import OverviewActivityFeed from '~/components/dashboard/OverviewActivityFeed.vue'
 
 import { useOrgState } from '~/composables/useOrgState'
+import { useEvents } from '~/composables/useEvents'
 
 definePageMeta({
   layout: 'dashboard',
 })
-
-const { hasActiveOrg } = useOrgState()
 
 useHead({
   title: 'Overview — Uzu Ticket',
   meta: [
     { name: 'description', content: 'Manage your organization activity and track key metrics.' },
   ],
+})
+
+const { hasActiveOrg, activeOrgId } = useOrgState()
+const { fetchEvents } = useEvents()
+
+const isOrgDashboardLoading = ref(false)
+const totalEventsCount = ref(0)
+
+async function loadDashboardData() {
+  if (!activeOrgId.value) return
+  isOrgDashboardLoading.value = true
+  try {
+    const eventsList = await fetchEvents(true)
+    totalEventsCount.value = eventsList.length
+  } catch (e) {
+    console.error('Failed to load dashboard data:', e)
+  } finally {
+    isOrgDashboardLoading.value = false
+  }
+}
+
+onMounted(() => {
+  if (hasActiveOrg.value) {
+    loadDashboardData()
+  }
+})
+
+watch(activeOrgId, (newId) => {
+  if (newId) {
+    loadDashboardData()
+  }
 })
 </script>
 

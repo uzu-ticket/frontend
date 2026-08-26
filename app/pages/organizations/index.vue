@@ -1,8 +1,30 @@
 <template>
   <div class="orgs-page">
-    <!-- Loading -->
-    <div v-if="orgsLoading" class="loading-state">
-      <p class="loading-text">Loading your organizations...</p>
+    <!-- SKELETON LOADING STATE -->
+    <div v-if="orgsLoading" class="orgs-card-wrapper">
+      <div class="orgs-section-header">
+        <AppSkeleton variant="title" width="180px" />
+        <AppSkeleton variant="text" width="110px" height="36px" border-radius="0.6rem" />
+      </div>
+      <div class="search-box">
+        <AppSkeleton variant="text" width="100%" height="40px" border-radius="9999px" />
+      </div>
+      <div class="orgs-grid">
+        <div v-for="i in 3" :key="i" class="skeleton-card-box">
+          <div class="skeleton-header">
+            <AppSkeleton variant="circle" width="40px" height="40px" />
+            <div class="skeleton-header-info">
+              <AppSkeleton variant="title" width="75%" height="1rem" />
+              <AppSkeleton variant="text" width="45%" height="0.75rem" />
+            </div>
+          </div>
+          <div class="skeleton-metrics">
+            <AppSkeleton variant="text" width="40%" height="1.2rem" />
+            <AppSkeleton variant="text" width="40%" height="1.2rem" />
+          </div>
+          <AppSkeleton variant="text" width="100%" height="38px" border-radius="0.6rem" />
+        </div>
+      </div>
     </div>
 
     <!-- Error -->
@@ -13,11 +35,19 @@
 
     <!-- DATA STATE -->
     <div v-else-if="viewMode === 'data'" class="orgs-data-container">
-      <div class="orgs-card-wrapper">
-        <!-- Section Header -->
-        <h2 class="section-title">View all organizations</h2>
+        <div class="orgs-card-wrapper">
+          <!-- Section Header + Create action -->
+          <div class="orgs-section-header">
+            <h2 class="section-title">View all organizations</h2>
+            <button class="btn-create-org" @click="handleCreateOrg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="btn-create-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+              </svg>
+              <span>+ Create New</span>
+            </button>
+          </div>
 
-        <!-- Search Bar -->
+          <!-- Search Bar -->
         <div class="search-box">
           <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -50,7 +80,7 @@
         </div>
 
         <!-- Pending Invitations Section -->
-        <div class="pending-section">
+        <div v-if="pendingInvitations.length > 0" class="pending-section">
           <div class="pending-header">
             <h3 class="pending-title">Pending Invitations</h3>
             <p class="pending-subtitle">You have been invited to join the following organizations</p>
@@ -67,8 +97,8 @@
               :initials="inv.initials"
               :badge-bg="inv.badgeBg"
               :badge-color="inv.badgeColor"
-              @accept="handleAcceptInvitation(inv.id)"
-              @decline="handleDeclineInvitation(inv.id)"
+              @accept="handleAcceptInvitation(inv)"
+              @decline="handleDeclineInvitation(inv)"
             />
           </div>
         </div>
@@ -85,11 +115,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import OrganizationCard from '~/components/organizations/OrganizationCard.vue'
 import PendingInvitationCard from '~/components/organizations/PendingInvitationCard.vue'
 import OrgEmptyState from '~/components/organizations/OrgEmptyState.vue'
-import { useOrgState } from '~/composables/useOrgState'
+import AppSkeleton from '~/components/ui/AppSkeleton.vue'
+import { useOrgState, type PendingInvite } from '~/composables/useOrgState'
 
 definePageMeta({
   layout: 'dashboard',
@@ -105,9 +136,21 @@ useHead({
 const router = useRouter()
 const searchQuery = ref('')
 
-const { organizations, orgsLoading, orgsError, loadOrganizations } = useOrgState()
+const {
+  organizations,
+  pendingInvitations,
+  orgsLoading,
+  orgsError,
+  loadOrganizations,
+  loadPendingInvitations,
+  acceptInvitation,
+  declineInvitation,
+} = useOrgState()
 
-await loadOrganizations()
+onMounted(() => {
+  loadOrganizations()
+  loadPendingInvitations()
+})
 
 const filteredOrganizations = computed(() => {
   if (!searchQuery.value.trim()) return organizations.value
@@ -117,36 +160,26 @@ const filteredOrganizations = computed(() => {
 
 const viewMode = computed<'data' | 'empty'>(() => (organizations.value.length > 0 ? 'data' : 'empty'))
 
-const pendingInvitations = ref([
-  {
-    id: 101,
-    orgName: 'Worship Kitchen',
-    invitedBy: 'Esther Thoman',
-    role: 'Admin',
-    initials: 'WC',
-    badgeBg: '#fce7f3',
-    badgeColor: '#db2777',
-  },
-])
-
 function retryLoad() {
   loadOrganizations(true)
+  loadPendingInvitations()
 }
 
 function handleCreateOrg() {
   router.push('/organizations/new')
 }
 
-function handleAcceptInvitation(id: number) {
-  pendingInvitations.value = pendingInvitations.value.filter((inv) => inv.id !== id)
+async function handleAcceptInvitation(inv: PendingInvite) {
+  await acceptInvitation(inv.organisationId, inv.id)
 }
 
-function handleDeclineInvitation(id: number) {
-  pendingInvitations.value = pendingInvitations.value.filter((inv) => inv.id !== id)
+async function handleDeclineInvitation(inv: PendingInvite) {
+  await declineInvitation(inv.organisationId, inv.id)
 }
 
 function handleAcceptInvitedOrg() {
   loadOrganizations(true)
+  loadPendingInvitations()
 }
 </script>
 
@@ -187,12 +220,40 @@ function handleAcceptInvitedOrg() {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
 }
 
+.orgs-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
 .section-title {
   font-size: 1rem;
   font-weight: 800;
   color: #0E2615;
-  margin: 0 0 1.25rem;
+  margin: 0;
   letter-spacing: -0.01em;
+}
+.btn-create-org {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #3FD246;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-create-org:hover {
+  background: #36bd3d;
+  box-shadow: 0 4px 12px rgba(63, 210, 70, 0.25);
+}
+.btn-create-icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 /* Search Box */
@@ -294,6 +355,36 @@ function handleAcceptInvitedOrg() {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.skeleton-card-box {
+  background: #ffffff;
+  border-radius: 1rem;
+  border: 1px solid #eef2ee;
+  padding: 1.35rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.skeleton-header-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.skeleton-metrics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
 }
 
 @media (max-width: 1024px) {
