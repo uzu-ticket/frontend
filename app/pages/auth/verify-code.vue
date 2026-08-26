@@ -57,6 +57,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useAuth } from '~/composables/useAuth'
+import { useToast } from '~/composables/useToast'
 
 useHead({
   title: 'Enter Verification Code — Uzu Ticket',
@@ -65,11 +67,18 @@ useHead({
   ],
 })
 
+definePageMeta({
+  layout: 'auth',
+})
+
+const auth = useAuth()
 const router = useRouter()
 const route  = useRoute()
+const toast = useToast()
 
 const phoneNumber = computed(() => (route.query.phone as string) || '+2346165924531')
-const code = ref('')
+const devCode = computed(() => (route.query.devCode as string) || '')
+const code = ref(devCode.value)
 const error = ref('')
 const timerSeconds = ref(165) // 02:45
 const cooldown = ref(0)
@@ -81,12 +90,29 @@ const formattedTimer = computed(() => {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 })
 
-function handleCodeComplete(val: string) {
-  if (val === '123456') {
-    error.value = ''
-    router.push('/auth/reset-password')
-  } else {
-    error.value = 'Invalid code. Use 123456 to test.'
+async function handleCodeComplete(val: string) {
+  error.value = ''
+  try {
+    toast.show({
+      title: 'Code Verified',
+      message: 'Redirecting to reset your password...',
+      type: 'success',
+    })
+    await router.push({
+      path: '/auth/reset-password',
+      query: {
+        channel: 'phone',
+        contact: phoneNumber.value,
+        code: val,
+      },
+    })
+  } catch {
+    error.value = auth.error.value || 'The verification code you entered is incorrect.'
+    toast.show({
+      title: 'Verification Failed',
+      message: error.value,
+      type: 'error',
+    })
   }
 }
 
@@ -98,6 +124,17 @@ function handleResend() {
     cooldown.value--
     if (cooldown.value <= 0) clearInterval(cdInterval)
   }, 1000)
+  auth.forgotPassword(phoneNumber.value, 'phone').then((res) => {
+    if (res?.devToken && res.devToken.length === 6) {
+      code.value = res.devToken
+    }
+  }).catch(() => {
+    toast.show({
+      title: 'Failed to Resend Code',
+      message: auth.error.value || 'Could not resend the verification code. Please try again.',
+      type: 'error',
+    })
+  })
 }
 
 onMounted(() => {
@@ -108,6 +145,9 @@ onMounted(() => {
       clearInterval(timerInterval)
     }
   }, 1000)
+  if (devCode.value && devCode.value.length === 6) {
+    handleCodeComplete(devCode.value)
+  }
 })
 
 onUnmounted(() => {

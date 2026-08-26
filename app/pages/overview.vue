@@ -1,27 +1,6 @@
 <template>
   <div class="overview-page">
-    <!-- State Toggle Bar for Demo Switcher -->
-    <div class="view-toggle-bar">
-      <span class="toggle-label">Preview Mode:</span>
-      <div class="toggle-pills">
-        <button
-          class="toggle-pill"
-          :class="{ 'toggle-pill--active': !hasActiveOrg }"
-          @click="hasActiveOrg = false"
-        >
-          Getting Started State
-        </button>
-        <button
-          class="toggle-pill"
-          :class="{ 'toggle-pill--active': hasActiveOrg }"
-          @click="hasActiveOrg = true"
-        >
-          Active Org Data State
-        </button>
-      </div>
-    </div>
-
-    <!-- 1. GETTING STARTED STATE (EMPTY ORG) -->
+    <!-- 1. GETTING STARTED STATE (EMPTY / NO ACTIVE ORG) -->
     <template v-if="!hasActiveOrg">
       <!-- Top Hero Banner -->
       <OverviewHero />
@@ -93,49 +72,6 @@ useHead({
   max-width: 1200px;
   margin: 0 auto;
 }
-
-/* View State Switcher */
-.view-toggle-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-
-.toggle-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.toggle-pills {
-  display: flex;
-  background: #e5e7eb;
-  padding: 0.2rem;
-  border-radius: 9999px;
-  gap: 0.2rem;
-}
-
-.toggle-pill {
-  padding: 0.35rem 0.875rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #4b5563;
-  background: transparent;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.toggle-pill--active {
-  background: #ffffff;
-  color: #0E2615;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-/* Empty Getting Started Grid */
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

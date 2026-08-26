@@ -56,7 +56,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAuth } from '~/composables/useAuth'
+import { useToast } from '~/composables/useToast'
 
 useHead({
   title: 'Reset via Phone — Uzu Ticket',
@@ -65,21 +67,46 @@ useHead({
   ],
 })
 
-const router = useRouter()
-const phone = ref('')
-const error = ref('')
-const loading = ref(false)
+definePageMeta({
+  layout: 'auth',
+})
 
-async function handleSubmit() {
-  if (!phone.value || phone.value.trim().length < 7) {
-    error.value = 'Please enter a valid phone number.'
-    return
+const auth = useAuth()
+const router = useRouter()
+const toast = useToast()
+  const phone = ref('')
+  const error = ref('')
+  const loading = computed(() => auth.loading.value)
+  const devCode = ref('')
+
+  async function handleSubmit() {
+    if (!phone.value || phone.value.trim().length < 7) {
+      error.value = 'Please enter a valid phone number.'
+      return
+    }
+    error.value = ''
+    try {
+      const res = await auth.forgotPassword(phone.value, 'phone')
+      if (res?.devToken) devCode.value = res.devToken
+      toast.show({
+        title: 'Verification Code Sent',
+        message: `A 6-digit code has been sent to ${phone.value}.`,
+        type: 'success',
+      })
+      router.push({
+        path: '/auth/verify-code',
+        query: {
+          phone: phone.value,
+          ...(devCode.value ? { devCode: devCode.value } : {}),
+        },
+      })
+  } catch {
+    toast.show({
+      title: 'Failed to Send Code',
+      message: auth.error.value || 'Could not send the verification code. Please try again.',
+      type: 'error',
+    })
   }
-  error.value = ''
-  loading.value = true
-  await new Promise(r => setTimeout(r, 800))
-  loading.value = false
-  router.push(`/auth/verify-code?phone=${encodeURIComponent(phone.value)}`)
 }
 </script>
 

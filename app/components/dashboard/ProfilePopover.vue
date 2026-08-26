@@ -1,13 +1,13 @@
 <template>
   <div class="profile-popover" @click.stop>
-    <!-- User Profile Header -->
+     <!-- User Profile Header -->
     <div class="user-header">
       <div class="avatar-large">
-        <div class="avatar-fallback">DE</div>
+        <div class="avatar-fallback">{{ userInitials }}</div>
       </div>
       <div class="user-details">
-        <h3 class="user-fullname">Divine Emmanuel</h3>
-        <span class="user-role">Super Admin</span>
+        <h3 class="user-fullname">{{ displayName }}</h3>
+        <span v-if="user?.email" class="user-role">{{ user.email }}</span>
       </div>
     </div>
 
@@ -82,6 +82,10 @@
 </template>
 
 <script setup lang="ts">
+import { useAuth } from '~/composables/useAuth'
+
+const { user, displayName, userInitials } = useAuth()
+
 defineEmits<{
   close: []
 }>()

@@ -124,6 +124,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from '~/composables/useToast'
 
 definePageMeta({
   layout: 'dashboard',
@@ -135,6 +136,7 @@ useHead({
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
 
 const eventId = computed(() => (route.params.id as string) || '1')
 
@@ -152,7 +154,11 @@ const scannerStatuses = ref([
 ])
 
 function handleSync() {
-  alert('Sync initiated successfully!')
+  toast.show({
+    title: 'Sync Initiated',
+    message: 'Offline scan data is being synchronized with the server',
+    type: 'success',
+  })
 }
 </script>
 

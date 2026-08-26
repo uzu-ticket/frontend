@@ -7,6 +7,46 @@
       </NuxtLink>
     </div>
 
+    <!-- Active Organization Switcher -->
+    <div v-if="hasActiveOrg" class="sidebar-org-switcher">
+      <div class="org-selector-pill" @click="toggleOrgDropdown">
+        <div class="org-badge-dark">
+          {{ activeOrgInitials }}
+        </div>
+        <span class="org-name-text">{{ activeOrgName }}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="org-chevron" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </div>
+
+      <!-- Organization Switcher Dropdown -->
+      <Transition name="org-dropdown">
+        <div
+          v-if="isOrgDropdownOpen"
+          class="org-switcher-dropdown"
+        >
+          <button
+            v-for="org in organizations"
+            :key="org.id"
+            class="org-switcher-item"
+            :class="{ 'org-switcher-item--active': org.id === activeOrgId }"
+            @click.stop="switchOrg(org)"
+          >
+            <div class="org-badge-sm" :style="{ backgroundColor: org.badgeBg }">{{ org.initials }}</div>
+            <span class="org-switcher-name">{{ org.name }}</span>
+            <span class="org-switcher-role">{{ org.role }}</span>
+          </button>
+          <NuxtLink
+            to="/organizations"
+            class="org-switcher-manage"
+            @click.stop="closeOrgDropdown"
+          >
+            Manage organizations
+          </NuxtLink>
+        </div>
+      </Transition>
+    </div>
+
     <!-- Navigation Stack -->
     <div class="sidebar-nav-container">
       <!-- 1. PERSONAL MODE -->
@@ -40,17 +80,6 @@
       <!-- 2. ORGANIZATION MODE -->
       <div v-else class="nav-section">
         <span class="section-title">ORGANIZATION</span>
-
-        <!-- Active Organization Pill Dropdown -->
-        <div class="org-selector-pill" @click="isOrgDropdownOpen = !isOrgDropdownOpen">
-          <div class="org-badge-dark">
-            {{ activeOrgInitials }}
-          </div>
-          <span class="org-name-text">{{ activeOrgName }}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="org-chevron" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </div>
 
         <!-- Full Organization Navigation List -->
         <nav class="nav-list org-nav-list">
@@ -173,19 +202,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useOrgState } from '~/composables/useOrgState'
 
 const emit = defineEmits<{
   'open-signout': []
 }>()
 
-const { hasActiveOrg, activeOrgName, activeOrgInitials } = useOrgState()
+const {
+  hasActiveOrg,
+  activeOrgId,
+  activeOrgName,
+  activeOrgInitials,
+  organizations,
+  loadOrganizations,
+  setActiveOrg,
+} = useOrgState()
+
 const isOrgDropdownOpen = ref(false)
+
+loadOrganizations()
+
+function toggleOrgDropdown() {
+  isOrgDropdownOpen.value = !isOrgDropdownOpen.value
+}
+
+function closeOrgDropdown() {
+  isOrgDropdownOpen.value = false
+}
+
+function switchOrg(org: { id: string; name: string; initials: string }) {
+  setActiveOrg({ id: org.id, name: org.name, initials: org.initials })
+  closeOrgDropdown()
+}
 
 function handleLogout() {
   emit('open-signout')
 }
+
+onMounted(() => {
+  const onDocClick = (e: MouseEvent) => {
+    if (!isOrgDropdownOpen.value) return
+    const target = e.target as HTMLElement | null
+    if (!target) return
+    if (!target.closest('.org-switcher-dropdown') && !target.closest('.org-selector-pill')) {
+      isOrgDropdownOpen.value = false
+    }
+  }
+  window.addEventListener('click', onDocClick)
+  onUnmounted(() => window.removeEventListener('click', onDocClick))
+})
 </script>
 
 <style scoped>
@@ -253,6 +319,7 @@ function handleLogout() {
   cursor: pointer;
   margin-bottom: 0.5rem;
   user-select: none;
+  position: relative;
   transition: background 0.15s ease;
 }
 .org-selector-pill:hover {
@@ -273,6 +340,11 @@ function handleLogout() {
   flex-shrink: 0;
 }
 
+.sidebar-org-switcher {
+  padding: 0 0.35rem 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
 .org-name-text {
   flex: 1;
   font-size: 0.85rem;
@@ -288,6 +360,92 @@ function handleLogout() {
   height: 1rem;
   color: #0E2615;
   flex-shrink: 0;
+}
+
+/* Organization Switcher Dropdown */
+:deep(.org-dropdown-enter-active),
+:deep(.org-dropdown-leave-active) {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+:deep(.org-dropdown-enter-from),
+:deep(.org-dropdown-leave-to) {
+  opacity: 0;
+  transform: scaleY(0.95);
+}
+.org-switcher-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  margin-top: 0.4rem;
+  min-width: 200px;
+  max-width: calc(100% - 1rem);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  padding: 0.5rem 0;
+}
+.org-switcher-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.85rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.825rem;
+  color: #1f2937;
+  border-radius: 0;
+  transition: background 0.15s ease;
+}
+.org-switcher-item:hover {
+  background: #f4fbf4;
+}
+.org-switcher-item--active {
+  background: #ecfdf5;
+  color: #0E2615;
+}
+.org-switcher-item--active .org-switcher-name {
+  font-weight: 800;
+}
+.org-badge-sm {
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.4rem;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.725rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.org-switcher-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.org-switcher-role {
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+.org-switcher-manage {
+  display: block;
+  padding: 0.5rem 0.85rem;
+  margin-top: 0.25rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #3FD246;
+  text-decoration: none;
+  text-align: center;
+  border-top: 1px solid #f3f4f6;
+}
+.org-switcher-manage:hover {
+  background: #f4fbf4;
 }
 
 .nav-list {

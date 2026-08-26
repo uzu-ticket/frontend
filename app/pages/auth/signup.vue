@@ -81,7 +81,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, computed } from 'vue'
+import { useAuth } from '~/composables/useAuth'
+import { useToast } from '~/composables/useToast'
 
 useHead({
   title: 'Create Account — Uzu Ticket',
@@ -90,7 +92,15 @@ useHead({
   ],
 })
 
-const loading = ref(false)
+definePageMeta({
+  layout: 'auth',
+})
+
+const auth = useAuth()
+const router = useRouter()
+const toast = useToast()
+
+const loading = computed(() => auth.loading.value)
 
 const form = reactive({
   fullName: '',
@@ -116,10 +126,21 @@ function validate() {
 
 async function handleSubmit() {
   if (!validate()) return
-  loading.value = true
-  // TODO: wire up API
-  await new Promise(r => setTimeout(r, 1500))
-  loading.value = false
+  try {
+    await auth.register(form.email, form.password, form.fullName, form.phone)
+    toast.show({
+      title: 'Account Created',
+      message: 'Your account has been created successfully. Redirecting to your dashboard.',
+      type: 'success',
+    })
+    await router.push('/overview')
+  } catch {
+    toast.show({
+      title: 'Sign Up Failed',
+      message: auth.error.value || 'Unable to create your account. Please try again.',
+      type: 'error',
+    })
+  }
 }
 </script>
 

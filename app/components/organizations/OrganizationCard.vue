@@ -1,5 +1,5 @@
 <template>
-  <div class="org-card">
+  <div class="org-card" :class="{ 'org-card--active': isActive }">
     <!-- Top Header: Initials Badge + Name & Role -->
     <div class="org-card-header">
       <div class="org-badge" :style="{ backgroundColor: badgeBg }">
@@ -8,6 +8,12 @@
       <div class="org-info">
         <h3 class="org-name">{{ name }}</h3>
         <span class="org-role">{{ role }}</span>
+      </div>
+      <div v-if="isActive" class="active-indicator">
+        <svg xmlns="http://www.w3.org/2000/svg" class="active-check" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+        <span class="active-label">Active</span>
       </div>
     </div>
 
@@ -41,6 +47,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useOrgState } from '~/composables/useOrgState'
+
 interface Props {
   id?: string | number
   name: string
@@ -58,21 +67,23 @@ const props = withDefaults(defineProps<Props>(), {
   badgeBg: '#0E2615',
   memberAvatars: () => [
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',
-    'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=100&q=80',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80',
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80',
+    'https://images.unsplash.com/photo-1517841052170-8d343b6f8539?auto=format&fit=crop&w=100&q=80',
+    'https://images.unsplash.com/photo-1507003211137-389274604336?auto=format&fit=crop&w=100&q=80',
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a3b6?auto=format&fit=crop&w=100&q=80',
   ],
   extraMembersCount: 5,
 })
 
 const router = useRouter()
+const { setActiveOrg, activeOrgId } = useOrgState()
+
+const isActive = computed(() => String(props.id) === activeOrgId.value)
 
 function handleOpenDashboard() {
   if (props.id) {
-    router.push(`/organizations/${props.id}`)
-  } else {
-    router.push('/overview')
+    setActiveOrg({ id: String(props.id), name: props.name, initials: props.initials })
   }
+  router.push('/overview')
 }
 </script>
 
@@ -132,6 +143,29 @@ function handleOpenDashboard() {
 .org-role {
   font-size: 0.8rem;
   color: #6b7280;
+}
+
+/* Active Organization Highlight */
+.org-card--active {
+  border-color: #3FD246;
+  box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.25), 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+.active-indicator {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #3FD246;
+  background: #ecfdf5;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+}
+.active-check {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: #3FD246;
 }
 
 /* Members Stack */

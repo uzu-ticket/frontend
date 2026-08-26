@@ -11,10 +11,29 @@
         </NuxtLink>
       </div>
 
-      <!-- Top Hero Section (2-Column Layout) -->
-      <div class="hero-section">
-        <!-- Left: Cover Banner -->
-        <div class="banner-wrapper">
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-state">
+        <div class="spinner" />
+        <p class="loading-text">Loading event details...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="!event" class="error-state">
+        <p class="error-text">{{ error || 'Event not found' }}</p>
+        <NuxtLink to="/events" class="btn-back-link">
+          <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+          </svg>
+          <span>Back to events</span>
+        </NuxtLink>
+      </div>
+
+      <!-- Event Content -->
+      <template v-else>
+        <!-- Top Hero Section (2-Column Layout) -->
+        <div class="hero-section">
+          <!-- Left: Cover Banner -->
+          <div class="banner-wrapper">
           <div class="banner-placeholder">
             <svg xmlns="http://www.w3.org/2000/svg" class="banner-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -25,27 +44,27 @@
         <!-- Right: Event Info Stack -->
         <div class="info-stack">
           <div class="title-header-row">
-            <h1 class="detail-event-title">The Startup Growth Summit</h1>
-            <span class="status-badge">Published</span>
+            <h1 class="detail-event-title">{{ eventName }}</h1>
+            <span class="status-badge">{{ statusLabel }}</span>
           </div>
 
-          <p class="event-description">
-            A one day gathering of top innovators, leaders and career experts, to talk about the futurue of finance
-          </p>
+            <p class="event-description">
+              {{ eventDescription }}
+            </p>
 
           <div class="meta-list">
             <div class="meta-item">
               <svg xmlns="http://www.w3.org/2000/svg" class="meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span>Saturday, August 24</span>
+               <span>{{ formattedStartDate }}</span>
             </div>
 
             <div class="meta-item">
               <svg xmlns="http://www.w3.org/2000/svg" class="meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>9:00 AM - 2:00 PM</span>
+               <span>{{ formattedTimeRange }}</span>
             </div>
 
             <div class="meta-item">
@@ -53,7 +72,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span>Victoria Island, Lagos</span>
+               <span>{{ eventVenue }}</span>
             </div>
           </div>
 
@@ -87,15 +106,15 @@
             <div class="kv-stack">
               <div class="kv-row">
                 <span class="kv-key">Category</span>
-                <span class="kv-val">Technology</span>
+                <span class="kv-val">{{ eventCategory }}</span>
               </div>
               <div class="kv-row">
                 <span class="kv-key">Event Type</span>
-                <span class="kv-val">Conference</span>
+                <span class="kv-val">{{ eventStatus.charAt(0).toUpperCase() + eventStatus.slice(1) }}</span>
               </div>
               <div class="kv-row">
                 <span class="kv-key">Visibility</span>
-                <span class="kv-val">Public</span>
+                <span class="kv-val">{{ eventVisibility.charAt(0).toUpperCase() + eventVisibility.slice(1) }}</span>
               </div>
               <div class="kv-row">
                 <span class="kv-key">Time Zone</span>
@@ -108,13 +127,13 @@
           <div class="detail-card">
             <h3 class="card-subheading">Schedule</h3>
             <div class="kv-stack">
-              <div class="kv-row">
+               <div class="kv-row">
                 <span class="kv-key">Start Date & Time</span>
-                <span class="kv-val">Aug 24, 2026 10:00 AM</span>
+                <span class="kv-val">{{ eventDate ? eventDate.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—' }}</span>
               </div>
               <div class="kv-row">
                 <span class="kv-key">End Date & Time</span>
-                <span class="kv-val">Aug 24, 2026 3:00 PM</span>
+                <span class="kv-val">{{ eventEndDate ? eventEndDate.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—' }}</span>
               </div>
               <div class="kv-row">
                 <span class="kv-key">Doors Open</span>
@@ -159,34 +178,102 @@
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
+</div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useEvents } from '~/composables/useEvents'
+import { useToast } from '~/composables/useToast'
+import type { Event } from '~/types/event'
 
 definePageMeta({
   layout: 'dashboard',
 })
 
 const router = useRouter()
+const route = useRoute()
+const { fetchEvent, loading, error } = useEvents()
+const toast = useToast()
+
+const eventId = computed(() => route.params.id as string)
+const event = ref<Event | null>(null)
 const copied = ref(false)
+
+onMounted(async () => {
+  try {
+    event.value = await fetchEvent(eventId.value)
+  } catch {
+    toast.show({
+      title: 'Failed to Load Event',
+      message: error.value || 'Could not load the event details. Please try again.',
+      type: 'error',
+    })
+  }
+})
+
+const eventName = computed(() => event.value?.title || 'Event')
+const eventDescription = computed(() => event.value?.description || '')
+const eventCategory = computed(() => event.value?.category?.name || '—')
+const eventVisibility = computed(() => event.value?.visibility || 'public')
+const eventStatus = computed(() => event.value?.status || 'draft')
+const eventDate = computed(() => event.value ? new Date(event.value.startsAt) : null)
+const eventEndDate = computed(() => event.value?.endsAt ? new Date(event.value.endsAt) : null)
+const eventVenue = computed(() => event.value?.venueName || event.value?.city || '—')
+
+const formattedStartDate = computed(() => {
+  if (!eventDate.value) return '—'
+  return eventDate.value.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
+})
+
+const formattedTimeRange = computed(() => {
+  if (!eventDate.value) return '—'
+  const start = eventDate.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  const end = eventEndDate.value
+    ? eventEndDate.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    : ''
+  return end ? `${start} - ${end}` : start
+})
+
+const statusLabel = computed(() => {
+  const statusMap: Record<string, string> = {
+    draft: 'Draft',
+    pending_kyb: 'Pending KYB',
+    published: 'Published',
+    sales_closed: 'Sales Closed',
+    live: 'Live',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+  }
+  return statusMap[eventStatus.value] || eventStatus.value
+})
 
 async function shareEvent() {
   try {
-    await navigator.clipboard.writeText('https://uzuticket.com/events/startup-growth-summit-2026')
+    await navigator.clipboard.writeText(`https://uzuticket.com/events/${eventId.value}`)
     copied.value = true
     setTimeout(() => { copied.value = false }, 2000)
   } catch {}
 }
 
 function triggerUpload() {
-  alert('Upload media dialog triggered')
+  toast.show({
+    title: 'Upload Media',
+    message: 'Upload media dialog is not yet available',
+    type: 'info',
+  })
 }
 
 useHead({
-  title: 'The Startup Growth Summit — Uzu Ticket',
+  title: computed(() => `${eventName.value} — Uzu Ticket`),
 })
 </script>
 
@@ -201,6 +288,47 @@ useHead({
   border: 1px solid #eef2ee;
   padding: 2rem 2.25rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  min-height: 500px;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3FD246;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-left: 1rem;
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.error-text {
+  font-size: 0.95rem;
+  color: #ef4444;
 }
 
 .back-row {

@@ -88,6 +88,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useAuth } from '~/composables/useAuth'
+import { useToast } from '~/composables/useToast'
 
 useHead({
   title: 'Create New Password — Uzu Ticket',
@@ -96,14 +98,29 @@ useHead({
   ],
 })
 
+definePageMeta({
+  layout: 'auth',
+})
+
+const auth = useAuth()
 const router = useRouter()
+const route = useRoute()
+const toast = useToast()
+
 const password = ref('')
 const confirmPassword = ref('')
 const passwordError = ref('')
 const confirmError = ref('')
-const loading = ref(false)
+const loading = computed(() => auth.loading.value)
 
-// Validation criteria
+const channel = computed(() => {
+  if (route.query.email) return 'email'
+  if (route.query.phone) return 'phone'
+  return (route.query.channel as 'email' | 'phone') || 'email'
+})
+const contact = computed(() => (route.query.email as string) || (route.query.contact as string) || '')
+const tokenOrCode = computed(() => (route.query.token as string) || (route.query.code as string) || '')
+
 const hasMinLength = computed(() => password.value.length >= 8)
 const hasNumberOrSymbol = computed(() => /[\d\W]/.test(password.value))
 const hasUpperAndLower = computed(() => /[a-z]/.test(password.value) && /[A-Z]/.test(password.value))
@@ -127,13 +144,26 @@ function validate() {
 
 async function handleSubmit() {
   if (!validate()) return
+  if (!contact.value || !tokenOrCode.value) {
+    passwordError.value = 'Missing reset token or code. Please restart the flow.'
+    return
+  }
 
-  loading.value = true
-  await new Promise(r => setTimeout(r, 1200))
-  loading.value = false
-
-  // Redirect to reset-success screen
-  router.push('/auth/reset-success')
+  try {
+    await auth.resetPassword(contact.value, channel.value, tokenOrCode.value, password.value)
+    toast.show({
+      title: 'Password Reset',
+      message: 'Your password has been reset successfully.',
+      type: 'success',
+    })
+    await router.push('/auth/reset-success')
+  } catch {
+    toast.show({
+      title: 'Password Reset Failed',
+      message: auth.error.value || 'Unable to reset your password. Please try again.',
+      type: 'error',
+    })
+  }
 }
 </script>
 

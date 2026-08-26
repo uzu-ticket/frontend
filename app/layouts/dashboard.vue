@@ -12,7 +12,10 @@
     </div>
 
     <!-- Sign Out Confirmation Modal -->
-    <SignOutModal v-model="showSignOutModal" />
+    <SignOutModal v-model="showSignOutModal" @confirm="handleSignOut" />
+
+    <!-- Toast Container (global) -->
+    <AppToastContainer />
   </div>
 </template>
 
@@ -21,11 +24,19 @@ import { ref, computed } from 'vue'
 import AppSidebar from '~/components/dashboard/AppSidebar.vue'
 import AppHeader from '~/components/dashboard/AppHeader.vue'
 import SignOutModal from '~/components/dashboard/SignOutModal.vue'
+import AppToastContainer from '~/components/ui/AppToastContainer.vue'
+import { useAuth } from '~/composables/useAuth'
 
 const showSignOutModal = ref(false)
 const hideSidebarState = useState<boolean>('hide-app-sidebar', () => false)
 
 const hideSidebar = computed(() => hideSidebarState.value)
+
+const { logout } = useAuth()
+
+function handleSignOut() {
+  logout()
+}
 </script>
 
 <style scoped>

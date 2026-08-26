@@ -41,11 +41,11 @@
       <div class="popover-wrapper">
         <div class="user-profile" @click.stop="toggleProfile">
           <div class="avatar-wrapper">
-            <div class="avatar-fallback">DE</div>
+            <div class="avatar-fallback">{{ userInitials }}</div>
           </div>
           <div class="user-info">
-            <span class="user-name">Divine Emmanuel</span>
-            <span class="user-email">favour009@gmail.com</span>
+            <span class="user-name">{{ displayName }}</span>
+            <span v-if="user?.email" class="user-email">{{ user.email }}</span>
           </div>
           <svg xmlns="http://www.w3.org/2000/svg" class="chevron-icon" :class="{ 'chevron-icon--open': isProfileOpen }" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -66,6 +66,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import NotificationPopover from '~/components/dashboard/NotificationPopover.vue'
 import ProfilePopover from '~/components/dashboard/ProfilePopover.vue'
+import { useAuth } from '~/composables/useAuth'
 
 const emit = defineEmits<{
   'open-signout': []
@@ -73,6 +74,8 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const route = useRoute()
+
+const { user, displayName, userInitials } = useAuth()
 
 const isNotificationOpen = ref(false)
 const isProfileOpen = ref(false)
@@ -134,6 +137,12 @@ const headerConfig = computed(() => {
     return {
       title: 'Help Center',
       subtitle: 'Find answers, guides and support for Uzuticket.',
+    }
+  }
+  if (path.startsWith('/customers')) {
+    return {
+      title: 'Customers',
+      subtitle: 'Manage buyers and their ticket activity across your events.',
     }
   }
   // Default Overview

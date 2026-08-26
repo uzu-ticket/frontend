@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import EventVerticalStepper from '~/components/events/EventVerticalStepper.vue'
 import CreateEventStep1 from '~/components/events/CreateEventStep1.vue'
 import CreateEventStep2 from '~/components/events/CreateEventStep2.vue'
@@ -63,25 +63,34 @@ import CreateEventStep3 from '~/components/events/CreateEventStep3.vue'
 import CreateEventStep4 from '~/components/events/CreateEventStep4.vue'
 import CreateEventStep5 from '~/components/events/CreateEventStep5.vue'
 import EventSuccessCard from '~/components/events/EventSuccessCard.vue'
+import { useEvents } from '~/composables/useEvents'
+import { useToast } from '~/composables/useToast'
+import type { Event, CreateEventDto, EventCategory } from '~/types/event'
 
 definePageMeta({
   layout: 'dashboard',
 })
 
 const router = useRouter()
+const toast = useToast()
+const { fetchCategories, createEvent, publishEvent, error } = useEvents()
+
 const currentStep = ref(1)
 const isLive = ref(false)
 const eventData = ref<Record<string, unknown>>({})
+const createdEventId = ref<string | null>(null)
+const categories = ref<EventCategory[]>([])
+const isSubmitting = ref(false)
 
 const hideSidebarState = useState<boolean>('hide-app-sidebar', () => false)
 
-// Hide AppSidebar during steps 1-5; show it when event goes live
 function updateSidebarVisibility() {
   hideSidebarState.value = !isLive.value
 }
 
-onMounted(() => {
+onMounted(async () => {
   updateSidebarVisibility()
+  categories.value = await fetchCategories()
 })
 
 watch(isLive, () => {
@@ -115,12 +124,102 @@ function handleStep4Next(data: unknown) {
   currentStep.value = 5
 }
 
-function handleSaveDraft() {
-  router.push('/events')
+function resolveCategoryId(categoryName: string): string | undefined {
+  return categories.value.find(c => c.name === categoryName)?.id
 }
 
-function handlePublish() {
-  isLive.value = true
+function buildCreateDto(): CreateEventDto {
+  const s1 = eventData.value.step1 as Record<string, unknown>
+  const s2 = eventData.value.step2 as Record<string, unknown>
+  const s4 = eventData.value.step4 as Record<string, unknown>
+
+  const startsAtDate = new Date(s2.startDate as string)
+  startsAtDate.setHours(
+    parseInt((s2.startTime as string).split(':')[0]) || 0,
+    parseInt((s2.startTime as string).split(':')[1]) || 0,
+  )
+
+  let endsAt: string | undefined
+  if (s2.endDate) {
+    const endsAtDate = new Date(s2.endDate as string)
+    endsAtDate.setHours(
+      parseInt((s2.endTime as string).split(':')[0]) || 0,
+      parseInt((s2.endTime as string).split(':')[1]) || 0,
+    )
+    endsAt = endsAtDate.toISOString()
+  }
+
+  return {
+    title: s1.eventName as string,
+    description: s1.description as string,
+    categoryId: resolveCategoryId(s1.category as string),
+    visibility: s1.visibility as Event['visibility'],
+    venueName: s2.venueName as string,
+    venueAddress: s2.address as string,
+    city: s2.city as string,
+    startsAt: startsAtDate.toISOString(),
+    endsAt,
+    salesCloseAt: computeSalesCloseAt(startsAtDate, s4),
+  }
+}
+
+function computeSalesCloseAt(startsAt: Date, s4: Record<string, unknown>): string {
+  const closeOption = (s4.salesClose as string) || '1h'
+  let hoursBefore = 1
+  if (closeOption === '3h') hoursBefore = 3
+  else if (closeOption === '6h') hoursBefore = 6
+  else if (closeOption === 'custom' && s4.customCloseDate && s4.customCloseTime) {
+    return new Date(s4.customCloseDate as string).toISOString().split('T')[0] + 'T' + s4.customCloseTime
+  }
+
+  const salesCloseAt = new Date(startsAt.getTime() - hoursBefore * 60 * 60 * 1000)
+  return salesCloseAt.toISOString()
+}
+
+async function handleSaveDraft() {
+  isSubmitting.value = true
+  try {
+    const dto = buildCreateDto()
+    await createEvent(dto)
+    toast.show({
+      title: 'Draft Saved',
+      message: 'Your event draft has been saved successfully.',
+      type: 'success',
+    })
+    router.push('/events')
+  } catch {
+    toast.show({
+      title: 'Failed to Save Draft',
+      message: error.value || 'Could not save the event draft. Please try again.',
+      type: 'error',
+    })
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+async function handlePublish() {
+  isSubmitting.value = true
+  try {
+    const dto = buildCreateDto()
+    const created = await createEvent(dto)
+    createdEventId.value = created.id
+    await publishEvent(created.id)
+    isLive.value = true
+    toast.show({
+      title: 'Event Published!',
+      message: `${created.title} is now live and accepting tickets.`,
+      type: 'success',
+    })
+  } catch {
+    toast.show({
+      title: 'Failed to Publish',
+      message: error.value || 'Could not publish the event. Please try again.',
+      type: 'error',
+    })
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 useHead({

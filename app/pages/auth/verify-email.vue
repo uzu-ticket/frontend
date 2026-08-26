@@ -36,6 +36,19 @@
         <!-- Actions -->
         <div class="ve-actions">
           <AppButton
+            v-if="token"
+            id="btn-verify"
+            type="button"
+            variant="primary"
+            size="lg"
+            block
+            :loading="auth.loading.value"
+            @click="verifyEmail"
+          >
+            Verify Email
+          </AppButton>
+          <AppButton
+            v-else
             id="btn-open-gmail"
             type="button"
             variant="primary"
@@ -111,7 +124,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, watch } from 'vue'
+import { useAuth } from '~/composables/useAuth'
+import { useToast } from '~/composables/useToast'
 
 useHead({
   title: 'Verify Email — Uzu Ticket',
@@ -120,16 +135,19 @@ useHead({
   ],
 })
 
+definePageMeta({
+  layout: 'auth',
+})
+
+const auth = useAuth()
 const router = useRouter()
-const route  = useRoute()
+const route = useRoute()
+const toast = useToast()
 
-// Email passed as query param from signup, fallback to placeholder
 const email = computed(() => (route.query.email as string) || 'you@example.com')
+const token = computed(() => (route.query.token as string) || '')
 
-// Modal state
 const showVerifiedModal = ref(false)
-
-// Resend cooldown
 const resendCooldown = ref(0)
 let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -137,17 +155,44 @@ function openGmail() {
   window.open('https://mail.google.com', '_blank', 'noopener')
 }
 
-function handleResend() {
+async function handleResend() {
   if (resendCooldown.value > 0) return
-  // TODO: call API resend endpoint
-  resendCooldown.value = 60
-  cooldownTimer = setInterval(() => {
-    resendCooldown.value--
-    if (resendCooldown.value <= 0 && cooldownTimer) {
-      clearInterval(cooldownTimer)
-      cooldownTimer = null
-    }
-  }, 1000)
+  try {
+    await auth.requestEmailVerification(email.value)
+    toast.show({
+      title: 'Verification Email Sent',
+      message: `A new verification link has been sent to ${email.value}.`,
+      type: 'success',
+    })
+    resendCooldown.value = 60
+    cooldownTimer = setInterval(() => {
+      resendCooldown.value--
+      if (resendCooldown.value <= 0 && cooldownTimer) {
+        clearInterval(cooldownTimer)
+        cooldownTimer = null
+      }
+    }, 1000)
+  } catch {
+    toast.show({
+      title: 'Failed to Resend',
+      message: auth.error.value || 'Could not resend the verification email. Please try again.',
+      type: 'error',
+    })
+  }
+}
+
+async function verifyEmail() {
+  if (!token.value) return
+  try {
+    await auth.verifyEmail(email.value, token.value)
+    showVerifiedModal.value = true
+  } catch {
+    toast.show({
+      title: 'Email Verification Failed',
+      message: auth.error.value || 'The verification link is invalid or has expired.',
+      type: 'error',
+    })
+  }
 }
 
 function goToLogin() {
@@ -158,11 +203,13 @@ onUnmounted(() => {
   if (cooldownTimer) clearInterval(cooldownTimer)
 })
 
-// ── Dev helper: expose so you can call showVerifiedModal = true from devtools ──
-// In production, trigger this after polling confirms email verified
+watch(() => token.value, (newToken) => {
+  if (newToken) {
+    verifyEmail()
+  }
+})
+
 if (import.meta.dev) {
-  // Auto-open after 3 s in dev so you can see the modal immediately
-  // Remove this block before going to production
   setTimeout(() => { showVerifiedModal.value = false }, 0)
 }
 </script>

@@ -1,40 +1,18 @@
 <template>
   <div class="events-page">
-    <!-- View Switcher for Demo Preview -->
-    <div class="view-toggle-bar">
-      <span class="toggle-label">Preview Mode:</span>
-      <div class="toggle-pills">
-        <button
-          class="toggle-pill"
-          :class="{ 'toggle-pill--active': currentView === 'empty' }"
-          @click="currentView = 'empty'"
-        >
-          Empty State
-        </button>
-        <button
-          class="toggle-pill"
-          :class="{ 'toggle-pill--active': currentView === 'table' }"
-          @click="currentView = 'table'"
-        >
-          Custom Table View
-        </button>
-        <button
-          class="toggle-pill"
-          :class="{ 'toggle-pill--active': currentView === 'grid' }"
-          @click="currentView = 'grid'"
-        >
-          Grid View (Scroll Right)
-        </button>
-      </div>
-    </div>
-
-    <!-- 1. EMPTY STATE -->
+    <!-- Empty State -->
     <EventEmptyState
-      v-if="currentView === 'empty'"
+      v-if="!loading && apiEvents.length === 0"
       @create="router.push('/events/create')"
     />
 
-    <!-- 2. TABLE / GRID CONTAINER -->
+    <!-- Loading State -->
+    <div v-else-if="loading" class="events-loading">
+      <div class="spinner" />
+      <p class="loading-text">Loading events...</p>
+    </div>
+
+    <!-- Table / Grid -->
     <div v-else class="events-main-card">
       <!-- Tabs Filter Bar -->
       <div class="tabs-header">
@@ -43,7 +21,7 @@
           :class="{ 'tab-btn--active': activeTab === 'all' }"
           @click="activeTab = 'all'"
         >
-          All Events (24)
+           All Events ({{ tableEvents.length }})
         </button>
         <button
           class="tab-btn"
@@ -102,54 +80,58 @@
         </div>
       </div>
 
-      <!-- A. CUSTOM REUSABLE TABLE VIEW -->
-      <template v-if="currentView === 'table'">
-        <AppDataTable :columns="tableColumns" :items="filteredTableEvents" :page-size="5">
-          <!-- Custom Cell: EVENT -->
-          <template #cell-event="{ item }">
-            <div class="event-cell" @click="router.push(`/events/${item.id}`)">
-              <div class="event-thumb-box" :style="{ background: item.bgGradient }">
-                <svg xmlns="http://www.w3.org/2000/svg" class="thumb-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                </svg>
-              </div>
-              <div class="event-title-stack">
-                <h4 class="table-event-name">{{ item.title }}</h4>
-                <span class="table-event-category">{{ item.category }}</span>
-              </div>
+      <!-- Custom Reusable Table View -->
+      <AppDataTable :columns="tableColumns" :items="filteredTableEvents" :page-size="5">
+        <!-- Custom Cell: EVENT -->
+        <template #cell-event="{ item }">
+          <div class="event-cell" @click="router.push(`/events/${item.id}`)">
+            <div class="event-thumb-box" :style="{ background: item.bgGradient }">
+              <svg xmlns="http://www.w3.org/2000/svg" class="thumb-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+              </svg>
             </div>
-          </template>
-
-          <!-- Custom Cell: DATE & TIME -->
-          <template #cell-dateTime="{ item }">
-            <div class="date-cell">
-              <span class="date-val">{{ item.date }}</span>
-              <span class="time-val">{{ item.time }}</span>
+            <div class="event-title-stack">
+              <h4 class="table-event-name">{{ item.title }}</h4>
+              <span class="table-event-category">{{ item.category }}</span>
             </div>
-          </template>
+          </div>
+        </template>
 
-          <!-- Custom Cell: VENUE -->
-          <template #cell-venue="{ item }">
-            <div class="venue-cell">
-              <span class="venue-name">{{ item.venue }}</span>
-              <span class="venue-location">{{ item.location }}</span>
-            </div>
-          </template>
+        <!-- Custom Cell: DATE & TIME -->
+        <template #cell-dateTime="{ item }">
+          <div class="date-cell">
+            <span class="date-val">{{ item.date }}</span>
+            <span class="time-val">{{ item.time }}</span>
+          </div>
+        </template>
 
-          <!-- Custom Cell: REVENUE -->
-          <template #cell-revenue="{ item }">
-            <span class="revenue-val">₦{{ item.revenue }}</span>
-          </template>
+        <!-- Custom Cell: VENUE -->
+        <template #cell-venue="{ item }">
+          <div class="venue-cell">
+            <span class="venue-name">{{ item.venue }}</span>
+            <span class="venue-location">{{ item.location }}</span>
+          </div>
+        </template>
 
-          <!-- Custom Cell: STATUS -->
-          <template #cell-status="{ item }">
-            <span
-              class="status-pill"
-              :class="item.status === 'Published' ? 'status-pill--published' : 'status-pill--draft'"
-            >
-              {{ item.status }}
-            </span>
-          </template>
+        <!-- Custom Cell: TICKETS SOLD -->
+        <template #cell-ticketsSold="{ item }">
+          <span class="tickets-val">{{ item.ticketsSold }}</span>
+        </template>
+
+        <!-- Custom Cell: REVENUE -->
+        <template #cell-revenue="{ item }">
+          <span class="revenue-val">{{ item.revenue }}</span>
+        </template>
+
+        <!-- Custom Cell: STATUS -->
+        <template #cell-status="{ item }">
+          <span
+            class="status-pill"
+            :class="item.status === 'Published' ? 'status-pill--published' : 'status-pill--draft'"
+          >
+            {{ item.status }}
+          </span>
+        </template>
 
           <!-- Custom Cell: ACTION (3-Dots Menu) -->
           <template #cell-action="{ item }">
@@ -203,39 +185,93 @@
             </div>
           </template>
         </AppDataTable>
-      </template>
-
-      <!-- B. HORIZONTAL SCROLL GRID VIEW -->
-      <template v-else>
-        <div class="events-grid">
-          <EventCard
-            v-for="event in filteredGridEvents"
-            :key="event.id"
-            :event="event"
-            @action="handleCardAction"
-            @click="router.push(`/events/${event.id}`)"
-          />
-        </div>
-      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import EventEmptyState from '~/components/events/EventEmptyState.vue'
-import EventCard, { type EventItem } from '~/components/events/EventCard.vue'
+import { type EventItem } from '~/components/events/EventCard.vue'
 import AppDataTable, { type TableColumn } from '~/components/ui/AppDataTable.vue'
+import { useEvents } from '~/composables/useEvents'
+import { useToast } from '~/composables/useToast'
+import type { Event } from '~/types/event'
 
 definePageMeta({
   layout: 'dashboard',
 })
 
 const router = useRouter()
-const currentView = ref<'table' | 'grid' | 'empty'>('table')
+const toast = useToast()
+const { fetchEvents, loading, error } = useEvents()
+
+const apiEvents = ref<Event[]>([])
 const activeTab = ref<'all' | 'published' | 'draft'>('all')
 const searchQuery = ref('')
-const openMenuId = ref<number | null>(null)
+const openMenuId = ref<string | null>(null)
+
+onMounted(async () => {
+  try {
+    apiEvents.value = await fetchEvents()
+  } catch {
+    toast.show({
+      title: 'Failed to Load Events',
+      message: error.value || 'Could not load your events. Please try again.',
+      type: 'error',
+    })
+  }
+})
+
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
+function formatPrice(minor: string, currency = 'NGN'): string {
+  const major = Number(minor) / 100
+  if (major === 0) return 'Free'
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(major)
+}
+
+function getGradient(category?: string): string {
+  const gradients: Record<string, string> = {
+    Technology: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+    Business: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    Music: 'linear-gradient(135deg, #ef4444 0%, #ec4899 100%)',
+    Education: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+    Finance: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    Design: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
+  }
+  return gradients[category || ''] || 'linear-gradient(135deg, #3FD246 0%, #22c55e 100%)'
+}
+
+const tableEvents = computed(() => {
+  return apiEvents.value.map((e): EventItem => ({
+    id: e.id,
+    title: e.title,
+    location: e.venueName || e.city || '—',
+    date: formatDate(e.startsAt),
+    status: e.status === 'Published' ? 'Published' : 'Sales closed',
+    ticketsSold: e.ticketTypes.reduce((sum, tt) => sum + tt.quantitySold, 0),
+    revenue: formatPrice(e.ticketTypes.reduce((sum, tt) => sum + Number(tt.priceMinor) * tt.quantitySold, 0).toString(), e.ticketTypes[0]?.currency || 'NGN'),
+    coverImage: e.images.find(img => img.isCover)?.url || e.images[0]?.url,
+    bgGradient: getGradient(e.category?.name),
+  }))
+})
+
+const publishedCount = computed(() => tableEvents.value.filter(e => e.status === 'Published').length)
+const draftCount = computed(() => tableEvents.value.filter(e => e.status === 'Sales closed').length)
 
 function closeAllMenus() {
   openMenuId.value = null
@@ -244,12 +280,6 @@ function closeAllMenus() {
 onMounted(() => {
   if (import.meta.client) {
     window.addEventListener('click', closeAllMenus)
-  }
-})
-
-onUnmounted(() => {
-  if (import.meta.client) {
-    window.removeEventListener('click', closeAllMenus)
   }
 })
 
@@ -264,58 +294,31 @@ const tableColumns: TableColumn[] = [
   { key: 'action', label: 'ACTION', width: '6%', align: 'center' },
 ]
 
-/* Sample 12 Events for Table Pagination & Horizontal Scroll */
-const tableEvents = ref([
-  { id: 1, title: 'Summer Tech Conference', category: 'Technology', date: 'Aug 24, 2026', time: '10:00 AM', venue: 'Eko Hotels & Suite', location: 'Victoria Island, Lagos', ticketsSold: 340, revenue: '500,000', status: 'Published', bgGradient: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)' },
-  { id: 2, title: 'Startup Growth Summit', category: 'Business', date: 'Aug 24, 2026', time: '10:00 AM', venue: 'Eko Hotels & Suite', location: 'Victoria Island, Lagos', ticketsSold: 340, revenue: '500,000', status: 'Published', bgGradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' },
-  { id: 3, title: 'Music Festival 2026', category: 'Music', date: 'Aug 24, 2026', time: '10:00 AM', venue: 'Eko Hotels & Suite', location: 'Victoria Island, Lagos', ticketsSold: 340, revenue: '500,000', status: 'Draft', bgGradient: 'linear-gradient(135deg, #ef4444 0%, #ec4899 100%)' },
-  { id: 4, title: 'Design Thinking Workshop', category: 'Education', date: 'Aug 24, 2026', time: '10:00 AM', venue: 'Eko Hotels & Suite', location: 'Victoria Island, Lagos', ticketsSold: 340, revenue: '500,000', status: 'Draft', bgGradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' },
-  { id: 5, title: 'Leadership Bootcamp', category: 'Business', date: 'Aug 24, 2026', time: '10:00 AM', venue: 'Eko Hotels & Suite', location: 'Victoria Island, Lagos', ticketsSold: 340, revenue: '500,000', status: 'Published', bgGradient: 'linear-gradient(135deg, #10b981 0%, #047857 100%)' },
-  { id: 6, title: 'Fintech Expo 2026', category: 'Finance', date: 'Aug 28, 2026', time: '09:00 AM', venue: 'Landmark Centre', location: 'Victoria Island, Lagos', ticketsSold: 420, revenue: '750,000', status: 'Published', bgGradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' },
-  { id: 7, title: 'AI & Data Summit', category: 'Technology', date: 'Sep 02, 2026', time: '11:00 AM', venue: 'Civic Centre', location: 'Victoria Island, Lagos', ticketsSold: 210, revenue: '400,000', status: 'Published', bgGradient: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)' },
-  { id: 8, title: 'Creative Designers Hangout', category: 'Design', date: 'Sep 10, 2026', time: '02:00 PM', venue: 'Federal Palace', location: 'Lagos', ticketsSold: 180, revenue: '250,000', status: 'Draft', bgGradient: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' },
-])
-
 const filteredTableEvents = computed(() => {
   let list = tableEvents.value
   if (activeTab.value === 'published') {
     list = list.filter(e => e.status === 'Published')
   } else if (activeTab.value === 'draft') {
-    list = list.filter(e => e.status === 'Draft')
+    list = list.filter(e => e.status === 'Sales closed')
   }
 
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase()
-    list = list.filter(e => e.title.toLowerCase().includes(q) || e.venue.toLowerCase().includes(q))
+    list = list.filter(e => e.title.toLowerCase().includes(q) || e.location.toLowerCase().includes(q))
   }
   return list
 })
 
-const filteredGridEvents = computed(() => {
-  return filteredTableEvents.value.map(e => ({
-    id: e.id,
-    title: e.title,
-    location: e.location,
-    date: `${e.date} • ${e.time}`,
-    status: (e.status === 'Published' ? 'Published' : 'Sales closed') as 'Published' | 'Sales closed',
-    ticketsSold: e.ticketsSold,
-    revenue: `N${e.revenue}`,
-    bgGradient: e.bgGradient,
-  }))
-})
-
-function handleAction(actionType: string, eventId: number) {
+function handleAction(actionType: string, eventId: string) {
   openMenuId.value = null
   if (actionType === 'edit') {
-    router.push('/events/create')
+    router.push(`/events/${eventId}`)
   } else if (actionType === 'delete') {
-    tableEvents.value = tableEvents.value.filter(e => e.id !== eventId)
+    // TODO: call delete API
+    toast.show({ title: 'Delete Event', message: 'Delete is not yet implemented.', type: 'info' })
   }
 }
 
-function handleCardAction(actionType: string, eventId: number) {
-  handleAction(actionType, eventId)
-}
 
 useHead({
   title: 'Events — Uzu Ticket',
@@ -330,45 +333,31 @@ useHead({
   width: 100%;
 }
 
-/* View State Switcher */
-.view-toggle-bar {
+/* Loading State */
+.events-loading {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  justify-content: center;
+  padding: 3rem 1rem;
 }
 
-.toggle-label {
-  font-size: 0.8rem;
-  font-weight: 600;
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3FD246;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-left: 1rem;
+  font-size: 0.95rem;
   color: #6b7280;
-}
-
-.toggle-pills {
-  display: flex;
-  background: #e5e7eb;
-  padding: 0.2rem;
-  border-radius: 9999px;
-  gap: 0.2rem;
-}
-
-.toggle-pill {
-  padding: 0.35rem 0.875rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #4b5563;
-  background: transparent;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.toggle-pill--active {
-  background: #ffffff;
-  color: #0E2615;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 /* Main Events Card */

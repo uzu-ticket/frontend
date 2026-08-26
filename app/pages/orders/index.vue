@@ -367,8 +367,6 @@
       :active-tier="filterTier"
       @apply="onFiltersApplied"
     />
-
-    <AppToastContainer />
   </div>
 </template>
 
@@ -383,7 +381,6 @@ import DownloadInvoiceModal from '~/components/orders/DownloadInvoiceModal.vue'
 import IssueRefundModal from '~/components/orders/IssueRefundModal.vue'
 import CancelOrderModal from '~/components/orders/CancelOrderModal.vue'
 import OrderFilterModal from '~/components/orders/OrderFilterModal.vue'
-import AppToastContainer from '~/components/ui/AppToastContainer.vue'
 
 import { useToast } from '~/composables/useToast'
 

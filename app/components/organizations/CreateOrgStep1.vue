@@ -83,24 +83,12 @@
         <label for="select-org-industry" class="field-label">
           Industry <span class="required-star">*</span>
         </label>
-        <div class="select-wrapper">
-          <select
-            id="select-org-industry"
-            v-model="formData.industry"
-            class="form-select"
-            :class="{ 'form-select--error': errors.industry }"
-          >
-            <option value="" disabled>Please select industry</option>
-            <option value="entertainment">Entertainment & Events</option>
-            <option value="tech">Technology & Software</option>
-            <option value="education">Education & Workshops</option>
-            <option value="sports">Sports & Fitness</option>
-            <option value="corporate">Corporate & Business</option>
-          </select>
-          <svg xmlns="http://www.w3.org/2000/svg" class="select-arrow" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </div>
+        <AppSelect
+          v-model="formData.industry"
+          :options="industryOptions"
+          placeholder="Please select industry"
+          :error="errors.industry"
+        />
         <span v-if="errors.industry" class="field-error">{{ errors.industry }}</span>
       </div>
 
@@ -143,7 +131,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { reactive } from 'vue'
+import AppSelect from '~/components/ui/AppSelect.vue'
 
 const router = useRouter()
 
@@ -159,6 +148,14 @@ const formData = reactive({
   industry: '',
   description: '',
 })
+
+const industryOptions = [
+  { value: 'entertainment', label: 'Entertainment & Events' },
+  { value: 'tech', label: 'Technology & Software' },
+  { value: 'education', label: 'Education & Workshops' },
+  { value: 'sports', label: 'Sports & Fitness' },
+  { value: 'corporate', label: 'Corporate & Business' },
+]
 
 const errors = reactive({
   name: '',
@@ -327,42 +324,6 @@ function handleCancel() {
   font-size: 0.875rem;
   color: #1f2937;
   background: transparent;
-}
-
-/* Select */
-.select-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.form-select {
-  width: 100%;
-  padding: 0.75rem 2.5rem 0.75rem 1rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.65rem;
-  font-size: 0.875rem;
-  color: #1f2937;
-  outline: none;
-  appearance: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.form-select:focus {
-  border-color: #3FD246;
-  box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
-}
-
-.select-arrow {
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1.1rem;
-  height: 1.1rem;
-  color: #6b7280;
-  pointer-events: none;
 }
 
 /* Textarea */

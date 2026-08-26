@@ -54,6 +54,10 @@
         <NuxtLink :to="`/scanner/${eventId}/conflicts`" class="action-link">
           Conflict Review
         </NuxtLink>
+
+        <NuxtLink :to="`/scanner/${eventId}/settings`" class="action-link">
+          Scanner Settings
+        </NuxtLink>
       </div>
     </div>
   </div>

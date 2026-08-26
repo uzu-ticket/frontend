@@ -106,7 +106,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 export interface EventItem {
-  id: number
+  id: string
   title: string
   location: string
   date: string
@@ -122,7 +122,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  action: [type: string, eventId: number]
+  action: [type: string, eventId: string]
 }>()
 
 const isMenuOpen = ref(false)

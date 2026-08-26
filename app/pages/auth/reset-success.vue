@@ -54,6 +54,9 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useToast } from '~/composables/useToast'
+
 useHead({
   title: 'Password Reset Successful — Uzu Ticket',
   meta: [
@@ -61,7 +64,20 @@ useHead({
   ],
 })
 
+definePageMeta({
+  layout: 'auth',
+})
+
+const toast = useToast()
 const router = useRouter()
+
+onMounted(() => {
+  toast.show({
+    title: 'Password Updated',
+    message: 'Your password has been reset successfully.',
+    type: 'success',
+  })
+})
 
 function goToSignIn() {
   router.push('/auth/signin')

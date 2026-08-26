@@ -1,28 +1,18 @@
 <template>
   <div class="orgs-page">
-    <!-- View State Switcher (for previewing Data vs Empty state) -->
-    <div class="view-toggle-bar">
-      <span class="toggle-label">Preview State:</span>
-      <div class="toggle-pills">
-        <button
-          class="toggle-pill"
-          :class="{ 'toggle-pill--active': viewMode === 'data' }"
-          @click="viewMode = 'data'"
-        >
-          Data State
-        </button>
-        <button
-          class="toggle-pill"
-          :class="{ 'toggle-pill--active': viewMode === 'empty' }"
-          @click="viewMode = 'empty'"
-        >
-          Empty State
-        </button>
-      </div>
+    <!-- Loading -->
+    <div v-if="orgsLoading" class="loading-state">
+      <p class="loading-text">Loading your organizations...</p>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="orgsError" class="error-state">
+      <p class="error-text">{{ orgsError }}</p>
+      <button class="btn-retry" @click="retryLoad">Retry</button>
     </div>
 
     <!-- DATA STATE -->
-    <div v-if="viewMode === 'data'" class="orgs-data-container">
+    <div v-else-if="viewMode === 'data'" class="orgs-data-container">
       <div class="orgs-card-wrapper">
         <!-- Section Header -->
         <h2 class="section-title">View all organizations</h2>
@@ -89,7 +79,7 @@
     <OrgEmptyState
       v-else
       @create="handleCreateOrg"
-      @accept-invitation="viewMode = 'data'"
+      @accept-invitation="handleAcceptInvitedOrg"
     />
   </div>
 </template>
@@ -99,6 +89,7 @@ import { ref, computed } from 'vue'
 import OrganizationCard from '~/components/organizations/OrganizationCard.vue'
 import PendingInvitationCard from '~/components/organizations/PendingInvitationCard.vue'
 import OrgEmptyState from '~/components/organizations/OrgEmptyState.vue'
+import { useOrgState } from '~/composables/useOrgState'
 
 definePageMeta({
   layout: 'dashboard',
@@ -112,41 +103,20 @@ useHead({
 })
 
 const router = useRouter()
-const viewMode = ref<'data' | 'empty'>('data')
 const searchQuery = ref('')
 
-// Mock Organizations Data
-const organizations = ref([
-  {
-    id: 1,
-    name: 'Zeenom Event',
-    role: 'Owner',
-    initials: 'ZE',
-    eventsCount: 23,
-    membersCount: 10,
-    badgeBg: '#0E2615',
-  },
-  {
-    id: 2,
-    name: 'Zeenom Event',
-    role: 'Owner',
-    initials: 'ZE',
-    eventsCount: 23,
-    membersCount: 10,
-    badgeBg: '#0E2615',
-  },
-  {
-    id: 3,
-    name: 'Zeenom Event',
-    role: 'Owner',
-    initials: 'ZE',
-    eventsCount: 23,
-    membersCount: 10,
-    badgeBg: '#0E2615',
-  },
-])
+const { organizations, orgsLoading, orgsError, loadOrganizations } = useOrgState()
 
-// Mock Pending Invitations Data
+await loadOrganizations()
+
+const filteredOrganizations = computed(() => {
+  if (!searchQuery.value.trim()) return organizations.value
+  const q = searchQuery.value.toLowerCase().trim()
+  return organizations.value.filter((org) => org.name.toLowerCase().includes(q) || org.role.toLowerCase().includes(q))
+})
+
+const viewMode = computed<'data' | 'empty'>(() => (organizations.value.length > 0 ? 'data' : 'empty'))
+
 const pendingInvitations = ref([
   {
     id: 101,
@@ -159,23 +129,24 @@ const pendingInvitations = ref([
   },
 ])
 
-// Search filter computed
-const filteredOrganizations = computed(() => {
-  if (!searchQuery.value.trim()) return organizations.value
-  const q = searchQuery.value.toLowerCase().trim()
-  return organizations.value.filter(org => org.name.toLowerCase().includes(q) || org.role.toLowerCase().includes(q))
-})
+function retryLoad() {
+  loadOrganizations(true)
+}
 
 function handleCreateOrg() {
   router.push('/organizations/new')
 }
 
 function handleAcceptInvitation(id: number) {
-  pendingInvitations.value = pendingInvitations.value.filter(inv => inv.id !== id)
+  pendingInvitations.value = pendingInvitations.value.filter((inv) => inv.id !== id)
 }
 
 function handleDeclineInvitation(id: number) {
-  pendingInvitations.value = pendingInvitations.value.filter(inv => inv.id !== id)
+  pendingInvitations.value = pendingInvitations.value.filter((inv) => inv.id !== id)
+}
+
+function handleAcceptInvitedOrg() {
+  loadOrganizations(true)
 }
 </script>
 
@@ -185,45 +156,26 @@ function handleDeclineInvitation(id: number) {
   margin: 0 auto;
 }
 
-/* View State Switcher */
-.view-toggle-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+/* Loading / Error */
+.loading-state {
+  padding: 3rem 1rem;
+  text-align: center;
 }
-
-.toggle-label {
-  font-size: 0.8rem;
-  font-weight: 600;
+.loading-text {
+  font-size: 0.9rem;
   color: #6b7280;
 }
-
-.toggle-pills {
-  display: flex;
-  background: #e5e7eb;
-  padding: 0.2rem;
-  border-radius: 9999px;
-  gap: 0.2rem;
+.error-state {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 0.75rem;
 }
-
-.toggle-pill {
-  padding: 0.35rem 0.875rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #4b5563;
-  background: transparent;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.toggle-pill--active {
-  background: #ffffff;
-  color: #0E2615;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+.error-text {
+  font-size: 0.875rem;
+  color: #c53030;
+  margin-bottom: 0.75rem;
 }
 
 /* Container Card */
@@ -294,8 +246,25 @@ function handleDeclineInvitation(id: number) {
 
 .no-search-results {
   padding: 2rem 0 3rem;
-  color: #6b7280;
+  text-align: center;
   font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.btn-retry {
+  padding: 0.55rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #0E2615;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-retry:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
 }
 
 /* Pending Section */

@@ -30,39 +30,70 @@
         </div>
       </div>
 
-      <!-- Table Section -->
-      <div class="conflict-table-wrapper">
-        <div class="table-headers">
-          <span class="th-cell">Ticket</span>
-          <span class="th-cell">Attendee</span>
+      <!-- Ticket & Attendee Meta Row -->
+      <div class="conflict-meta-row">
+        <div class="meta-col">
+          <span class="meta-label">Ticket</span>
+          <span class="meta-value font-mono font-bold">{{ activeConflict.ticketId }}</span>
         </div>
 
-        <div class="table-rows-container">
-          <div v-for="item in conflictItems" :key="item.id" class="conflict-row">
-            <div class="ticket-cell">
-              <span class="ticket-id-text">{{ item.ticketId }}</span>
-              <span class="ticket-type-text">{{ item.ticketType }}</span>
-            </div>
+        <div class="meta-col meta-col--right">
+          <span class="meta-label">Attendee</span>
+          <div class="attendee-name-badge">
+            <span class="meta-value font-bold">{{ activeConflict.attendeeName }}</span>
+            <span class="badge-vip">{{ activeConflict.ticketType }}</span>
+          </div>
+        </div>
+      </div>
 
-            <div class="attendee-cell">
-              <span class="attendee-name-text">{{ item.attendeeName }}</span>
-              <span class="attendee-email-text">{{ item.attendeeEmail }}</span>
-            </div>
+      <!-- First Scan Card (Accepted - Green Card) -->
+      <div class="scan-card scan-card--first">
+        <h3 class="scan-card-header text-green-600 font-bold">First Scan (Accepted)</h3>
+
+        <div class="scan-details-stack">
+          <div class="detail-row">
+            <span class="detail-label">Time</span>
+            <span class="detail-value">{{ activeConflict.firstScan.time }}</span>
           </div>
 
-          <div v-if="conflictItems.length === 0" class="empty-conflicts">
-            No unresolved conflicts found.
+          <div class="detail-row">
+            <span class="detail-label">Gate/device</span>
+            <span class="detail-value">{{ activeConflict.firstScan.device }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Status</span>
+            <span class="detail-value text-green-600 font-bold">{{ activeConflict.firstScan.status }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second Scan Card (Flagged - Red Card) -->
+      <div class="scan-card scan-card--second">
+        <h3 class="scan-card-header text-red-600 font-bold">Second Scan (Flagged)</h3>
+
+        <div class="scan-details-stack">
+          <div class="detail-row">
+            <span class="detail-label">Time</span>
+            <span class="detail-value">{{ activeConflict.secondScan.time }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Gate/device</span>
+            <span class="detail-value">{{ activeConflict.secondScan.device }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Status</span>
+            <span class="detail-value text-red-600 font-bold">{{ activeConflict.secondScan.status }}</span>
           </div>
         </div>
       </div>
 
       <!-- Bottom Right Action Button -->
       <div class="page-footer-actions">
-        <button type="button" class="btn-sync-now" @click="handleSync">
-          <span>Sync Now</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 04.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
+        <button type="button" class="btn-mark-reviewed" @click="handleMarkReviewed">
+          Mark as Reviewed
         </button>
       </div>
     </div>
@@ -72,6 +103,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from '~/composables/useToast'
 
 definePageMeta({
   layout: 'dashboard',
@@ -83,6 +115,7 @@ useHead({
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
 
 const eventId = computed(() => (route.params.id as string) || '1')
 
@@ -92,25 +125,29 @@ function goBack() {
 
 const eventName = ref('Summer Tech Growth Summit')
 
-const conflictItems = ref([
-  {
-    id: 'c1',
-    ticketId: '#UZT-B2HA-H7D9',
-    ticketType: 'VIP Access',
-    attendeeName: 'Divine Emmanuel',
-    attendeeEmail: 'divineemmanuel777@gmail.com',
+const activeConflict = ref({
+  ticketId: '#UZU-B2XA-H7D9',
+  attendeeName: 'Divine Emmanuel',
+  ticketType: 'VIP Access',
+  firstScan: {
+    time: 'Sept 20, 2026 - 04:24 PM',
+    device: 'Gate A - Scanner 01',
+    status: 'Accepted',
   },
-  {
-    id: 'c2',
-    ticketId: '#UZT-C4K1-P9A2',
-    ticketType: 'Regular',
-    attendeeName: 'Paschal Ugo',
-    attendeeEmail: 'gracepeter@gmail.com',
+  secondScan: {
+    time: 'Sept 20, 2026 - 04:24 PM',
+    device: 'Gate C - Scanner 03',
+    status: 'Flagged',
   },
-])
+})
 
-function handleSync() {
-  alert('Sync and conflict resolution triggered successfully!')
+function handleMarkReviewed() {
+  toast.show({
+    title: 'Conflict Marked as Reviewed',
+    message: `#UZU-B2XA-H7D9 has been marked as reviewed`,
+    type: 'success',
+  })
+  goBack()
 }
 </script>
 
@@ -127,9 +164,8 @@ function handleSync() {
   padding: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 1.5rem;
   position: relative;
-  min-height: 500px;
 }
 
 /* Back Link */
@@ -207,7 +243,7 @@ function handleSync() {
 .alert-title {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #B45309;
+  color: #C2410C;
   margin: 0;
 }
 
@@ -218,84 +254,111 @@ function handleSync() {
   margin: 0;
 }
 
-/* Table Section */
-.conflict-table-wrapper {
+/* Meta Row */
+.conflict-meta-row {
   display: flex;
-  flex-direction: column;
-  margin-top: 0.5rem;
-}
-
-.table-headers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 0.75rem 1rem;
-}
-
-.th-cell {
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: #374151;
-}
-
-.table-rows-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.conflict-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 1rem;
-  border-bottom: 1px solid #F3F4F6;
   align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.5rem 0.25rem;
 }
 
-.conflict-row:last-child {
-  border-bottom: none;
-}
-
-.ticket-cell, .attendee-cell {
+.meta-col {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.25rem;
 }
 
-.ticket-id-text, .attendee-name-text {
-  font-size: 0.875rem;
+.meta-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4B5563;
+}
+
+.meta-value {
+  font-size: 1.05rem;
   font-weight: 800;
   color: #111827;
 }
 
-.ticket-type-text, .attendee-email-text {
-  font-size: 0.775rem;
-  color: #6B7280;
+.attendee-name-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.empty-conflicts {
-  padding: 3rem 1rem;
-  text-align: center;
+.badge-vip {
+  background: #DCFCE7;
+  color: #16A34A;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+}
+
+/* Scan Cards */
+.scan-card {
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.scan-card--first {
+  background: #F0FDF4;
+  border: 1px solid #DCFCE7;
+}
+
+.scan-card--second {
+  background: #FEF2F2;
+  border: 1px solid #FEE2E2;
+}
+
+.scan-card-header {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.scan-details-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.detail-label {
   font-size: 0.875rem;
-  color: #9CA3AF;
   font-weight: 600;
+  color: #4B5563;
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #111827;
 }
 
 /* Page Footer Actions */
 .page-footer-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: auto;
-  padding-top: 1rem;
+  margin-top: 1rem;
 }
 
-.btn-sync-now {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
+.btn-mark-reviewed {
   background: #3FD246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.875rem;
-  padding: 0.7rem 1.4rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
   border: none;
   cursor: pointer;
@@ -303,13 +366,8 @@ function handleSync() {
   box-shadow: 0 4px 12px rgba(63, 210, 70, 0.25);
 }
 
-.btn-sync-now:hover {
+.btn-mark-reviewed:hover {
   background: #34c03b;
   transform: translateY(-1px);
-}
-
-.refresh-icon {
-  width: 1.1rem;
-  height: 1.1rem;
 }
 </style>

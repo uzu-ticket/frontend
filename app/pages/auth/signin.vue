@@ -85,7 +85,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, computed } from 'vue'
+import { useAuth } from '~/composables/useAuth'
+import { useToast } from '~/composables/useToast'
 
 useHead({
   title: 'Sign In — Uzu Ticket',
@@ -94,7 +96,15 @@ useHead({
   ],
 })
 
-const loading = ref(false)
+definePageMeta({
+  layout: 'auth',
+})
+
+const auth = useAuth()
+const router = useRouter()
+const toast = useToast()
+
+const loading = computed(() => auth.loading.value)
 
 const form = reactive({
   email: '',
@@ -114,14 +124,29 @@ function validate() {
 
 async function handleSubmit() {
   if (!validate()) return
-  loading.value = true
-  // TODO: wire up API
-  await new Promise(r => setTimeout(r, 1500))
-  loading.value = false
+  try {
+    await auth.login(form.email, form.password)
+    toast.show({
+      title: 'Signed In',
+      message: 'Welcome back! Redirecting to your dashboard.',
+      type: 'success',
+    })
+    await router.push('/overview')
+  } catch {
+    toast.show({
+      title: 'Sign In Failed',
+      message: auth.error.value || 'Please check your credentials and try again.',
+      type: 'error',
+    })
+  }
 }
 
 function handleGoogle() {
-  // TODO: wire up Google OAuth
+  toast.show({
+    title: 'Google Sign In',
+    message: 'Google OAuth is not yet available',
+    type: 'info',
+  })
 }
 </script>
 

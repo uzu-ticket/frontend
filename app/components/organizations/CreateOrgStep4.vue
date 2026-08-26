@@ -12,27 +12,12 @@
         <label for="select-bank" class="field-label">
           Bank Name <span class="required-star">*</span>
         </label>
-        <div class="select-wrapper">
-          <select
-            id="select-bank"
-            v-model="formData.bankName"
-            class="form-select"
-            :class="{ 'form-select--error': errors.bankName }"
-          >
-            <option value="" disabled>Select bank name</option>
-            <option value="access">Access Bank</option>
-            <option value="gtb">Guaranty Trust Bank</option>
-            <option value="zenith">Zenith Bank</option>
-            <option value="uba">United Bank for Africa</option>
-            <option value="first">First Bank Nigeria</option>
-            <option value="sterling">Sterling Bank</option>
-            <option value="kuda">Kuda Bank</option>
-            <option value="opay">OPay</option>
-          </select>
-          <svg xmlns="http://www.w3.org/2000/svg" class="select-arrow" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </div>
+        <AppSelect
+          v-model="formData.bankName"
+          :options="bankOptions"
+          placeholder="Select bank name"
+          :error="errors.bankName"
+        />
         <span v-if="errors.bankName" class="field-error">{{ errors.bankName }}</span>
       </div>
 
@@ -131,15 +116,32 @@
         <span>Back</span>
       </button>
 
-      <button type="submit" class="btn-create">
-        Create Organization
+      <button type="submit" class="btn-create" :disabled="props.isSubmitting">
+        <svg
+          v-if="props.isSubmitting"
+          xmlns="http://www.w3.org/2000/svg"
+          class="spinner"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12V7a1 1 0 10-2 0v1a2 2 0 104 0V6h-2z" clip-rule="evenodd" />
+        </svg>
+        <span>{{ props.isSubmitting ? 'Creating...' : 'Create Organization' }}</span>
       </button>
     </div>
+
+    <span v-if="props.submitError" class="field-error submit-error">{{ props.submitError }}</span>
   </form>
 </template>
 
 <script setup lang="ts">
 import { reactive } from 'vue'
+import AppSelect from '~/components/ui/AppSelect.vue'
+
+const props = defineProps<{
+  isSubmitting?: boolean
+  submitError?: string
+}>()
 
 const emit = defineEmits<{
   back: []
@@ -154,6 +156,17 @@ const formData = reactive({
   registeredBusinessName: '',
   confirmed: false,
 })
+
+const bankOptions = [
+  { value: 'access', label: 'Access Bank' },
+  { value: 'gtb', label: 'Guaranty Trust Bank' },
+  { value: 'zenith', label: 'Zenith Bank' },
+  { value: 'uba', label: 'United Bank for Africa' },
+  { value: 'first', label: 'First Bank Nigeria' },
+  { value: 'sterling', label: 'Sterling Bank' },
+  { value: 'kuda', label: 'Kuda Bank' },
+  { value: 'opay', label: 'OPay' },
+]
 
 const errors = reactive({
   bankName: '',
@@ -204,11 +217,6 @@ function handleSubmit() {
 .form-input:focus { border-color: #3FD246; box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12); }
 .form-input--error { border-color: #ef4444 !important; }
 
-.select-wrapper { position: relative; }
-.form-select { width: 100%; padding: 0.75rem 2.5rem 0.75rem 1rem; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.65rem; font-size: 0.875rem; color: #1f2937; outline: none; appearance: none; cursor: pointer; transition: all 0.15s ease; }
-.form-select:focus { border-color: #3FD246; box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12); }
-.select-arrow { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); width: 1.1rem; height: 1.1rem; color: #6b7280; pointer-events: none; }
-
 /* Match Banner */
 .match-banner {
   display: flex; align-items: center; gap: 0.5rem;
@@ -232,6 +240,10 @@ function handleSubmit() {
 .btn-back:hover { background: #f9fafb; border-color: #d1d5db; }
 
 .btn-create { padding: 0.65rem 1.75rem; background: #3FD246; color: #ffffff; font-weight: 700; font-size: 0.85rem; border-radius: 0.65rem; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(63, 210, 70, 0.22); transition: all 0.15s ease; }
-.btn-create:hover { background: #34c03b; transform: translateY(-1px); }
-.btn-arrow-left { width: 1rem; height: 1rem; }
+  .btn-create:hover:not(:disabled) { background: #34c03b; transform: translateY(-1px); }
+  .btn-create:disabled { opacity: 0.65; cursor: wait; }
+  .spinner { width: 1rem; height: 1rem; animation: spin 0.8s linear infinite; }
+  .submit-error { margin-top: 0.5rem; display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-arrow-left { width: 1rem; height: 1rem; }
 </style>

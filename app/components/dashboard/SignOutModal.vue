@@ -37,8 +37,6 @@ const emit = defineEmits<{
   confirm: []
 }>()
 
-const router = useRouter()
-
 function close() {
   emit('update:modelValue', false)
 }
@@ -46,7 +44,6 @@ function close() {
 function confirmSignOut() {
   emit('confirm')
   close()
-  router.push('/auth/signin')
 }
 </script>
 

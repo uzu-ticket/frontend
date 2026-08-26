@@ -90,7 +90,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
+import { useAuth } from '~/composables/useAuth'
+import { useToast } from '~/composables/useToast'
 
 useHead({
   title: 'Reset via Email — Uzu Ticket',
@@ -99,12 +101,21 @@ useHead({
   ],
 })
 
+definePageMeta({
+  layout: 'auth',
+})
+
+const auth = useAuth()
 const router = useRouter()
-const email = ref('')
+const route = useRoute()
+const toast = useToast()
+
+const email = ref((route.query.email as string) || '')
 const error = ref('')
-const loading = ref(false)
+const loading = computed(() => auth.loading.value)
 const isSent = ref(false)
 const resendCooldown = ref(0)
+const devToken = ref('')
 let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
 function handleBack() {
@@ -121,17 +132,35 @@ async function handleSubmit() {
     return
   }
   error.value = ''
-  loading.value = true
-  await new Promise(r => setTimeout(r, 1000))
-  loading.value = false
-  isSent.value = true
+  try {
+    const res = await auth.forgotPassword(email.value, 'email')
+    if (res?.devToken) devToken.value = res.devToken
+    isSent.value = true
+    toast.show({
+      title: 'Reset Link Sent',
+      message: `A password reset link has been sent to ${email.value}.`,
+      type: 'success',
+    })
+  } catch {
+    toast.show({
+      title: 'Failed to Send Reset Link',
+      message: auth.error.value || 'Could not send the reset link. Please try again.',
+      type: 'error',
+    })
+  }
 }
 
 function goToResetPassword() {
-  router.push('/auth/reset-password')
+  router.push({
+    path: '/auth/reset-password',
+    query: {
+      token: devToken.value,
+      email: email.value,
+    },
+  })
 }
 
-function handleResend() {
+async function handleResend() {
   if (resendCooldown.value > 0) return
   resendCooldown.value = 15
   cooldownTimer = setInterval(() => {
@@ -141,6 +170,16 @@ function handleResend() {
       cooldownTimer = null
     }
   }, 1000)
+  try {
+    const res = await auth.forgotPassword(email.value, 'email')
+    if (res?.devToken) devToken.value = res.devToken
+  } catch {
+    toast.show({
+      title: 'Failed to Resend Reset Link',
+      message: auth.error.value || 'Could not resend the reset link. Please try again.',
+      type: 'error',
+    })
+  }
 }
 
 onUnmounted(() => {
