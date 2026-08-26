@@ -33,4 +33,24 @@ export class UsersService {
     ]);
     return this.prisma.userInterest.findMany({ where: { userId }, include: { category: true } });
   }
+
+  async searchUsers(query: string) {
+    if (!query || query.trim().length === 0) return [];
+    const q = query.trim();
+    const users = await this.prisma.user.findMany({
+      where: {
+        OR: [
+          { email: { contains: q, mode: "insensitive" } },
+          { fullName: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      take: 10,
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+      },
+    });
+    return users;
+  }
 }

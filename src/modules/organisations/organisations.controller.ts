@@ -3,6 +3,7 @@ import { ApiTags } from "@nestjs/swagger";
 import { IsOptional, IsString } from "class-validator";
 import { CurrentUser, AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { PlatformAdminGuard } from "../../common/auth/platform-admin.guard";
+import { Public } from "../../common/decorators/public.decorator";
 import { OrganisationsService } from "./organisations.service";
 import { CreateOrganisationDto } from "./dto/create-organisation.dto";
 import { UpdateOrganisationDto } from "./dto/update-organisation.dto";
@@ -29,6 +30,18 @@ export class OrganisationsController {
   findMine(@CurrentUser() user: AuthenticatedUser) {
     return this.organisationsService.findMine(user.id);
   }
+
+  @Get("invitations/mine")
+  findMyPendingInvites(@CurrentUser() user: AuthenticatedUser) {
+    return this.organisationsService.findMyPendingInvites(user.id);
+  }
+
+  @Public()
+  @Get("invitations/info/:memberId")
+  getInviteInfo(@Param("memberId") memberId: string) {
+    return this.organisationsService.getInviteInfo(memberId);
+  }
+
 
   @Get(":organisationId")
   findOne(@CurrentUser() user: AuthenticatedUser, @Param("organisationId") organisationId: string) {
@@ -67,6 +80,15 @@ export class OrganisationsController {
     return this.organisationsService.acceptInvite(organisationId, memberId, user.id);
   }
 
+  @Post(":organisationId/members/:memberId/decline")
+  declineInvite(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("memberId") memberId: string,
+  ) {
+    return this.organisationsService.declineInvite(organisationId, memberId, user.id);
+  }
+
   @Post(":organisationId/members/:memberId/revoke")
   revokeMember(
     @CurrentUser() user: AuthenticatedUser,
@@ -75,6 +97,16 @@ export class OrganisationsController {
   ) {
     return this.organisationsService.revokeMember(organisationId, memberId, user.id);
   }
+
+  @Post(":organisationId/members/:memberId/resend")
+  resendInvite(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("memberId") memberId: string,
+  ) {
+    return this.organisationsService.resendInvite(organisationId, memberId, user.id);
+  }
+
 
   @Post(":organisationId/kyb")
   submitKyb(

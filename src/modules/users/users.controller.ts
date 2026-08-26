@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Put } from "@nestjs/common";
+import { Body, Controller, Get, Patch, Put, Query } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser, AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { UsersService } from "./users.service";
@@ -9,6 +9,11 @@ import { SetInterestsDto } from "./dto/set-interests.dto";
 @Controller("users")
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get("search")
+  searchUsers(@Query("q") query: string) {
+    return this.usersService.searchUsers(query);
+  }
 
   @Get("me")
   getMe(@CurrentUser() user: AuthenticatedUser) {
