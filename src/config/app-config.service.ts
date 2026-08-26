@@ -113,4 +113,12 @@ export class AppConfigService {
       from: this.config.get("SMTP_FROM", { infer: true }),
     };
   }
+
+  get mailgun() {
+    return {
+      apiKey: this.config.get("MAILGUN_API_KEY", { infer: true }),
+      domain: this.config.get("MAILGUN_DOMAIN", { infer: true }),
+      from: this.config.get("MAILGUN_FROM", { infer: true }) || this.smtp.from,
+    };
+  }
 }

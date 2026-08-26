@@ -12,11 +12,11 @@ export class PermissionsGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const required = this.reflector.getAllAndOverride<Permission[]>(PERMISSIONS_KEY, [
+    const required = this.reflector.getAllAndOverride<Permission | Permission[]>(PERMISSIONS_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!required || required.length === 0) {
+    if (!required) {
       return true;
     }
 
@@ -33,7 +33,8 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException("Not authenticated");
     }
 
-    for (const permission of required) {
+    const permissions = (Array.isArray(required) ? required : [required]) as Permission[];
+    for (const permission of permissions) {
       // eslint-disable-next-line no-await-in-loop
       if (!(await this.permissionsService.hasPermission(userId, organisationId, permission))) {
         throw new ForbiddenException(`Missing permission: ${permission}`);

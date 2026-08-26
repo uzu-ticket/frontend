@@ -58,7 +58,9 @@ export class OrdersService {
           throw new BadRequestException(`Sales have ended for one of the selected ticket types`);
         }
         if (row.per_order_limit && item.quantity > row.per_order_limit) {
-          throw new BadRequestException(`Max ${row.per_order_limit} tickets per order for one of the selected ticket types`);
+          throw new BadRequestException(
+            `Max ${row.per_order_limit} tickets per order for one of the selected ticket types`,
+          );
         }
         if (row.quantity_sold + item.quantity > row.quantity_total) {
           throw new BadRequestException(`Not enough tickets remaining for one of the selected ticket types`);
@@ -91,7 +93,11 @@ export class OrdersService {
         });
       }
 
-      const fee = calculatePlatformFee(subtotalMinor, this.config.platformFeePercentBps, this.config.platformFeeFixedMinor);
+      const fee = calculatePlatformFee(
+        subtotalMinor,
+        this.config.platformFeePercentBps,
+        this.config.platformFeeFixedMinor,
+      );
       const metadata: OrderMetadata = { items };
 
       return tx.order.create({

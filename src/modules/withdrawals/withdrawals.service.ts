@@ -67,7 +67,13 @@ export class WithdrawalsService {
       });
       await this.wallets.debitWalletForWithdrawal(wallet.id, amountMinor, created.id, wallet.currency, tx);
       await this.audit.log(
-        { organisationId, actorUserId: userId, action: "withdrawal.requested", entityType: "withdrawal", entityId: created.id },
+        {
+          organisationId,
+          actorUserId: userId,
+          action: "withdrawal.requested",
+          entityType: "withdrawal",
+          entityId: created.id,
+        },
         tx,
       );
       return created;
@@ -89,7 +95,9 @@ export class WithdrawalsService {
       });
     } catch (error) {
       await this.markFailed(withdrawal.id, (error as Error).message);
-      throw new BadRequestException("Payout provider rejected the transfer — withdrawal marked failed and funds returned");
+      throw new BadRequestException(
+        "Payout provider rejected the transfer — withdrawal marked failed and funds returned",
+      );
     }
   }
 
@@ -120,7 +128,10 @@ export class WithdrawalsService {
       });
       await tx.transaction.updateMany({ where: { withdrawalId }, data: { status: "failed" } });
       // Return the funds: reverse the debit.
-      await tx.wallet.update({ where: { id: withdrawal.walletId }, data: { balanceMinor: { increment: withdrawal.amountMinor } } });
+      await tx.wallet.update({
+        where: { id: withdrawal.walletId },
+        data: { balanceMinor: { increment: withdrawal.amountMinor } },
+      });
     });
   }
 
@@ -149,7 +160,8 @@ export class WithdrawalsService {
   async findOne(organisationId: string, withdrawalId: string, userId: string) {
     await this.permissions.assertPermission(userId, organisationId, Permission.WithdrawalView);
     const withdrawal = await this.prisma.withdrawal.findUnique({ where: { id: withdrawalId } });
-    if (!withdrawal || withdrawal.organisationId !== organisationId) throw new NotFoundException("Withdrawal not found");
+    if (!withdrawal || withdrawal.organisationId !== organisationId)
+      throw new NotFoundException("Withdrawal not found");
     return withdrawal;
   }
 }

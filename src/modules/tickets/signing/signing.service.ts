@@ -50,7 +50,11 @@ export class SigningService {
     };
     const { bytes } = encodePayload(payload);
     const signature = await this.keyProvider.sign(key.id, bytes, tx);
-    return { qrCode: buildQrCode(payload, signature), signature: signature.toString("base64url"), signingKeyId: key.id };
+    return {
+      qrCode: buildQrCode(payload, signature),
+      signature: signature.toString("base64url"),
+      signingKeyId: key.id,
+    };
   }
 
   /**
@@ -58,7 +62,13 @@ export class SigningService {
    * sync). Offline devices do the equivalent check locally against the
    * manifest's public keys — see scanner module.
    */
-  async verifyTicket(ticket: { id: string; eventId: string; signingKeyId: string; signature: string; issuedAt: Date }): Promise<boolean> {
+  async verifyTicket(ticket: {
+    id: string;
+    eventId: string;
+    signingKeyId: string;
+    signature: string;
+    issuedAt: Date;
+  }): Promise<boolean> {
     const key = await this.prisma.eventSigningKey.findUnique({ where: { id: ticket.signingKeyId } });
     if (!key) return false;
 

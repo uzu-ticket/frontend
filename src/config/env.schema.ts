@@ -28,9 +28,7 @@ export const envSchema = z.object({
 
   PLATFORM_ADMIN_EMAILS: z.string().default(""),
 
-  SIGNING_KEY_MASTER_SECRET: z
-    .string()
-    .regex(/^[0-9a-f]{64}$/i, "must be a 32-byte hex string (64 hex chars)"),
+  SIGNING_KEY_MASTER_SECRET: z.string().regex(/^[0-9a-f]{64}$/i, "must be a 32-byte hex string (64 hex chars)"),
 
   PAYSTACK_SECRET_KEY: z.string().min(1),
   PAYSTACK_PUBLIC_KEY: z.string().min(1),
@@ -48,6 +46,10 @@ export const envSchema = z.object({
   SMTP_USER: z.string().default(""),
   SMTP_PASS: z.string().default(""),
   SMTP_FROM: z.string().default("UzuTicket <tickets@uzuticket.com>"),
+
+  MAILGUN_API_KEY: z.string().min(1),
+  MAILGUN_DOMAIN: z.string().min(1),
+  MAILGUN_FROM: z.string().default(""),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -55,9 +57,7 @@ export type Env = z.infer<typeof envSchema>;
 export function validateEnv(config: Record<string, unknown>): Env {
   const parsed = envSchema.safeParse(config);
   if (!parsed.success) {
-    const message = parsed.error.issues
-      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
-      .join("\n");
+    const message = parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("\n");
     throw new Error(`Invalid environment configuration:\n${message}`);
   }
   return parsed.data;

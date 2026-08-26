@@ -93,7 +93,13 @@ export class ScannerService {
 
   // --- Manifest -------------------------------------------------------------
 
-  async downloadManifest(organisationId: string, eventId: string, deviceId: string, userId: string, deviceMonotonicMs: number) {
+  async downloadManifest(
+    organisationId: string,
+    eventId: string,
+    deviceId: string,
+    userId: string,
+    deviceMonotonicMs: number,
+  ) {
     const { assignment, event } = await this.assertDeviceOwnerAndAssigned(organisationId, eventId, deviceId, userId);
     if (!event.manifestSealedAt) {
       throw new BadRequestException("Manifest is not sealed yet — wait until ticket sales close");
@@ -111,11 +117,18 @@ export class ScannerService {
     const now = new Date();
     await this.prisma.eventScannerAssignment.update({
       where: { id: assignment.id },
-      data: { manifestVersionDownloaded: event.manifestVersion, downloadedAt: now, monotonicOffsetMs: BigInt(deviceMonotonicMs) },
+      data: {
+        manifestVersionDownloaded: event.manifestVersion,
+        downloadedAt: now,
+        monotonicOffsetMs: BigInt(deviceMonotonicMs),
+      },
     });
 
     const [signingKeys, tickets] = await Promise.all([
-      this.prisma.eventSigningKey.findMany({ where: { eventId }, select: { id: true, publicKey: true, isActive: true } }),
+      this.prisma.eventSigningKey.findMany({
+        where: { eventId },
+        select: { id: true, publicKey: true, isActive: true },
+      }),
       this.prisma.ticket.findMany({ where: { eventId }, select: { id: true, ticketTypeId: true, status: true } }),
     ]);
 
@@ -175,10 +188,18 @@ export class ScannerService {
   }
 
   /** Batched upload of locally-recorded offline scans (integrity doc §7 step 7-8). */
-  async syncOfflineScans(organisationId: string, eventId: string, deviceId: string, userId: string, scans: OfflineScanItemDto[]) {
+  async syncOfflineScans(
+    organisationId: string,
+    eventId: string,
+    deviceId: string,
+    userId: string,
+    scans: OfflineScanItemDto[],
+  ) {
     const { assignment } = await this.assertDeviceOwnerAndAssigned(organisationId, eventId, deviceId, userId);
     if (assignment.monotonicOffsetMs === null || !assignment.downloadedAt) {
-      throw new BadRequestException("Device has not downloaded a manifest for this event yet — cannot translate scan times");
+      throw new BadRequestException(
+        "Device has not downloaded a manifest for this event yet — cannot translate scan times",
+      );
     }
 
     const results: { ticketId: string | null; result: ScanResult; isConflict: boolean }[] = [];

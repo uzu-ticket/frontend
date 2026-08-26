@@ -14,11 +14,7 @@ import { RealtimeModule } from "../realtime/realtime.module";
 @Module({
   imports: [TicketsModule, WalletsModule, DeliveryModule, WithdrawalsModule, RealtimeModule],
   controllers: [PaymentsController, PaystackWebhookController],
-  providers: [
-    PaymentsService,
-    PaymentReconciliationCron,
-    { provide: PAYMENT_PROVIDER, useClass: PaystackProvider },
-  ],
+  providers: [PaymentsService, PaymentReconciliationCron, { provide: PAYMENT_PROVIDER, useClass: PaystackProvider }],
   exports: [PaymentsService],
 })
 export class PaymentsModule {}

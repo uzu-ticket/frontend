@@ -29,7 +29,10 @@ export class WalletsService {
     private readonly permissions: PermissionsService,
   ) {}
 
-  async getOrCreateOrganisationWallet(organisationId: string, tx: Prisma.TransactionClient = this.prisma): Promise<Wallet> {
+  async getOrCreateOrganisationWallet(
+    organisationId: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Wallet> {
     const existing = await tx.wallet.findFirst({ where: { organisationId, ownerType: "organisation" } });
     if (existing) return existing;
     return tx.wallet.create({
@@ -72,9 +75,10 @@ export class WalletsService {
       },
     });
 
-    const isFirstTimeOrg = (await tx.transaction.count({
-      where: { organisationId: input.organisationId, transactionType: "ticket_purchase", status: "succeeded" },
-    })) <= 1; // this transaction itself already counts
+    const isFirstTimeOrg =
+      (await tx.transaction.count({
+        where: { organisationId: input.organisationId, transactionType: "ticket_purchase", status: "succeeded" },
+      })) <= 1; // this transaction itself already counts
 
     const holdMinor = isFirstTimeOrg ? bpsOf(input.subtotalMinor, this.config.defaultRiskHoldPercentBps) : 0n;
     const availableMinor = input.subtotalMinor - holdMinor;

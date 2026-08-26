@@ -40,7 +40,9 @@ export class PaystackProvider implements PaymentProvider {
   }
 
   async verify(reference: string): Promise<VerifyPaymentResult> {
-    const { data } = await this.http.get<PaystackVerifyResponse>(`/transaction/verify/${encodeURIComponent(reference)}`);
+    const { data } = await this.http.get<PaystackVerifyResponse>(
+      `/transaction/verify/${encodeURIComponent(reference)}`,
+    );
     const status = data.data.status === "success" ? "success" : data.data.status === "abandoned" ? "pending" : "failed";
     return {
       status,

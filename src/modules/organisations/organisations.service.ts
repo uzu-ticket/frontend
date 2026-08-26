@@ -114,9 +114,7 @@ export class OrganisationsService {
 
     const invitee = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!invitee) {
-      throw new NotFoundException(
-        "No UzuTicket account found for this email — the invitee must register first",
-      );
+      throw new NotFoundException("No UzuTicket account found for this email — the invitee must register first");
     }
 
     const member = await this.prisma.organisationMember.create({

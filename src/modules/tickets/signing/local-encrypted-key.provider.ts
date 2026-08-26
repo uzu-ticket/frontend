@@ -1,4 +1,12 @@
-import { randomBytes, createCipheriv, createDecipheriv, generateKeyPairSync, sign as edSign, createPrivateKey, JsonWebKey } from "crypto";
+import {
+  randomBytes,
+  createCipheriv,
+  createDecipheriv,
+  generateKeyPairSync,
+  sign as edSign,
+  createPrivateKey,
+  JsonWebKey,
+} from "crypto";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../../prisma/prisma.service";
@@ -29,7 +37,11 @@ export class LocalEncryptedKeyProvider implements KeyProvider {
     return { publicKey: publicJwk.x!, privateKeyHandle: privateJwk.d! };
   }
 
-  async persistPrivateKey(signingKeyId: string, privateKeyHandle: unknown, tx?: Prisma.TransactionClient): Promise<void> {
+  async persistPrivateKey(
+    signingKeyId: string,
+    privateKeyHandle: unknown,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const client = tx ?? this.prisma;
     const { ciphertext, iv, authTag } = this.encrypt(privateKeyHandle as string);
     await client.signingKeySecret.create({

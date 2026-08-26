@@ -72,7 +72,12 @@ export class EventLifecycleCron {
         // eslint-disable-next-line no-await-in-loop
         await this.prisma.event.update({ where: { id: event.id }, data: { status: "completed" } });
         // eslint-disable-next-line no-await-in-loop
-        await this.audit.log({ organisationId: event.organisationId, action: "event.completed", entityType: "event", entityId: event.id });
+        await this.audit.log({
+          organisationId: event.organisationId,
+          action: "event.completed",
+          entityType: "event",
+          entityId: event.id,
+        });
       }
     }
   }

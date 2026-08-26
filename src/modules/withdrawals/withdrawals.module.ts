@@ -10,7 +10,11 @@ import { WalletsModule } from "../wallets/wallets.module";
 @Module({
   imports: [AuthModule, WalletsModule],
   controllers: [WithdrawalsController],
-  providers: [WithdrawalsService, PayoutHoldReleaseCron, { provide: PAYOUT_PROVIDER, useClass: PaystackPayoutProvider }],
+  providers: [
+    WithdrawalsService,
+    PayoutHoldReleaseCron,
+    { provide: PAYOUT_PROVIDER, useClass: PaystackPayoutProvider },
+  ],
   exports: [WithdrawalsService],
 })
 export class WithdrawalsModule {}

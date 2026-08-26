@@ -66,7 +66,12 @@ export class DiscoveryService {
   async getPublicEvent(eventId: string) {
     return this.prisma.event.findFirst({
       where: { id: eventId, status: VISIBLE_STATUSES },
-      include: { category: true, images: true, ticketTypes: true, organisation: { select: { name: true, logoUrl: true } } },
+      include: {
+        category: true,
+        images: true,
+        ticketTypes: true,
+        organisation: { select: { name: true, logoUrl: true } },
+      },
     });
   }
 

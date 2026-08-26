@@ -36,7 +36,11 @@ export class DeliveryService {
         resendReason: opts.resendReason,
       },
     });
-    await this.queue.add("send", { ticketDeliveryId: delivery.id }, { attempts: 5, backoff: { type: "exponential", delay: 5000 } });
+    await this.queue.add(
+      "send",
+      { ticketDeliveryId: delivery.id },
+      { attempts: 5, backoff: { type: "exponential", delay: 5000 } },
+    );
   }
 
   /** PRD §3.6: resend to an event's full customer list. */
@@ -90,7 +94,10 @@ export class DeliveryService {
   async regenerateAndVoid(organisationId: string, ticketId: string, actorUserId: string, reason: string) {
     await this.permissions.assertPermission(actorUserId, organisationId, Permission.OrderResendTicket);
     const oldTicket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
-    if (!oldTicket || (await this.prisma.event.findUnique({ where: { id: oldTicket.eventId } }))?.organisationId !== organisationId) {
+    if (
+      !oldTicket ||
+      (await this.prisma.event.findUnique({ where: { id: oldTicket.eventId } }))?.organisationId !== organisationId
+    ) {
       throw new NotFoundException("Ticket not found");
     }
     if (oldTicket.status !== "valid") {

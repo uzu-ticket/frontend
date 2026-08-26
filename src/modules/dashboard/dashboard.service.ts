@@ -39,7 +39,11 @@ export class DashboardService {
       paidOrderCount: revenue._count,
       channelAttribution: Object.fromEntries(channelGroups.map((g) => [g.channel, g._count])),
       refundedOrderCount: refundedCount,
-      ordersOverTime: ordersOverTime.map((r) => ({ day: r.day, orders: Number(r.orders), revenueMinor: r.revenue_minor })),
+      ordersOverTime: ordersOverTime.map((r) => ({
+        day: r.day,
+        orders: Number(r.orders),
+        revenueMinor: r.revenue_minor,
+      })),
     };
   }
 
@@ -47,7 +51,10 @@ export class DashboardService {
     await this.permissions.assertMembership(userId, organisationId);
     const [events, revenue] = await Promise.all([
       this.prisma.event.count({ where: { organisationId } }),
-      this.prisma.order.aggregate({ where: { event: { organisationId }, status: "paid" }, _sum: { subtotalMinor: true } }),
+      this.prisma.order.aggregate({
+        where: { event: { organisationId }, status: "paid" },
+        _sum: { subtotalMinor: true },
+      }),
     ]);
     return { eventCount: events, grossRevenueMinor: revenue._sum.subtotalMinor ?? 0n };
   }

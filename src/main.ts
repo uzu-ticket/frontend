@@ -42,8 +42,6 @@ async function bootstrap() {
   SwaggerModule.setup("api/docs", app, document);
 
   await app.listen(config.port);
-  // eslint-disable-next-line no-console
-  console.log(`UzuTicket API listening on :${config.port} (docs at /api/docs)`);
 }
 
 bootstrap();
