@@ -145,6 +145,42 @@ const headerConfig = computed(() => {
       subtitle: 'Manage buyers and their ticket activity across your events.',
     }
   }
+  if (path.startsWith('/promoters')) {
+    return {
+      title: 'Promoters',
+      subtitle: 'Manage your promotions, and keep up with your commission earnings.',
+    }
+  }
+  if (path.startsWith('/marketing')) {
+    return {
+      title: 'Marketing',
+      subtitle: 'Create and manage marketing campaigns and discounts.',
+    }
+  }
+  if (path.startsWith('/reports')) {
+    return {
+      title: 'Sales & Reports',
+      subtitle: 'Track sales analytics, revenue and performance metrics.',
+    }
+  }
+  if (path.startsWith('/finance')) {
+    return {
+      title: 'Finance / Wallet',
+      subtitle: 'Manage payouts, bank details and transaction logs.',
+    }
+  }
+  if (path.startsWith('/integrations')) {
+    return {
+      title: 'Integrations',
+      subtitle: 'Connect third-party services and webhooks.',
+    }
+  }
+  if (path.startsWith('/settings')) {
+    return {
+      title: 'Settings',
+      subtitle: 'Manage organization preferences and account settings.',
+    }
+  }
   // Default Overview
   return {
     title: 'Overview',

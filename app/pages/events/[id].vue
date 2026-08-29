@@ -78,6 +78,20 @@
 
           <!-- Action Buttons -->
           <div class="hero-actions-row">
+            <button v-if="eventStatus === 'draft'" class="btn-publish" :disabled="isActionLoading" @click="handlePublish">
+              <svg xmlns="http://www.w3.org/2000/svg" class="btn-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              <span>{{ isActionLoading ? 'Publishing...' : 'Publish Event' }}</span>
+            </button>
+
+            <button v-if="eventStatus === 'published'" class="btn-cancel-event" :disabled="isActionLoading" @click="handleCancel">
+              <svg xmlns="http://www.w3.org/2000/svg" class="btn-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+              <span>{{ isActionLoading ? 'Cancelling...' : 'Cancel Event' }}</span>
+            </button>
+
             <button class="btn-edit" @click="router.push('/events/create')">
               <svg xmlns="http://www.w3.org/2000/svg" class="btn-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -196,12 +210,57 @@ definePageMeta({
 
 const router = useRouter()
 const route = useRoute()
-const { fetchEvent, loading, error } = useEvents()
+const { fetchEvent, publishEvent, cancelEvent, loading, error } = useEvents()
 const toast = useToast()
 
 const eventId = computed(() => route.params.id as string)
 const event = ref<Event | null>(null)
 const copied = ref(false)
+const isActionLoading = ref(false)
+
+async function handlePublish() {
+  if (!event.value) return
+  isActionLoading.value = true
+  try {
+    const updated = await publishEvent(event.value.id)
+    event.value = updated
+    toast.show({
+      title: 'Event Published',
+      message: `${updated.title} is now live and accepting orders.`,
+      type: 'success',
+    })
+  } catch {
+    toast.show({
+      title: 'Publish Failed',
+      message: error.value || 'Could not publish event.',
+      type: 'error',
+    })
+  } finally {
+    isActionLoading.value = false
+  }
+}
+
+async function handleCancel() {
+  if (!event.value) return
+  isActionLoading.value = true
+  try {
+    const updated = await cancelEvent(event.value.id)
+    event.value = updated
+    toast.show({
+      title: 'Event Cancelled',
+      message: `${updated.title} has been cancelled.`,
+      type: 'info',
+    })
+  } catch {
+    toast.show({
+      title: 'Cancellation Failed',
+      message: error.value || 'Could not cancel event.',
+      type: 'error',
+    })
+  } finally {
+    isActionLoading.value = false
+  }
+}
 
 onMounted(async () => {
   try {
@@ -447,6 +506,41 @@ useHead({
   align-items: center;
   gap: 1rem;
 }
+
+.btn-publish {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.5rem;
+  background: #3FD246;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 0.65rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(63, 210, 70, 0.22);
+  transition: all 0.15s ease;
+}
+.btn-publish:hover:not(:disabled) { background: #34c03b; transform: translateY(-1px); }
+.btn-publish:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-cancel-event {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.35rem;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-cancel-event:hover:not(:disabled) { background: #fee2e2; }
+.btn-cancel-event:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .btn-edit {
   display: inline-flex;

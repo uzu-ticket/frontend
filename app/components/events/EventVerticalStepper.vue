@@ -19,8 +19,10 @@
         :class="{
           'stepper-item--completed': step.number < currentStep,
           'stepper-item--active': step.number === currentStep,
+          'stepper-item--clickable': step.number < currentStep,
           'stepper-item--last': index === steps.length - 1
         }"
+        @click="handleStepClick(step.number)"
       >
         <!-- Circle & Line Wrapper -->
         <div class="stepper-left-col">
@@ -68,9 +70,19 @@ interface Props {
   currentStep?: number
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   currentStep: 1,
 })
+
+const emit = defineEmits<{
+  'select-step': [step: number]
+}>()
+
+function handleStepClick(stepNumber: number) {
+  if (stepNumber < props.currentStep) {
+    emit('select-step', stepNumber)
+  }
+}
 
 const steps = [
   { number: 1, title: 'Event Details' },
@@ -123,7 +135,15 @@ const steps = [
 .stepper-item {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 0.85rem;
+  position: relative;
+}
+
+.stepper-item--clickable {
+  cursor: pointer;
+}
+.stepper-item--clickable:hover .step-title {
+  color: #3FD246;
 }
 
 .stepper-left-col {

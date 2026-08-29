@@ -1,4 +1,4 @@
-import type { Event, EventCategory, EventImage, TicketType, CreateEventDto } from '~/types/event'
+import type { Event, EventCategory, TicketType, CreateEventDto, CreateTicketTypeDto } from '~/types/event'
 
 export const useEvents = () => {
   const { instance } = useApi()
@@ -95,6 +95,26 @@ export const useEvents = () => {
     }
   }
 
+  const updateEvent = async (eventId: string, dto: Partial<CreateEventDto>): Promise<Event> => {
+    try {
+      loading.value = true
+      error.value = null
+      const res = await instance.patch<Event>(
+        `/organisations/${activeOrgId.value}/events/${eventId}`,
+        dto,
+      )
+      const updated = res.data
+      const idx = events.value.findIndex((e) => e.id === eventId)
+      if (idx !== -1) events.value[idx] = updated
+      return updated
+    } catch (e) {
+      error.value = extractErrorMessage(e, 'Failed to update event')
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   const publishEvent = async (eventId: string): Promise<Event> => {
     try {
       loading.value = true
@@ -119,6 +139,58 @@ export const useEvents = () => {
     }
   }
 
+  const cancelEvent = async (eventId: string): Promise<Event> => {
+    try {
+      loading.value = true
+      error.value = null
+      const res = await instance.post<Event>(
+        `/organisations/${activeOrgId.value}/events/${eventId}/cancel`,
+        {},
+      )
+      const updated = res.data
+      const idx = events.value.findIndex((e) => e.id === eventId)
+      if (idx !== -1) events.value[idx] = updated
+      return updated
+    } catch (e) {
+      error.value = extractErrorMessage(e, 'Failed to cancel event')
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const createTicketType = async (eventId: string, dto: CreateTicketTypeDto): Promise<TicketType> => {
+    try {
+      loading.value = true
+      error.value = null
+      const res = await instance.post<TicketType>(
+        `/organisations/${activeOrgId.value}/events/${eventId}/ticket-types`,
+        dto,
+      )
+      return res.data
+    } catch (e) {
+      error.value = extractErrorMessage(e, 'Failed to add ticket type')
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const deleteTicketType = async (eventId: string, ticketTypeId: string): Promise<void> => {
+    try {
+      loading.value = true
+      error.value = null
+      await instance.delete(
+        `/organisations/${activeOrgId.value}/events/${eventId}/ticket-types/${ticketTypeId}`,
+      )
+    } catch (e) {
+      error.value = extractErrorMessage(e, 'Failed to delete ticket type')
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     events,
     loading,
@@ -127,6 +199,10 @@ export const useEvents = () => {
     fetchEvents,
     fetchCategories,
     createEvent,
+    updateEvent,
     publishEvent,
+    cancelEvent,
+    createTicketType,
+    deleteTicketType,
   }
 }

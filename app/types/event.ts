@@ -74,6 +74,15 @@ export interface Event {
   signingKeys: EventSigningKey[]
 }
 
+export interface CreateTicketTypeDto {
+  name: string
+  priceMinor: number
+  quantityTotal: number
+  perOrderLimit?: number
+  saleStartsAt?: string
+  saleEndsAt?: string
+}
+
 export interface CreateEventDto {
   title: string
   description?: string
@@ -89,3 +98,4 @@ export interface CreateEventDto {
   endsAt?: string
   salesCloseAt: string
 }
+

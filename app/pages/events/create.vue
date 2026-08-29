@@ -4,7 +4,10 @@
     <div :class="{ 'create-event-layout': !isLive, 'live-layout': isLive }">
       <!-- Left Column: Vertical Stepper (contains single Back to events link & auto-save badge) -->
       <aside v-if="!isLive" class="stepper-col">
-        <EventVerticalStepper :current-step="currentStep" />
+        <EventVerticalStepper
+          :current-step="currentStep"
+          @select-step="(s) => currentStep = s"
+        />
       </aside>
 
       <!-- Right Column / Main Form Card -->
@@ -13,41 +16,19 @@
           <!-- SUCCESS STATE: YOUR EVENT IS LIVE! -->
           <EventSuccessCard v-if="isLive" />
 
-          <!-- STEP 1: Basic Information -->
-          <CreateEventStep1
-            v-else-if="currentStep === 1"
-            @cancel="handleCancel"
-            @next="handleStep1Next"
-          />
-
-          <!-- STEP 2: Venue & Schedule -->
-          <CreateEventStep2
-            v-else-if="currentStep === 2"
-            @back="currentStep = 1"
-            @next="handleStep2Next"
-          />
-
-          <!-- STEP 3: Tickets -->
-          <CreateEventStep3
-            v-else-if="currentStep === 3"
-            @back="currentStep = 2"
-            @next="handleStep3Next"
-          />
-
-          <!-- STEP 4: Sales Settings -->
-          <CreateEventStep4
-            v-else-if="currentStep === 4"
-            @back="currentStep = 3"
-            @next="handleStep4Next"
-          />
-
-          <!-- STEP 5: Preview & Publish -->
-          <CreateEventStep5
-            v-else-if="currentStep === 5"
-            @back="currentStep = 4"
-            @save-draft="handleSaveDraft"
-            @publish="handlePublish"
-          />
+          <!-- STEP FLOW WITH KEEPALIVE -->
+          <KeepAlive v-else>
+            <component
+              :is="activeStepComponent"
+              :key="currentStep"
+              :event-data="eventData"
+              @cancel="handleCancel"
+              @back="currentStep--"
+              @next="handleStepNext"
+              @save-draft="handleSaveDraft"
+              @publish="handlePublish"
+            />
+          </KeepAlive>
         </div>
       </main>
     </div>
@@ -73,7 +54,7 @@ definePageMeta({
 
 const router = useRouter()
 const toast = useToast()
-const { fetchCategories, createEvent, publishEvent, error } = useEvents()
+const { fetchCategories, createEvent, publishEvent, createTicketType, error } = useEvents()
 
 const currentStep = ref(1)
 const isLive = ref(false)
@@ -105,6 +86,22 @@ function handleCancel() {
   router.push('/events')
 }
 
+const stepComponents = [
+  CreateEventStep1,
+  CreateEventStep2,
+  CreateEventStep3,
+  CreateEventStep4,
+  CreateEventStep5,
+]
+const activeStepComponent = computed(() => stepComponents[currentStep.value - 1])
+
+function handleStepNext(data: unknown) {
+  if (currentStep.value === 1) handleStep1Next(data)
+  else if (currentStep.value === 2) handleStep2Next(data)
+  else if (currentStep.value === 3) handleStep3Next(data)
+  else if (currentStep.value === 4) handleStep4Next(data)
+}
+
 function handleStep1Next(data: unknown) {
   eventData.value.step1 = data
   currentStep.value = 2
@@ -115,7 +112,8 @@ function handleStep2Next(data: unknown) {
   currentStep.value = 3
 }
 
-function handleStep3Next() {
+function handleStep3Next(data?: unknown) {
+  if (data) eventData.value.step3 = data
   currentStep.value = 4
 }
 
@@ -176,11 +174,34 @@ function computeSalesCloseAt(startsAt: Date, s4: Record<string, unknown>): strin
   return salesCloseAt.toISOString()
 }
 
+async function createTicketsForEvent(eventId: string) {
+  const step3Tickets = (eventData.value.step3 as Array<Record<string, unknown>>) || []
+  for (const t of step3Tickets) {
+    const rawPrice = String(t.price || '0').replace(/[^0-9.]/g, '')
+    const priceAmount = parseFloat(rawPrice) || 0
+    const priceMinor = Math.round(priceAmount * 100)
+
+    const dto: CreateTicketTypeDto = {
+      name: (t.type as string) || 'General Admission',
+      priceMinor,
+      quantityTotal: parseInt(t.quantity as string) || 100,
+      perOrderLimit: parseInt(t.maxPerOrder as string) || 10,
+    }
+
+    try {
+      await createTicketType(eventId, dto)
+    } catch (e) {
+      console.warn('Could not create ticket type:', e)
+    }
+  }
+}
+
 async function handleSaveDraft() {
   isSubmitting.value = true
   try {
     const dto = buildCreateDto()
-    await createEvent(dto)
+    const created = await createEvent(dto)
+    await createTicketsForEvent(created.id)
     toast.show({
       title: 'Draft Saved',
       message: 'Your event draft has been saved successfully.',
@@ -204,6 +225,7 @@ async function handlePublish() {
     const dto = buildCreateDto()
     const created = await createEvent(dto)
     createdEventId.value = created.id
+    await createTicketsForEvent(created.id)
     await publishEvent(created.id)
     isLive.value = true
     toast.show({
