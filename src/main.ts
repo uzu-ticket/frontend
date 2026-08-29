@@ -17,8 +17,22 @@ async function bootstrap() {
 
   const config = app.get(AppConfigService);
 
-  app.use(helmet());
-  app.enableCors({ origin: config.corsOrigins, credentials: true });
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+  app.enableCors({
+    origin: true,
+    credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+      "x-organization-id",
+      "X-Organization-Id",
+      "x-api-key",
+    ],
+  });
   app.setGlobalPrefix("api");
 
   app.useGlobalPipes(
