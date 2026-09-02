@@ -5,6 +5,7 @@ import { CurrentUser, AuthenticatedUser } from "../../common/decorators/current-
 import { OrdersService } from "./orders.service";
 import { PaymentsService } from "../payments/payments.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
+import { CancelOrderDto } from "./dto/cancel-order.dto";
 
 @ApiTags("orders")
 @Controller("orders")
@@ -41,6 +42,22 @@ export class OrdersController {
   @Get("mine/tickets")
   findMyTickets(@CurrentUser() user: AuthenticatedUser) {
     return this.ordersService.findMyTickets(user.id);
+  }
+
+  /**
+   * Lists all orders across every event in an organisation. The
+   * organisation context for the dashboard — any accepted member can
+   * read the list; write operations (cancel, refund) enforce stricter
+   * permission checks in the service layer.
+   */
+  @Get("organisation/:organisationId")
+  listForOrganisation(@CurrentUser() user: AuthenticatedUser, @Param("organisationId") organisationId: string) {
+    return this.ordersService.listForOrganisation(organisationId, user.id);
+  }
+
+  @Post(":orderId/cancel")
+  cancelOrder(@CurrentUser() user: AuthenticatedUser, @Param("orderId") orderId: string, @Body() dto: CancelOrderDto) {
+    return this.ordersService.cancelOrder(orderId, user.id, dto.reason);
   }
 
   /**

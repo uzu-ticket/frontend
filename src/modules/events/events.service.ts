@@ -59,7 +59,7 @@ export class EventsService {
     return this.prisma.event.findMany({
       where: { organisationId },
       orderBy: { startsAt: "desc" },
-      include: { ticketTypes: true, category: true },
+      include: { ticketTypes: true, category: true, images: true },
     });
   }
 

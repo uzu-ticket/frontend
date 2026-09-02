@@ -4,6 +4,8 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { AppConfigService } from "../../config/app-config.service";
 import { newId } from "../../common/id";
 import { calculatePlatformFee } from "../../common/money";
+import { AuditService } from "../../common/audit/audit.service";
+import { PermissionsService } from "../../common/auth/permissions.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { OrderMetadata, OrderMetadataItem } from "./order-metadata";
 
@@ -23,6 +25,8 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: AppConfigService,
+    private readonly permissions: PermissionsService,
+    private readonly audit: AuditService,
   ) {}
 
   async createOrder(dto: CreateOrderDto) {
@@ -120,7 +124,11 @@ export class OrdersService {
   async findOne(orderId: string) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { tickets: true, transactions: true, event: { select: { id: true, title: true, startsAt: true } } },
+      include: {
+        tickets: { include: { ticketType: true } },
+        transactions: true,
+        event: { select: { id: true, title: true, startsAt: true, venueName: true } },
+      },
     });
     if (!order) throw new NotFoundException("Order not found");
     return order;
@@ -140,6 +148,66 @@ export class OrdersService {
       orderBy: { issuedAt: "desc" },
       include: { event: { select: { id: true, title: true, startsAt: true, venueName: true } }, ticketType: true },
     });
+  }
+
+  async listForOrganisation(organisationId: string, userId: string) {
+    await this.permissions.assertMembership(userId, organisationId);
+    return this.prisma.order.findMany({
+      where: { event: { organisationId } },
+      orderBy: { createdAt: "desc" },
+      include: {
+        event: { select: { id: true, title: true, startsAt: true, venueName: true } },
+        tickets: { include: { ticketType: true } },
+        transactions: true,
+      },
+    });
+  }
+
+  /**
+   * Cancels a pending order: releases reserved inventory and marks the order
+   * as cancelled. Paid orders must be refunded via WalletsService instead.
+   */
+  async cancelOrder(orderId: string, userId: string, reason?: string) {
+    await this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+        include: { event: { select: { organisationId: true } } },
+      });
+      if (!order) throw new NotFoundException("Order not found");
+
+      await this.permissions.assertMembership(userId, order.event.organisationId);
+
+      if (order.status !== "pending") {
+        throw new BadRequestException(
+          `Cannot cancel an order in status "${order.status}". Paid orders should be refunded instead.`,
+        );
+      }
+
+      const metadata = order.metadata as unknown as OrderMetadata | null;
+      for (const item of metadata?.items ?? []) {
+        // eslint-disable-next-line no-await-in-loop
+        await tx.ticketType.update({
+          where: { id: item.ticketTypeId },
+          data: { quantitySold: { decrement: item.quantity } },
+        });
+      }
+
+      await tx.order.update({ where: { id: orderId }, data: { status: "cancelled" } });
+
+      await this.audit.log(
+        {
+          organisationId: order.event.organisationId,
+          actorUserId: userId,
+          action: "order.cancelled",
+          entityType: "order",
+          entityId: orderId,
+          metadata: reason ? { reason } : undefined,
+        },
+        tx,
+      );
+    });
+
+    return this.findOne(orderId);
   }
 
   /** Gives back reserved inventory for an order that never completed payment. Used by StaleOrderCron. */
