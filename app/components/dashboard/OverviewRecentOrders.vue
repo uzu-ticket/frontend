@@ -3,11 +3,30 @@
     <!-- Header -->
     <div class="card-header">
       <h3 class="card-title">Recent Orders</h3>
-      <NuxtLink to="/orders" class="view-all-link">View All</NuxtLink>
+      <NuxtLink v-if="orders.length > 0" to="/orders" class="view-all-link">View All</NuxtLink>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-state">
+      <div v-for="i in 3" :key="i" class="skeleton-row">
+        <AppSkeleton variant="text" width="100%" height="0.8rem" class="mb-1" />
+        <AppSkeleton variant="text" width="80%" height="0.8rem" class="mb-2" />
+        <AppSkeleton variant="text" width="60%" height="0.8rem" />
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-state">
+      <p class="error-text">{{ error }}</p>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="orders.length === 0" class="empty-state">
+      <p class="empty-text">No orders yet for this organization.</p>
     </div>
 
     <!-- Data Table -->
-    <div class="table-responsive">
+    <div v-else class="table-responsive">
       <table class="orders-table">
         <thead>
           <tr>
@@ -22,17 +41,17 @@
         </thead>
         <tbody>
           <tr v-for="order in orders" :key="order.id">
-            <td class="order-id">{{ order.orderId }}</td>
-            <td class="customer-name">{{ order.customer }}</td>
-            <td class="event-title">{{ order.event }}</td>
-            <td class="ticket-count">{{ order.tickets }}</td>
-            <td class="amount-val">₦{{ order.amount }}</td>
+            <td class="order-id">{{ order.orderNumber }}</td>
+            <td class="customer-name">{{ order.buyer.name }}</td>
+            <td class="event-title">{{ order.event.title }}</td>
+            <td class="ticket-count">{{ order.tickets.count }}</td>
+            <td class="amount-val">₦{{ order.totalAmount.toLocaleString() }}</td>
             <td>
-              <span class="status-pill" :class="`status--${order.status.toLowerCase()}`">
+              <span class="status-pill" :class="statusBadgeClass(order.status)">
                 {{ order.status }}
               </span>
             </td>
-            <td class="order-date">{{ order.date }}</td>
+            <td class="order-date">{{ order.createdDate }}</td>
           </tr>
         </tbody>
       </table>
@@ -41,48 +60,33 @@
 </template>
 
 <script setup lang="ts">
-const orders = [
-  {
-    id: 1,
-    orderId: '#ORD-455',
-    customer: 'Tolu Adebayo',
-    event: 'Summer Tech..',
-    tickets: 1,
-    amount: '10,000',
-    status: 'Paid',
-    date: 'Aug 4, 2026',
-  },
-  {
-    id: 2,
-    orderId: '#ORD-455',
-    customer: 'Tolu Adebayo',
-    event: 'Lagos Event',
-    tickets: 6,
-    amount: '20,000',
-    status: 'Pending',
-    date: 'Aug 10, 2026',
-  },
-  {
-    id: 3,
-    orderId: '#ORD-455',
-    customer: 'Tolu Adebayo',
-    event: 'Startup Growth',
-    tickets: 4,
-    amount: '30,000',
-    status: 'Paid',
-    date: 'Aug 8, 2026',
-  },
-  {
-    id: 4,
-    orderId: '#ORD-455',
-    customer: 'Tolu Adebayo',
-    event: 'Runners Jump',
-    tickets: 5,
-    amount: '15,000',
-    status: 'Failed',
-    date: 'Aug 2, 2026',
-  },
-]
+import { ref, computed, onMounted, watch } from 'vue'
+import AppSkeleton from '~/components/ui/AppSkeleton.vue'
+import { useOrders } from '~/composables/useOrders'
+import { useOrgState } from '~/composables/useOrgState'
+import { orderStatusCssClass } from '~/types/orders'
+import type { OrderStatus } from '~/types/orders'
+
+const { activeOrgId } = useOrgState()
+const { fetchOrders, orders: allOrders, loading, error } = useOrders()
+
+const orders = computed(() => allOrders.value.slice(0, 5))
+
+onMounted(() => {
+  if (activeOrgId.value) {
+    fetchOrders(activeOrgId.value, true)
+  }
+})
+
+watch(activeOrgId, (newId) => {
+  if (newId) {
+    fetchOrders(newId, true)
+  }
+})
+
+function statusBadgeClass(status: string): string {
+  return orderStatusCssClass(status as OrderStatus)
+}
 </script>
 
 <style scoped>
@@ -168,6 +172,36 @@ const orders = [
   color: #6b7280;
 }
 
+/* Loading & empty states */
+.loading-state {
+  padding: 1rem 0;
+}
+
+.skeleton-row {
+  margin-bottom: 1rem;
+}
+.skeleton-row:last-child {
+  margin-bottom: 0;
+}
+
+.error-state {
+  padding: 2rem 0;
+  text-align: center;
+}
+.error-text {
+  font-size: 0.85rem;
+  color: #ef4444;
+}
+
+.empty-state {
+  padding: 2rem 0;
+  text-align: center;
+}
+.empty-text {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
 /* Status Pills */
 .status-pill {
   display: inline-block;
@@ -178,16 +212,19 @@ const orders = [
   text-align: center;
 }
 
-.status--paid {
-  background: #DCFCE7;
-  color: #16A34A;
-}
-
-.status--pending {
+.status--pending,
+.status--partially-refunded {
   background: #FEF9C3;
   color: #CA8A04;
 }
 
+.status--completed {
+  background: #DCFCE7;
+  color: #16A34A;
+}
+
+.status--refunded,
+.status--cancelled,
 .status--failed {
   background: #FEE2E2;
   color: #DC2626;

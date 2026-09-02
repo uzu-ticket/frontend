@@ -47,10 +47,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppSelect from '~/components/ui/AppSelect.vue'
 import ScannerEventCard, { type EventItem } from '~/components/scanner/ScannerEventCard.vue'
+import { useScanner } from '~/composables/useScanner'
+import { useToast } from '~/composables/useToast'
 
 definePageMeta({
   layout: 'dashboard',
@@ -61,17 +63,25 @@ useHead({
 })
 
 const router = useRouter()
+const toast = useToast()
+const scannerStore = useScanner()
 
 const selectedEventId = ref<string | number>('')
+const eventOptions = ref<{ value: string; label: string }[]>([])
+const events = ref<EventItem[]>([])
 
-function goBack() {
-  router.push('/scanner')
-}
-
-const eventOptions = [
-  { value: 'summer-tech', label: 'Summer Tech Growth Summit' },
-  { value: 'music-fest-2026', label: 'Music Festival 2026' },
-]
+onMounted(async () => {
+  try {
+    eventOptions.value = await scannerStore.fetchEventOptions()
+    events.value = (await scannerStore.fetchEvents()) as EventItem[]
+  } catch {
+    toast.show({
+      title: 'Failed to load events',
+      message: 'Could not load events for scanner selection',
+      type: 'error',
+    })
+  }
+})
 
 function handleEventSelect(val: string | number | null) {
   if (val) selectEvent(val)
@@ -80,33 +90,6 @@ function handleEventSelect(val: string | number | null) {
 function selectEvent(id: string | number) {
   router.push(`/scanner/${id}`)
 }
-
-const events = ref<EventItem[]>([
-  {
-    id: 'summer-tech-1',
-    title: 'Summer Tech Growth Summit',
-    dateTime: 'Aug, 30 • 10:00AM',
-    location: 'Victoria Island, Lagos, Nigeria.',
-    imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&auto=format&fit=crop&q=80',
-    status: 'Live',
-  },
-  {
-    id: 'music-festival-2026',
-    title: 'Music Festival 2026',
-    dateTime: 'Aug, 30 • 10:00AM',
-    location: 'Maryland Yaba, Lagos, Nigeria.',
-    imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&auto=format&fit=crop&q=80',
-    status: 'Live',
-  },
-  {
-    id: 'summer-tech-2',
-    title: 'Summer Tech Growth Summit',
-    dateTime: 'Aug, 30 • 10:00AM',
-    location: 'Victoria Island, Lagos, Nigeria.',
-    imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&auto=format&fit=crop&q=80',
-    status: 'Upcoming',
-  },
-])
 </script>
 
 <style scoped>

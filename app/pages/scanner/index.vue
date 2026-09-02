@@ -81,13 +81,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppSelect from '~/components/ui/AppSelect.vue'
 import DatePicker from '~/components/ui/DatePicker.vue'
 import ScannerStatGroup from '~/components/scanner/ScannerStatGroup.vue'
 import LiveScanActivityItem, { type ScanItem } from '~/components/scanner/LiveScanActivityItem.vue'
 import ScanDetailModal from '~/components/scanner/ScanDetailModal.vue'
+import { useScanner } from '~/composables/useScanner'
+import { useToast } from '~/composables/useToast'
 
 definePageMeta({
   layout: 'dashboard',
@@ -98,15 +100,25 @@ useHead({
 })
 
 const router = useRouter()
+const toast = useToast()
+const scannerStore = useScanner()
 
-const selectedEventId = ref<string | number>('music-fest')
+const selectedEventId = ref<string | number>('')
 const dateRange = ref('')
+const eventOptions = ref<{ value: string; label: string }[]>([])
+const recentScans = ref<ScanItem[]>([])
 
-const eventOptions = [
-  { value: 'music-fest', label: 'Music Fest Event' },
-  { value: 'summer-tech', label: 'Summer Tech Growth Summit' },
-  { value: 'music-festival-2026', label: 'Music Festival 2026' },
-]
+onMounted(async () => {
+  try {
+    eventOptions.value = await scannerStore.fetchEventOptions()
+  } catch {
+    toast.show({
+      title: 'Failed to load events',
+      message: 'Could not load events for scanner selection',
+      type: 'error',
+    })
+  }
+})
 
 function handleEventChange(val: string | number | null) {
   if (val) {
@@ -121,84 +133,6 @@ function openScanModal(scan: ScanItem) {
   selectedScan.value = scan
   isModalOpen.value = true
 }
-
-const recentScans = ref<ScanItem[]>([
-  {
-    id: '1',
-    name: 'Paschal Ugo',
-    email: 'gracepeter@gmail.com',
-    status: 'Valid',
-    time: '2m ago',
-    ticketType: 'VIP Access',
-    ticketId: '#UZT-B2HA-H7D9',
-    orderId: '#ORD-39281',
-    gate: 'Gate B',
-    scanner: 'Scanner 01',
-    scannedAt: 'Sept 20, 2026 - 9:46 AM',
-    purchased: 'VIP ACCESS',
-    avatarColor: '#86EFAC',
-  },
-  {
-    id: '2',
-    name: 'Dara Uche',
-    email: 'gracepeter@gmail.com',
-    status: 'Valid',
-    time: '2m ago',
-    ticketType: 'Regular',
-    ticketId: '#UZT-C4K1-P9A2',
-    orderId: '#ORD-39282',
-    gate: 'Gate A',
-    scanner: 'Scanner 02',
-    scannedAt: 'Sept 20, 2026 - 9:45 AM',
-    purchased: 'REGULAR ACCESS',
-    avatarColor: '#FDBA74',
-  },
-  {
-    id: '3',
-    name: 'Paul Ega',
-    email: 'gracepeter@gmail.com',
-    status: 'Invalid',
-    time: '2m ago',
-    ticketType: 'Regular',
-    ticketId: '#UZT-X9D2-L8M0',
-    orderId: '#ORD-39283',
-    gate: 'Gate A',
-    scanner: 'Scanner 01',
-    scannedAt: 'Sept 20, 2026 - 9:44 AM',
-    purchased: 'REGULAR ACCESS',
-    avatarColor: '#60A5FA',
-  },
-  {
-    id: '4',
-    name: 'Paschal Ugo',
-    email: 'gracepeter@gmail.com',
-    status: 'Valid',
-    time: '2m ago',
-    ticketType: 'VIP Access',
-    ticketId: '#UZT-B2HA-H7D9',
-    orderId: '#ORD-39284',
-    gate: 'Gate B',
-    scanner: 'Scanner 02',
-    scannedAt: 'Sept 20, 2026 - 9:43 AM',
-    purchased: 'VIP ACCESS',
-    avatarColor: '#FDE047',
-  },
-  {
-    id: '5',
-    name: 'Paschal Ugo',
-    email: 'gracepeter@gmail.com',
-    status: 'Valid',
-    time: '2m ago',
-    ticketType: 'VIP Access',
-    ticketId: '#UZT-B2HA-H7D9',
-    orderId: '#ORD-39285',
-    gate: 'Gate C',
-    scanner: 'Scanner 01',
-    scannedAt: 'Sept 20, 2026 - 9:42 AM',
-    purchased: 'VIP ACCESS',
-    avatarColor: '#F472B6',
-  },
-])
 </script>
 
 <style scoped>

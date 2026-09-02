@@ -101,9 +101,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useScanner } from '~/composables/useScanner'
 import { useToast } from '~/composables/useToast'
+import { formatDateTime } from '~/types/scanner'
 
 definePageMeta({
   layout: 'dashboard',
@@ -116,35 +118,99 @@ useHead({
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const scannerStore = useScanner()
 
-const eventId = computed(() => (route.params.id as string) || '1')
+const eventId = computed(() => route.params.id as string)
 
 function goBack() {
   router.push(`/scanner/${eventId.value}`)
 }
 
-const eventName = ref('Summer Tech Growth Summit')
-
+const eventName = ref('')
 const activeConflict = ref({
-  ticketId: '#UZU-B2XA-H7D9',
-  attendeeName: 'Divine Emmanuel',
-  ticketType: 'VIP Access',
+  ticketId: '',
+  attendeeName: '',
+  ticketType: '',
   firstScan: {
-    time: 'Sept 20, 2026 - 04:24 PM',
-    device: 'Gate A - Scanner 01',
-    status: 'Accepted',
+    time: '',
+    device: '',
+    status: '',
   },
   secondScan: {
-    time: 'Sept 20, 2026 - 04:24 PM',
-    device: 'Gate C - Scanner 03',
-    status: 'Flagged',
+    time: '',
+    device: '',
+    status: '',
   },
+  reason: '',
+  firstScannedAt: '',
+  firstScannedBy: '',
+  gate: '',
+  scanner: '',
+  scannedAt: '',
 })
+
+onMounted(async () => {
+  await loadConflictData()
+})
+
+watch(eventId, async () => {
+  await loadConflictData()
+})
+
+async function loadConflictData() {
+  try {
+    const [evt, report] = await Promise.all([
+      scannerStore.fetchEvent(eventId.value),
+      scannerStore.fetchIntegrityReport(eventId.value, true),
+    ])
+
+    eventName.value = evt.title
+
+    if (report.conflicts.length > 0) {
+      const conflict = report.conflicts[0]
+      const deviceLabel = conflict.scannerDevice?.deviceLabel || conflict.scannerDeviceId
+      const reasonMap: Record<string, string> = {
+        duplicate: 'Ticket already used',
+        invalid: 'Ticket is invalid',
+        wrong_event: 'Wrong event',
+        admitted: 'Already admitted',
+      }
+
+      activeConflict.value = {
+        ticketId: conflict.ticket?.id || conflict.id,
+        attendeeName: conflict.ticket?.recipientName || 'Unknown',
+        ticketType: conflict.ticket?.ticketTypeId || '',
+        firstScan: {
+          time: formatDateTime(conflict.scannedAt) || 'Sept 20, 2026 - 9:46 AM',
+          device: deviceLabel || '',
+          status: 'Accepted',
+        },
+        secondScan: {
+          time: formatDateTime(conflict.scannedAt) || 'Sept 20, 2026 - 9:46 AM',
+          device: deviceLabel || '',
+          status: 'Flagged',
+        },
+        reason: reasonMap[conflict.result] || conflict.result,
+        firstScannedAt: formatDateTime(conflict.scannedAt) || '',
+        firstScannedBy: conflict.scannedBy || deviceLabel || '',
+        gate: deviceLabel || '',
+        scanner: deviceLabel || '',
+        scannedAt: formatDateTime(conflict.scannedAt) || '',
+      }
+    }
+  } catch (e) {
+    toast.show({
+      title: 'Failed to load conflict data',
+      message: 'Could not load conflict review data for this event',
+      type: 'error',
+    })
+  }
+}
 
 function handleMarkReviewed() {
   toast.show({
     title: 'Conflict Marked as Reviewed',
-    message: `#UZU-B2XA-H7D9 has been marked as reviewed`,
+    message: `${activeConflict.value.ticketId} has been marked as reviewed`,
     type: 'success',
   })
   goBack()

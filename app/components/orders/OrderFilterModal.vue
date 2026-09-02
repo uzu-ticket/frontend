@@ -26,19 +26,19 @@
       <!-- Event Filter (Custom AppSelect) -->
       <div class="filter-group">
         <label class="filter-label">Filter by Event</label>
-        <AppSelect
+         <AppSelect
           v-model="selectedEvent"
-          :options="eventOptions"
+          :options="resolvedEventOptions"
           placeholder="All Events"
         />
-      </div>
+       </div>
 
-      <!-- Ticket Tier Filter (Custom AppSelect) -->
-      <div class="filter-group">
-        <label class="filter-label">Ticket Tier</label>
-        <AppSelect
+       <!-- Ticket Tier Filter (Custom AppSelect) -->
+       <div class="filter-group">
+         <label class="filter-label">Ticket Tier</label>
+         <AppSelect
           v-model="selectedTier"
-          :options="tierOptions"
+          :options="resolvedTierOptions"
           placeholder="All Tiers"
         />
       </div>
@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import AppModal from '~/components/AppModal.vue'
 import AppSelect from '~/components/ui/AppSelect.vue'
 
@@ -67,6 +67,8 @@ const props = defineProps<{
   activeStatus: string
   activeEvent: string
   activeTier: string
+  eventOptions?: { value: string; label: string }[]
+  tierOptions?: { value: string; label: string }[]
 }>()
 
 const emit = defineEmits<{
@@ -74,22 +76,18 @@ const emit = defineEmits<{
   'apply': [filters: { status: string; event: string; tier: string }]
 }>()
 
-const statusOptions = ['All', 'Published', 'Draft', 'Refunded']
+const statusOptions = ['All', 'Pending', 'Completed', 'Partially Refunded', 'Refunded', 'Cancelled', 'Failed']
 
-const eventOptions = [
+const defaultEventOptions = [
   { value: 'ALL', label: 'All Events' },
-  { value: 'Table Talks', label: 'Table Talks' },
-  { value: 'Startup Meets', label: 'Startup Meets' },
-  { value: 'Music Fest 2026', label: 'Music Fest 2026' },
-  { value: 'The Startup Growth Summit', label: 'The Startup Growth Summit' },
 ]
 
-const tierOptions = [
+const defaultTierOptions = [
   { value: 'ALL', label: 'All Tiers' },
-  { value: 'VIP', label: 'VIP' },
-  { value: 'REGULAR', label: 'REGULAR' },
-  { value: 'VVIP', label: 'VVIP' },
 ]
+
+const resolvedEventOptions = computed(() => props.eventOptions ?? defaultEventOptions)
+const resolvedTierOptions = computed(() => props.tierOptions ?? defaultTierOptions)
 
 const selectedStatus = ref(props.activeStatus || 'All')
 const selectedEvent = ref<string | null>(props.activeEvent || 'ALL')

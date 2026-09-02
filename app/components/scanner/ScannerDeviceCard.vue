@@ -32,8 +32,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  online: 3,
-  offline: 1,
+  online: 0,
+  offline: 0,
 })
 
 const total = computed(() => props.online + props.offline)

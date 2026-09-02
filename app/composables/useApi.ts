@@ -2,33 +2,36 @@ import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axio
 
 function safeGetCookie<T>(name: string): T | null {
   try {
-    return useCookie<T | null>(name).value
+    const val = useCookie<T | null>(name).value
+    if (val !== null && val !== undefined) return val
   } catch {
-    if (typeof document !== 'undefined') {
-      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-      if (match) {
-        try {
-          return JSON.parse(decodeURIComponent(match[2])) as T
-        } catch {
-          return decodeURIComponent(match[2]) as unknown as T
-        }
+    void 0
+  }
+  if (typeof document !== 'undefined') {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+    if (match) {
+      try {
+        return JSON.parse(decodeURIComponent(match[2])) as T
+      } catch {
+        return decodeURIComponent(match[2]) as unknown as T
       }
     }
-    return null
   }
+  return null
 }
 
 function safeSetCookie<T>(name: string, val: T | null) {
   try {
     useCookie<T | null>(name).value = val
   } catch {
-    if (typeof document !== 'undefined') {
-      if (val === null) {
-        document.cookie = `${name}=; Max-Age=0; path=/`
-      } else {
-        const strVal = typeof val === 'string' ? val : JSON.stringify(val)
-        document.cookie = `${name}=${encodeURIComponent(strVal)}; path=/; max-age=${60 * 60 * 24 * 30}`
-      }
+    void 0
+  }
+  if (typeof document !== 'undefined') {
+    if (val === null) {
+      document.cookie = `${name}=; Max-Age=0; path=/`
+    } else {
+      const strVal = typeof val === 'string' ? val : JSON.stringify(val)
+      document.cookie = `${name}=${encodeURIComponent(strVal)}; path=/; max-age=${60 * 60 * 24 * 30}`
     }
   }
 }

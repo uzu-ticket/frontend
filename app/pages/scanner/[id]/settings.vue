@@ -137,9 +137,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppSelect from '~/components/ui/AppSelect.vue'
+import { useScanner } from '~/composables/useScanner'
 import { useToast } from '~/composables/useToast'
 
 definePageMeta({
@@ -153,14 +154,28 @@ useHead({
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const scannerStore = useScanner()
 
-const eventId = computed(() => (route.params.id as string) || '1')
+const eventId = computed(() => route.params.id as string)
 
 function goBack() {
   router.push(`/scanner/${eventId.value}`)
 }
 
-const eventName = ref('Summer Tech Growth Summit')
+const eventName = ref('')
+
+onMounted(async () => {
+  try {
+    const evt = await scannerStore.fetchEvent(eventId.value)
+    eventName.value = evt.title
+  } catch {
+    toast.show({
+      title: 'Failed to load event',
+      message: 'Could not load event for scanner settings',
+      type: 'error',
+    })
+  }
+})
 
 const settings = ref({
   autoRefresh: true,

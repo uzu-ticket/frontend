@@ -15,18 +15,17 @@
         <!-- Banner Image -->
         <div class="cover-banner-wrapper">
           <img
-            src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=1200&auto=format&fit=crop"
-            alt="Summer Tech Conference"
+            :src="coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=1200&auto=format&fit=crop'"
+            :alt="previewTitle"
             class="cover-banner-img"
           />
         </div>
 
         <!-- Event Details -->
         <div class="event-details-section">
-          <h2 class="event-preview-title">Summer Tech Conference</h2>
+          <h2 class="event-preview-title">{{ previewTitle }}</h2>
           <p class="event-preview-desc">
-            Join us for a full day fof talks, workshop, and networking with
-            industry leaders  and innovators
+            {{ eventDescription || 'No description provided.' }}
           </p>
 
           <!-- 3 Info Cards Grid -->
@@ -39,12 +38,12 @@
                 </svg>
               </div>
               <div class="card-text-col">
-                <span class="info-primary">Saturday, August 24</span>
+                <span class="info-primary">{{ formattedDate || 'Date TBD' }}</span>
                 <span class="info-secondary">
                   <svg xmlns="http://www.w3.org/2000/svg" class="inline-clock" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  9:00 AM – 4:00 PM
+                  {{ formattedStartTime }} – {{ formattedEndTime }}
                 </span>
               </div>
             </div>
@@ -58,8 +57,8 @@
                 </svg>
               </div>
               <div class="card-text-col">
-                <span class="info-primary">Landmark Event Centre</span>
-                <span class="info-secondary">Victoria Island, Lagos.</span>
+                <span class="info-primary">{{ locationName || 'Venue TBD' }}</span>
+                <span class="info-secondary">{{ locationCity || '' }}</span>
               </div>
             </div>
 
@@ -72,27 +71,24 @@
                 </svg>
               </div>
               <div class="card-text-col">
-                <span class="info-primary">Public Event</span>
-                <span class="info-secondary">Anyone can view</span>
+                <span class="info-primary">{{ visibilityLabel || 'Visibility not set' }}</span>
+                <span class="info-secondary">{{ visibilityDesc || '' }}</span>
               </div>
             </div>
           </div>
 
           <!-- Ticket Type Section -->
-          <div class="ticket-section">
+          <div class="ticket-section" v-if="hasTicket">
             <h4 class="ticket-section-label">Ticket Type</h4>
             <div class="tickets-preview-row">
-              <div class="ticket-preview-card ticket--purple">
-                <span class="ticket-tag">VIP</span>
-                <span class="ticket-price">₦20,000</span>
-              </div>
-              <div class="ticket-preview-card ticket--green">
-                <span class="ticket-tag">Regular</span>
-                <span class="ticket-price">₦10,000</span>
-              </div>
-              <div class="ticket-preview-card ticket--yellow">
-                <span class="ticket-tag">Early Bird</span>
-                <span class="ticket-price">₦5,000</span>
+              <div
+                v-for="(ticket, idx) in previewTickets"
+                :key="idx"
+                class="ticket-preview-card"
+                :class="ticketColorClass(idx)"
+              >
+                <span class="ticket-tag">{{ ticket.type }}</span>
+                <span class="ticket-price">{{ ticket.price }}</span>
               </div>
             </div>
           </div>
@@ -116,7 +112,7 @@
             <div class="media-thumbnails-row">
               <div class="thumb-preview thumb-preview--169">
                 <img
-                  src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=300&auto=format&fit=crop"
+                  :src="coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=300&auto=format&fit=crop'"
                   alt="Thumbnail 16:9"
                   class="thumb-img"
                 />
@@ -139,7 +135,7 @@
             <div class="media-thumbnails-row">
               <div class="thumb-preview thumb-preview--45">
                 <img
-                  src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=200&auto=format&fit=crop"
+                  :src="coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=200&auto=format&fit=crop'"
                   alt="Thumbnail 4:5"
                   class="thumb-img"
                 />
@@ -213,21 +209,96 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
+const props = defineProps<{
+  eventData: Record<string, unknown>
+}>()
+
 const emit = defineEmits<{
   back: []
   'save-draft': []
   publish: []
 }>()
 
-const checklist = [
-  { label: 'Event Details', status: 'Completed', step: 1 },
-  { label: 'Venue & Schedule', status: 'Completed', step: 2 },
-  { label: 'Ticket Types', status: 'Completed', step: 3 },
-  { label: 'Sales Settings', status: 'Completed', step: 4 },
-]
+const s1 = computed(() => props.eventData.step1 as Record<string, unknown> | undefined)
+const s2 = computed(() => props.eventData.step2 as Record<string, unknown> | undefined)
+const s3 = computed(() => props.eventData.step3 as Array<Record<string, unknown>> | undefined)
+const s4 = computed(() => props.eventData.step4 as Record<string, unknown> | undefined)
+
+const previewTitle = computed(() => s1.value?.eventName || 'Untitled Event')
+const previewDesc = computed(() => s1.value?.description || '')
+const coverImage = computed(() => s1.value?.coverImage || null)
+
+const eventName = computed(() => s1.value?.eventName || '')
+const eventDescription = computed(() => s1.value?.description || '')
+
+const locationName = computed(() => s2.value?.venueName || '')
+const locationCity = computed(() => {
+  const parts: string[] = []
+  if (s2.value?.city) parts.push(s2.value.city as string)
+  if (s2.value?.state) parts.push(s2.value.state as string)
+  if (s2.value?.country) parts.push(s2.value.country as string)
+  return parts.join(', ') || ''
+})
+
+const formattedDate = computed(() => {
+  const d = s2.value?.startDate as string | undefined
+  if (!d) return ''
+  const date = new Date(d)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
+})
+
+const formattedStartTime = computed(() => s2.value?.startTime || '')
+const formattedEndTime = computed(() => s2.value?.endTime || '')
+
+const visibilityLabel = computed(() => {
+  const v = s1.value?.visibility as string | undefined
+  if (v === 'public') return 'Public Event'
+  if (v === 'unlisted') return 'Unlisted Event'
+  if (v === 'rsvp') return 'RSVP Event'
+  return v || ''
+})
+
+const visibilityDesc = computed(() => {
+  const v = s1.value?.visibility as string | undefined
+  if (v === 'public') return 'Anyone can view'
+  if (v === 'unlisted') return 'Only people with the link'
+  if (v === 'rsvp') return 'Attendees must RSVP'
+  return ''
+})
+
+const previewTickets = computed(() => {
+  const tickets = s3.value || []
+  return tickets.map((t) => ({
+    type: t.type as string || 'General Admission',
+    price: (t.price as string) || 'Free',
+    color: (t.color as string) || '',
+  }))
+})
+
+const hasTicket = computed(() => previewTickets.value.length > 0)
+
+const checklist = computed(() => [
+  { label: 'Event Details', status: s1.value && s1.value.eventName ? 'Completed' : 'Incomplete', step: 1 },
+  { label: 'Venue & Schedule', status: s2.value && s2.value.venueName ? 'Completed' : 'Incomplete', step: 2 },
+  { label: 'Ticket Types', status: s3.value && s3.value.length > 0 ? 'Completed' : 'Incomplete', step: 3 },
+  { label: 'Sales Settings', status: s4.value && Object.keys(s4.value).length > 0 ? 'Completed' : 'Incomplete', step: 4 },
+])
 
 function triggerImageSelect(_ratio: string) {
   // Future: open file picker for the given aspect ratio
+}
+
+const ticketColorClasses = ['ticket--purple', 'ticket--green', 'ticket--yellow']
+function ticketColorClass(idx: number): string {
+  return ticketColorClasses[idx % ticketColorClasses.length]
 }
 </script>
 

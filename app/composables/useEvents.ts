@@ -32,15 +32,19 @@ export const useEvents = () => {
   }
 
   const fetchEvent = async (eventId: string): Promise<Event> => {
+    const cached = events.value.find((e) => e.id === eventId)
+    if (cached) return cached
+
     try {
       loading.value = true
       error.value = null
       const res = await instance.get<Event>(
         `/organisations/${activeOrgId.value}/events/${eventId}`,
       )
-      return res.data
+      return res.data?.data ?? res.data
     } catch (e) {
       error.value = extractErrorMessage(e, 'Failed to load event')
+      if (cached) return cached
       throw e
     } finally {
       loading.value = false
@@ -55,8 +59,9 @@ export const useEvents = () => {
       const res = await instance.get<Event[]>(
         `/organisations/${activeOrgId.value}/events`,
       )
-      events.value = res.data
-      return res.data
+      const raw = res.data?.data ?? res.data
+      events.value = Array.isArray(raw) ? raw : []
+      return Array.isArray(raw) ? raw : []
     } catch (e) {
       error.value = extractErrorMessage(e, 'Failed to load events')
       throw e
@@ -68,7 +73,8 @@ export const useEvents = () => {
   const fetchCategories = async (): Promise<EventCategory[]> => {
     try {
       const res = await instance.get<EventCategory[]>('/categories')
-      return res.data
+      const raw = res.data?.data ?? res.data
+      return Array.isArray(raw) ? raw : []
     } catch (e) {
       const msg = extractErrorMessage(e, 'Failed to load categories')
       console.error(msg)
@@ -84,7 +90,7 @@ export const useEvents = () => {
         `/organisations/${activeOrgId.value}/events`,
         dto,
       )
-      const newEvent = res.data
+      const newEvent = res.data?.data ?? res.data
       events.value = [newEvent, ...events.value]
       return newEvent
     } catch (e) {
@@ -103,7 +109,7 @@ export const useEvents = () => {
         `/organisations/${activeOrgId.value}/events/${eventId}`,
         dto,
       )
-      const updated = res.data
+      const updated = res.data?.data ?? res.data
       const idx = events.value.findIndex((e) => e.id === eventId)
       if (idx !== -1) events.value[idx] = updated
       return updated
@@ -123,7 +129,7 @@ export const useEvents = () => {
         `/organisations/${activeOrgId.value}/events/${eventId}/publish`,
         {},
       )
-      const updated = res.data
+      const updated = res.data?.data ?? res.data
       const idx = events.value.findIndex((e) => e.id === eventId)
       if (idx !== -1) {
         events.value[idx] = updated
@@ -147,7 +153,7 @@ export const useEvents = () => {
         `/organisations/${activeOrgId.value}/events/${eventId}/cancel`,
         {},
       )
-      const updated = res.data
+      const updated = res.data?.data ?? res.data
       const idx = events.value.findIndex((e) => e.id === eventId)
       if (idx !== -1) events.value[idx] = updated
       return updated
@@ -167,7 +173,7 @@ export const useEvents = () => {
         `/organisations/${activeOrgId.value}/events/${eventId}/ticket-types`,
         dto,
       )
-      return res.data
+      return res.data?.data ?? res.data
     } catch (e) {
       error.value = extractErrorMessage(e, 'Failed to add ticket type')
       throw e

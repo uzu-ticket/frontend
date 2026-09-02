@@ -2,28 +2,28 @@
   <div class="scanner-stat-group">
     <ScannerStatCard
       label="Ticket Sold"
-      :value="stats.ticketSold ?? 1500"
-      :change="stats.ticketSoldChange ?? 12.4"
+      :value="stats.ticketSold ?? 0"
+      :change="stats.ticketSoldChange"
     />
     <ScannerStatCard
       label="Scanned"
-      :value="stats.scanned ?? 1248"
-      :change="stats.scannedChange ?? 10.3"
+      :value="stats.scanned ?? 0"
+      :change="stats.scannedChange"
     />
     <ScannerStatCard
       label="Valid"
-      :value="stats.valid ?? 1122"
-      :change="stats.validChange ?? 9.6"
+      :value="stats.valid ?? 0"
+      :change="stats.validChange"
     />
     <ScannerStatCard
       label="Duplicate/Used"
-      :value="stats.duplicate ?? 72"
-      :change="stats.duplicateChange ?? -2.2"
+      :value="stats.duplicate ?? 0"
+      :change="stats.duplicateChange"
     />
     <ScannerStatCard
       label="Invalid"
-      :value="stats.invalid ?? 54"
-      :change="stats.invalidChange ?? -3.2"
+      :value="stats.invalid ?? 0"
+      :change="stats.invalidChange"
     />
   </div>
 </template>

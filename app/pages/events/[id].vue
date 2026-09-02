@@ -151,11 +151,11 @@
               </div>
               <div class="kv-row">
                 <span class="kv-key">Doors Open</span>
-                <span class="kv-val">9:00 AM</span>
+                <span class="kv-val">{{ doorsOpenTime }}</span>
               </div>
               <div class="kv-row">
                 <span class="kv-key">Doors Close</span>
-                <span class="kv-val">Aug 23, 2026 11:59 PM</span>
+                <span class="kv-val">{{ doorsCloseTime }}</span>
               </div>
             </div>
           </div>
@@ -167,18 +167,16 @@
         <h2 class="section-heading">Media</h2>
 
         <div class="media-grid">
-          <div class="media-thumb-card media-thumb--1">
-            <div class="media-thumb-overlay">
+          <div
+            v-for="(img, idx) in eventImages"
+            :key="img.id || idx"
+            class="media-thumb-card"
+            :class="`media-thumb--${idx + 1}`"
+          >
+            <img v-if="img.url" :src="img.url" alt="Event media" class="media-thumb-img" />
+            <div v-else class="media-thumb-overlay">
               <svg xmlns="http://www.w3.org/2000/svg" class="media-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
-
-          <div class="media-thumb-card media-thumb--2">
-            <div class="media-thumb-overlay">
-              <svg xmlns="http://www.w3.org/2000/svg" class="media-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
             </div>
           </div>
@@ -282,6 +280,18 @@ const eventStatus = computed(() => event.value?.status || 'draft')
 const eventDate = computed(() => event.value ? new Date(event.value.startsAt) : null)
 const eventEndDate = computed(() => event.value?.endsAt ? new Date(event.value.endsAt) : null)
 const eventVenue = computed(() => event.value?.venueName || event.value?.city || '—')
+const doorsOpenTime = computed(() => {
+  if (!eventDate.value) return '—'
+  const d = new Date(eventDate.value.getTime() - 60 * 60 * 1000)
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+})
+const doorsCloseTime = computed(() => {
+  if (!event.value?.salesCloseAt) return '—'
+  const d = new Date(event.value.salesCloseAt)
+  if (Number.isNaN(d.getTime())) return '—'
+  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+})
+const eventImages = computed(() => event.value?.images || [])
 
 const formattedStartDate = computed(() => {
   if (!eventDate.value) return '—'
@@ -652,6 +662,12 @@ useHead({
   border-radius: 1rem;
   overflow: hidden;
   position: relative;
+}
+
+.media-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .media-thumb--1 {

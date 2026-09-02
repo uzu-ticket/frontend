@@ -36,11 +36,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  gates: () => [
-    { gate: 'Gate A', count: 562 },
-    { gate: 'Gate B', count: 438 },
-    { gate: 'Gate C', count: 248 },
-  ],
+  gates: () => [],
 })
 
 const items = computed(() => props.gates)

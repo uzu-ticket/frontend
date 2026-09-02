@@ -18,9 +18,9 @@
       <OverviewMetrics
         :loading="isOrgDashboardLoading"
         :total-events="totalEventsCount"
-        :tickets-sold="3672"
-        :total-revenue="5742200"
-        :wallet-balance="1245600"
+        :tickets-sold="orderMetrics.ticketsSold"
+        :total-revenue="orderMetrics.totalRevenue"
+        :wallet-balance="orderMetrics.totalRevenue"
       />
 
       <!-- Middle 2-Column Row: Sales Summary Chart & Upcoming Events -->
@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import OverviewHero from '~/components/dashboard/OverviewHero.vue'
 import OverviewCapabilities from '~/components/dashboard/OverviewCapabilities.vue'
 import OverviewChecklist from '~/components/dashboard/OverviewChecklist.vue'
@@ -60,6 +60,7 @@ import OverviewActivityFeed from '~/components/dashboard/OverviewActivityFeed.vu
 
 import { useOrgState } from '~/composables/useOrgState'
 import { useEvents } from '~/composables/useEvents'
+import { useOrders } from '~/composables/useOrders'
 
 definePageMeta({
   layout: 'dashboard',
@@ -74,9 +75,12 @@ useHead({
 
 const { hasActiveOrg, activeOrgId } = useOrgState()
 const { fetchEvents } = useEvents()
+const { fetchOrders, orders, getMetrics } = useOrders()
 
 const isOrgDashboardLoading = ref(false)
 const totalEventsCount = ref(0)
+
+const orderMetrics = computed(() => getMetrics())
 
 async function loadDashboardData() {
   if (!activeOrgId.value) return
@@ -84,6 +88,7 @@ async function loadDashboardData() {
   try {
     const eventsList = await fetchEvents(true)
     totalEventsCount.value = eventsList.length
+    await fetchOrders(activeOrgId.value, true)
   } catch (e) {
     console.error('Failed to load dashboard data:', e)
   } finally {

@@ -41,8 +41,12 @@
         </div>
       </div>
 
-      <!-- Load More / Full Activity Action Link -->
+       <!-- Load More / Full Activity Action Link -->
       <div class="footer-actions">
+        <NuxtLink :to="`/scanner/${eventId}/scan`" class="action-link">
+          Scan Tickets
+        </NuxtLink>
+
         <NuxtLink :to="`/scanner/${eventId}/activity`" class="action-link">
           Load More Activity
         </NuxtLink>
@@ -64,12 +68,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ScannerEventCard from '~/components/scanner/ScannerEventCard.vue'
 import ScannerStatGroup from '~/components/scanner/ScannerStatGroup.vue'
 import ScannerDeviceCard from '~/components/scanner/ScannerDeviceCard.vue'
 import GateThroughputCard from '~/components/scanner/GateThroughputCard.vue'
+import { useScanner } from '~/composables/useScanner'
+import { useToast } from '~/composables/useToast'
+import { formatEventDate } from '~/types/scanner'
 
 definePageMeta({
   layout: 'dashboard',
@@ -81,45 +88,104 @@ useHead({
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
+const scannerStore = useScanner()
 
-const eventId = computed(() => (route.params.id as string) || '1')
+const eventId = computed(() => route.params.id as string)
 
 function goBack() {
   router.push('/scanner/select')
 }
 
 const event = ref({
-  id: 'summer-tech-growth-summit',
-  title: 'Summer Tech Growth Summit',
-  dateTime: 'Aug, 30 • 10:00AM',
-  location: 'Victoria Island, Lagos, Nigeria.',
-  imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&auto=format&fit=crop&q=80',
+  id: '',
+  title: '',
+  dateTime: '',
+  location: '',
+  imageUrl: '',
   status: 'Live',
 })
 
 const stats = ref({
-  ticketSold: 1500,
-  ticketSoldChange: 12.4,
-  scanned: 1248,
-  scannedChange: 10.3,
-  valid: 1122,
-  validChange: 9.6,
-  duplicate: 72,
-  duplicateChange: -2.2,
-  invalid: 54,
-  invalidChange: -3.2,
+  ticketSold: 0,
+  scanned: 0,
+  valid: 0,
+  duplicate: 0,
+  invalid: 0,
 })
 
 const devices = ref({
-  online: 3,
-  offline: 1,
+  online: 0,
+  offline: 0,
 })
 
-const throughputGates = ref([
-  { gate: 'Gate A', count: 562 },
-  { gate: 'Gate B', count: 438 },
-  { gate: 'Gate C', count: 248 },
-])
+const throughputGates = ref([])
+
+const isLoading = ref(true)
+
+onMounted(async () => {
+  await loadScannerData()
+})
+
+watch(eventId, async () => {
+  await loadScannerData()
+})
+
+async function loadScannerData() {
+  isLoading.value = true
+  try {
+    const evt = await scannerStore.fetchEvent(eventId.value)
+
+    let report: any = null
+    let deviceList: any[] = []
+    try {
+      report = await scannerStore.fetchIntegrityReport(eventId.value, true)
+    } catch (e) {
+      console.warn("Integrity report fetch failed:", e)
+    }
+    try {
+      deviceList = await scannerStore.fetchDevices(true)
+    } catch (e) {
+      console.warn("Device list fetch failed:", e)
+    }
+
+    event.value = {
+      id: evt.id,
+      title: evt.title,
+      dateTime: formatEventDate(evt.startsAt),
+      location: evt.venueName || evt.city || '',
+      imageUrl: evt.images?.[0]?.url || '',
+      status: (evt.status as string) === 'live' ? 'Live' : 'Upcoming',
+    }
+
+    if (report) {
+      stats.value = {
+        ticketSold: 0,
+        scanned: report.totalScans,
+        valid: report.admitted,
+        duplicate: Math.floor(report.conflictCount / 2),
+        invalid: report.conflictCount - Math.floor(report.conflictCount / 2),
+      }
+    }
+
+    const now = Date.now()
+    const recentThreshold = 5 * 60 * 1000
+    const allDevices = deviceList || []
+    devices.value = {
+      online: allDevices.filter((d) => d.lastSyncedAt && now - new Date(d.lastSyncedAt).getTime() < recentThreshold).length,
+      offline: allDevices.filter((d) => !d.lastSyncedAt || now - new Date(d.lastSyncedAt).getTime() >= recentThreshold).length,
+    }
+  } catch (e: any) {
+    console.error("Scanner monitor load error:", e?.message || e, e)
+    toast.show({
+      title: 'Failed to load scanner data',
+      message: e?.message || 'Could not load scanner monitor data for this event',
+      type: 'error',
+    })
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <style scoped>

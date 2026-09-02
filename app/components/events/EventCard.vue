@@ -110,6 +110,7 @@ export interface EventItem {
   title: string
   location: string
   date: string
+  time: string
   status: 'Published' | 'Sales closed'
   ticketsSold: number
   revenue: string

@@ -27,7 +27,7 @@
             <span class="offline-mode-title">Offline Mode</span>
           </div>
 
-          <p class="offline-count-title">1 Scanner Offline</p>
+          <p class="offline-count-title">{{ offlineCount }} Scanner{{ offlineCount !== 1 ? 's' : '' }} Offline</p>
           <p class="offline-desc">Scanner will continue scanning and sync when back online</p>
         </div>
 
@@ -35,7 +35,7 @@
         <div class="info-card last-synced-card">
           <div class="sync-info-block">
             <span class="info-label">Last Synced</span>
-            <span class="info-value font-semibold">Sept 12, 2026 - 9:46 AM</span>
+            <span class="info-value font-semibold">{{ lastSyncedTime }}</span>
           </div>
 
           <div class="sync-info-block">
@@ -87,22 +87,22 @@
           <div class="queue-list">
             <div class="queue-row queue-total-row">
               <span class="queue-label-bold">Total Pending</span>
-              <span class="queue-count-bold">12</span>
+              <span class="queue-count-bold">{{ totalPendingSync }}</span>
             </div>
 
             <div class="queue-row">
               <span class="badge-pill badge-pill--valid">Valid</span>
-              <span class="queue-count">8</span>
+              <span class="queue-count">{{ validPending }}</span>
             </div>
 
             <div class="queue-row">
               <span class="badge-pill badge-pill--invalid">Invalid</span>
-              <span class="queue-count">2</span>
+              <span class="queue-count">{{ invalidPending }}</span>
             </div>
 
             <div class="queue-row">
               <span class="badge-pill badge-pill--duplicate">Duplicate</span>
-              <span class="queue-count">2</span>
+              <span class="queue-count">{{ duplicatePending }}</span>
             </div>
           </div>
         </div>
@@ -122,8 +122,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useScanner } from '~/composables/useScanner'
 import { useToast } from '~/composables/useToast'
 
 definePageMeta({
@@ -137,22 +138,78 @@ useHead({
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const scannerStore = useScanner()
 
-const eventId = computed(() => (route.params.id as string) || '1')
+const eventId = computed(() => route.params.id as string)
 
 function goBack() {
   router.push(`/scanner/${eventId.value}`)
 }
 
-const eventName = ref('Summer Tech Growth Summit')
+const eventName = ref('')
+const isLoading = ref(true)
 
-const scannerStatuses = ref([
-  { scanner: 'Scanner 01', gate: 'Gate B', status: 'Invalid', pendingSync: 0 },
-  { scanner: 'Scanner 02', gate: 'Gate A', status: 'Valid', pendingSync: 1 },
-  { scanner: 'Scanner 01', gate: 'Gate C', status: 'Valid', pendingSync: 2 },
-  { scanner: 'Scanner 02', gate: 'Gate B', status: 'Invalid', pendingSync: 2 },
-])
+onMounted(async () => {
+  await loadSyncData()
+})
 
+watch(eventId, async () => {
+  await loadSyncData()
+})
+
+async function loadSyncData() {
+  isLoading.value = true
+  try {
+    const [evt, devices] = await Promise.all([
+      scannerStore.fetchEvent(eventId.value),
+      scannerStore.fetchDevices(true),
+    ])
+
+    eventName.value = evt.title
+  } catch (e) {
+    toast.show({
+      title: 'Failed to load sync data',
+      message: 'Could not load offline and sync data for this event',
+      type: 'error',
+    })
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const scannerStatuses = computed(() => {
+  return scannerStore.devices.value.map((d) => ({
+    scanner: d.deviceLabel || d.id,
+    gate: '',
+    status: d.isRevoked ? 'Invalid' : 'Valid',
+    pendingSync: d.lastSyncedAt ? 0 : 0,
+  }))
+})
+
+const offlineCount = computed(() => {
+  const now = Date.now()
+  const threshold = 5 * 60 * 1000
+  return scannerStore.devices.value.filter(
+    (d) => !d.lastSyncedAt || now - new Date(d.lastSyncedAt).getTime() >= threshold,
+  ).length
+})
+
+const totalPendingSync = computed(() => scannerStatuses.value.reduce((sum, r) => sum + r.pendingSync, 0))
+const validPending = computed(() => scannerStatuses.value.filter((r) => r.status === 'Valid').length)
+const invalidPending = computed(() => scannerStatuses.value.filter((r) => r.status === 'Invalid').length)
+const duplicatePending = computed(() => 0)
+
+const lastSyncedTime = computed(() => {
+  const device = scannerStore.devices.value[0]
+  if (!device?.lastSyncedAt) return 'Never'
+  return new Date(device.lastSyncedAt).toLocaleString('en-US', {
+    month: 'short',
+    day: 'd',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+})
 function handleSync() {
   toast.show({
     title: 'Sync Initiated',

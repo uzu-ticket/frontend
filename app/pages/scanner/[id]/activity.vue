@@ -102,11 +102,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppDataTable, { type TableColumn } from '~/components/ui/AppDataTable.vue'
 import ScanDetailModal from '~/components/scanner/ScanDetailModal.vue'
 import type { ScanItem } from '~/components/scanner/LiveScanActivityItem.vue'
+import { useScanner } from '~/composables/useScanner'
+import { useToast } from '~/composables/useToast'
 
 definePageMeta({
   layout: 'dashboard',
@@ -118,15 +120,17 @@ useHead({
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
+const scannerStore = useScanner()
 
-const eventId = computed(() => (route.params.id as string) || '1')
+const eventId = computed(() => route.params.id as string)
 
 function goBack() {
   router.push(`/scanner/${eventId.value}`)
 }
 
-const eventName = ref('Summer Tech Growth Summit')
-const eventDate = ref('Aug, 30 • 10:00AM')
+const eventName = ref('')
+const eventDate = ref('')
 
 const searchQuery = ref('')
 const activeFilter = ref('All')
@@ -149,122 +153,55 @@ const columns: TableColumn[] = [
   { key: 'scanner', label: 'SCANNER', width: '16%' },
 ]
 
-const scans = ref<ScanItem[]>([
-  {
-    id: '1',
-    time: '9: 05 AM',
-    name: 'Lizzy Poole',
-    email: 'lizzy.poole@example.com',
-    ticketType: 'VIP Access',
-    status: 'Valid',
-    gate: 'Gate B',
-    scanner: 'Scanner 01',
-    ticketId: '#UZT-B2HA-H7D9',
-    orderId: '#ORD-39281',
-    scannedAt: 'Sept 20, 2026 - 9:05 AM',
-    purchased: 'VIP ACCESS',
-  },
-  {
-    id: '2',
-    time: '11: 00 AM',
-    name: 'Mike Mills',
-    email: 'mike.mills@example.com',
-    ticketType: 'Regular',
-    status: 'Invalid',
-    gate: 'Gate A',
-    scanner: 'Scanner 02',
-    ticketId: '#UZT-M98K-P110',
-    orderId: '#ORD-39282',
-    scannedAt: 'Sept 20, 2026 - 11:00 AM',
-    purchased: 'REGULAR ACCESS',
-  },
-  {
-    id: '3',
-    time: '01: 30 PM',
-    name: 'Jane Cooper',
-    email: 'jane.cooper@example.com',
-    ticketType: 'Regular',
-    status: 'Valid',
-    gate: 'Gate C',
-    scanner: 'Scanner 01',
-    ticketId: '#UZT-J441-A882',
-    orderId: '#ORD-39283',
-    scannedAt: 'Sept 20, 2026 - 1:30 PM',
-    purchased: 'REGULAR ACCESS',
-  },
-  {
-    id: '4',
-    time: '10: 30 PM',
-    name: 'Ben Francis',
-    email: 'ben.francis@example.com',
-    ticketType: 'VIP Access',
-    status: 'Valid',
-    gate: 'Gate B',
-    scanner: 'Scanner 02',
-    ticketId: '#UZT-B772-F900',
-    orderId: '#ORD-39284',
-    scannedAt: 'Sept 20, 2026 - 10:30 PM',
-    purchased: 'VIP ACCESS',
-  },
-  {
-    id: '5',
-    time: '10: 30 PM',
-    name: 'Lizzy Poole',
-    email: 'lizzy.poole@example.com',
-    ticketType: 'Regular',
-    status: 'Invalid',
-    gate: 'Gate A',
-    scanner: 'Scanner 01',
-    ticketId: '#UZT-L101-R332',
-    orderId: '#ORD-39285',
-    scannedAt: 'Sept 20, 2026 - 10:30 PM',
-    purchased: 'REGULAR ACCESS',
-  },
-  {
-    id: '6',
-    time: '10: 30 PM',
-    name: 'Ben Francis',
-    email: 'ben.francis@example.com',
-    ticketType: 'Regular',
-    status: 'Valid',
-    gate: 'Gate B',
-    scanner: 'Scanner 02',
-    ticketId: '#UZT-B772-F901',
-    orderId: '#ORD-39286',
-    scannedAt: 'Sept 20, 2026 - 10:30 PM',
-    purchased: 'REGULAR ACCESS',
-  },
-  {
-    id: '7',
-    time: '10: 30 PM',
-    name: 'Jane Cooper',
-    email: 'jane.cooper@example.com',
-    ticketType: 'VIP Access',
-    status: 'Valid',
-    gate: 'Gate A',
-    scanner: 'Scanner 01',
-    ticketId: '#UZT-J441-A883',
-    orderId: '#ORD-39287',
-    scannedAt: 'Sept 20, 2026 - 10:30 PM',
-    purchased: 'VIP ACCESS',
-  },
-])
+const scans = ref<ScanItem[]>([])
+
+onMounted(async () => {
+  await loadActivityData()
+})
+
+watch(eventId, async () => {
+  await loadActivityData()
+})
+
+async function loadActivityData() {
+  try {
+    const [evt, report] = await Promise.all([
+      scannerStore.fetchEvent(eventId.value),
+      scannerStore.fetchIntegrityReport(eventId.value, true),
+    ])
+
+    eventName.value = evt.title
+    eventDate.value = new Date(evt.startsAt).toLocaleString('en-US', {
+      month: 'short',
+      day: 'd',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+    scans.value = report.conflicts.map(scannerStore.mapConflictToScanItem) as ScanItem[]
+  } catch (e) {
+    toast.show({
+      title: 'Failed to load scan activity',
+      message: 'Could not load scan activity for this event',
+      type: 'error',
+    })
+  }
+}
 
 const filteredScans = computed(() => {
   return scans.value.filter((item) => {
-    // Status filter
     if (activeFilter.value !== 'All' && item.status.toLowerCase() !== activeFilter.value.toLowerCase()) {
       return false
     }
-    // Search query
     if (searchQuery.value.trim()) {
       const q = searchQuery.value.toLowerCase()
       return (
         item.name.toLowerCase().includes(q) ||
         item.email.toLowerCase().includes(q) ||
-        item.ticketType.toLowerCase().includes(q) ||
-        item.gate.toLowerCase().includes(q) ||
-        item.scanner.toLowerCase().includes(q)
+        (item.ticketType?.toLowerCase().includes(q) ?? false) ||
+        (item.gate?.toLowerCase().includes(q) ?? false) ||
+        (item.scanner?.toLowerCase().includes(q) ?? false)
       )
     }
     return true
@@ -278,6 +215,7 @@ function getStatusClass(status: string) {
     case 'invalid':
       return 'badge-pill--invalid'
     case 'duplicate':
+    case 'used':
       return 'badge-pill--duplicate'
     default:
       return 'badge-pill--default'

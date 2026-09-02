@@ -10,7 +10,7 @@
           </svg>
         </div>
         <span class="metric-label">Total Orders</span>
-        <div class="metric-value">24</div>
+         <div class="metric-value">{{ formattedMetrics.totalOrders }}</div>
         <div class="metric-trend">
           <span class="trend-arrow">↑</span>
           <span class="trend-percent">15%</span>
@@ -26,7 +26,7 @@
           </svg>
         </div>
         <span class="metric-label">Tickets Sold</span>
-        <div class="metric-value">3,672</div>
+         <div class="metric-value">{{ formatNumber(formattedMetrics.ticketsSold) }}</div>
         <div class="metric-trend">
           <span class="trend-arrow">↑</span>
           <span class="trend-percent">18%</span>
@@ -42,7 +42,7 @@
           </svg>
         </div>
         <span class="metric-label">Total Revenue</span>
-        <div class="metric-value">5,742,200</div>
+         <div class="metric-value">₦{{ formatNumber(formattedMetrics.totalRevenue) }}</div>
         <div class="metric-trend">
           <span class="trend-arrow">↑</span>
           <span class="trend-percent">30%</span>
@@ -58,7 +58,7 @@
           </svg>
         </div>
         <span class="metric-label">Refunds</span>
-        <div class="metric-value">1,245,600</div>
+         <div class="metric-value">₦{{ formatNumber(formattedMetrics.totalRefunds) }}</div>
         <div class="metric-trend">
           <span class="trend-arrow">↑</span>
           <span class="trend-percent">15%</span>
@@ -215,9 +215,9 @@
 
               <!-- Status -->
               <td class="col-status">
-                <span class="status-pill" :class="`status--${order.status.toLowerCase()}`">
-                  {{ order.status }}
-                </span>
+                 <span class="status-pill" :class="statusBadgeClass(order.status)">
+                   {{ order.status }}
+                 </span>
               </td>
 
               <!-- Date -->
@@ -301,7 +301,7 @@
       <!-- Pagination Footer -->
       <div class="table-pagination-footer">
         <div class="pagination-info">
-          Showing 1 of {{ totalOrdersCount }} orders
+           Showing {{ (currentPage - 1) * pageSize + 1 }} of {{ totalOrdersCount }} orders
         </div>
 
         <div class="pagination-controls">
@@ -360,19 +360,22 @@
       @order-cancelled="onOrderCancelled"
     />
 
-    <OrderFilterModal
-      v-model="showFilterModal"
-      :active-status="filterStatus"
-      :active-event="filterEvent"
-      :active-tier="filterTier"
-      @apply="onFiltersApplied"
-    />
+     <OrderFilterModal
+       v-model="showFilterModal"
+       :active-status="filterStatus"
+       :active-event="filterEvent"
+       :active-tier="filterTier"
+       :event-options="eventOptions"
+       :tier-options="tierOptions"
+       @apply="onFiltersApplied"
+     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { Order } from '~/types/orders'
+import { ref, computed, onMounted, watch } from 'vue'
+import type { Order, OrderStatus } from '~/types/orders'
+import { orderStatusCssClass } from '~/types/orders'
 
 import ExportOrdersModal from '~/components/orders/ExportOrdersModal.vue'
 import ViewOrderModal from '~/components/orders/ViewOrderModal.vue'
@@ -383,6 +386,8 @@ import CancelOrderModal from '~/components/orders/CancelOrderModal.vue'
 import OrderFilterModal from '~/components/orders/OrderFilterModal.vue'
 
 import { useToast } from '~/composables/useToast'
+import { useOrders } from '~/composables/useOrders'
+import { useOrgState } from '~/composables/useOrgState'
 
 definePageMeta({
   layout: 'dashboard',
@@ -396,180 +401,29 @@ useHead({
 })
 
 const toast = useToast()
+const { activeOrgId } = useOrgState()
+const {
+  orders: ordersList,
+  loading,
+  error,
+  fetchOrders,
+  cancelOrder,
+  refundOrder,
+  getMetrics,
+} = useOrders()
 
-// Initial Mock Orders Dataset matching screenshots exactly
-const ordersList = ref<Order[]>([
-  {
-    id: 'ord-1',
-    orderNumber: '#ORD-1264',
-    reference: 'UZ12481248',
-    buyer: {
-      name: 'Jane Cooper',
-      email: 'Jane@gmail.com',
-      phone: '08166523458',
-    },
-    event: {
-      title: 'Table Talks',
-      date: 'Aug, 30 . 10:00 AM',
-    },
-    tickets: {
-      count: 2,
-      tier: 'VIP',
-    },
-    totalAmount: 500000,
-    status: 'Published',
-    createdDate: 'Aug 4, 2026 10:00 AM',
-    payment: {
-      method: 'Card',
-      details: 'Card ending in 4342',
-    },
-    ticketItems: [
-      {
-        id: 'tkt-101',
-        type: 'REGULAR',
-        price: 10000,
-        available: 500,
-        totalQuantity: 1,
-        salesStart: 'Aug 24, 2026 • 9:00 AM',
-        salesEnd: 'Aug 24, 2026 • 9:00 AM',
-      },
-      {
-        id: 'tkt-102',
-        type: 'VIP',
-        price: 20000,
-        available: 200,
-        totalQuantity: 1,
-        salesStart: 'Aug 24, 2026 • 9:00 AM',
-        salesEnd: 'Aug 24, 2026 • 9:00 AM',
-      },
-    ],
-  },
-  {
-    id: 'ord-2',
-    orderNumber: '#ORD-1264',
-    reference: 'UZ12481248',
-    buyer: {
-      name: 'Jane Cooper',
-      email: 'Jane@gmail.com',
-      phone: '08166523458',
-    },
-    event: {
-      title: 'Startup Meets',
-      date: 'Aug, 30 . 10:00 AM',
-    },
-    tickets: {
-      count: 2,
-      tier: 'VIP',
-    },
-    totalAmount: 100000,
-    status: 'Published',
-    createdDate: 'Aug 4, 2026 10:00 AM',
-    payment: {
-      method: 'Card',
-      details: 'Card ending in 4342',
-    },
-  },
-  {
-    id: 'ord-3',
-    orderNumber: '#ORD-1264',
-    reference: 'UZ12481248',
-    buyer: {
-      name: 'Jane Cooper',
-      email: 'Jane@gmail.com',
-      phone: '08166523458',
-    },
-    event: {
-      title: 'Music Fest 2026',
-      date: 'Aug, 30 . 10:00 AM',
-    },
-    tickets: {
-      count: 2,
-      tier: 'VIP',
-    },
-    totalAmount: 100000,
-    status: 'Draft',
-    createdDate: 'Aug 4, 2026 10:00 AM',
-    payment: {
-      method: 'Card',
-      details: 'Card ending in 4342',
-    },
-  },
-  {
-    id: 'ord-4',
-    orderNumber: '#ORD-1264',
-    reference: 'UZ12481248',
-    buyer: {
-      name: 'Jane Cooper',
-      email: 'Jane@gmail.com',
-      phone: '08166523458',
-    },
-    event: {
-      title: 'Music Fest 2026',
-      date: 'Aug, 30 . 10:00 AM',
-    },
-    tickets: {
-      count: 2,
-      tier: 'VIP',
-    },
-    totalAmount: 100000,
-    status: 'Published',
-    createdDate: 'Aug 4, 2026 10:00 AM',
-    payment: {
-      method: 'Card',
-      details: 'Card ending in 4342',
-    },
-  },
-  {
-    id: 'ord-5',
-    orderNumber: '#ORD-1264',
-    reference: 'UZ12481248',
-    buyer: {
-      name: 'Jane Cooper',
-      email: 'Jane@gmail.com',
-      phone: '08166523458',
-    },
-    event: {
-      title: 'Music Fest 2026',
-      date: 'Aug, 30 . 10:00 AM',
-    },
-    tickets: {
-      count: 2,
-      tier: 'VIP',
-    },
-    totalAmount: 100000,
-    status: 'Refunded',
-    createdDate: 'Aug 4, 2026 10:00 AM',
-    payment: {
-      method: 'Card',
-      details: 'Card ending in 4342',
-    },
-  },
-  {
-    id: 'ord-6',
-    orderNumber: '#ORD-1264',
-    reference: 'UZ12481248',
-    buyer: {
-      name: 'Jane Cooper',
-      email: 'Jane@gmail.com',
-      phone: '08166523458',
-    },
-    event: {
-      title: 'Music Fest 2026',
-      date: 'Aug, 30 . 10:00 AM',
-    },
-    tickets: {
-      count: 2,
-      tier: 'VIP',
-    },
-    totalAmount: 100000,
-    status: 'Published',
-    createdDate: 'Aug 4, 2026 10:00 AM',
-    payment: {
-      method: 'Card',
-      details: 'Card ending in 4342',
-    },
-  },
-])
+// Load orders on mount and when org changes
+onMounted(() => {
+  if (activeOrgId.value) {
+    fetchOrders(activeOrgId.value, true)
+  }
+})
+
+watch(activeOrgId, (newId) => {
+  if (newId) {
+    fetchOrders(newId, true)
+  }
+})
 
 // State
 const searchQuery = ref('')
@@ -594,15 +448,40 @@ const showFilterModal = ref(false)
 const currentPage = ref(1)
 const pageSize = 10
 
+// Computed: unique event titles and tiers from loaded orders
+const eventOptions = computed(() => {
+  const events = new Set<string>()
+  for (const order of ordersList.value) {
+    events.add(order.event.title)
+  }
+  return [{ value: 'ALL', label: 'All Events' }, ...Array.from(events).map((title) => ({ value: title, label: title }))]
+})
+
+const tierOptions = computed(() => {
+  const tiers = new Set<string>()
+  for (const order of ordersList.value) {
+    tiers.add(order.tickets.tier)
+  }
+  return [{ value: 'ALL', label: 'All Tiers' }, ...Array.from(tiers).map((tier) => ({ value: tier, label: tier }))]
+})
+
 // Active Filters check
 const hasActiveFilters = computed(() => {
   return filterStatus.value !== 'All' || filterEvent.value !== 'ALL' || filterTier.value !== 'ALL'
 })
 
-// Filtered list
+// Metrics from real data
+const metrics = computed(() => getMetrics())
+const formattedMetrics = computed(() => ({
+  totalOrders: metrics.value.totalOrders,
+  ticketsSold: metrics.value.ticketsSold,
+  totalRevenue: metrics.value.totalRevenue,
+  totalRefunds: metrics.value.totalRefunds,
+}))
+
+// Filtered and paginated list
 const filteredOrders = computed(() => {
   return ordersList.value.filter((order) => {
-    // Search match
     const query = searchQuery.value.toLowerCase().trim()
     const matchesSearch = !query || (
       order.orderNumber.toLowerCase().includes(query) ||
@@ -612,34 +491,53 @@ const filteredOrders = computed(() => {
       order.event.title.toLowerCase().includes(query)
     )
 
-    // Status filter
     const matchesStatus = filterStatus.value === 'All' || order.status === filterStatus.value
 
-    // Event filter
     const matchesEvent = filterEvent.value === 'ALL' || order.event.title === filterEvent.value
 
-    // Tier filter
     const matchesTier = filterTier.value === 'ALL' || order.tickets.tier === filterTier.value
 
     return matchesSearch && matchesStatus && matchesEvent && matchesTier
   })
 })
 
-const totalOrdersCount = computed(() => 24)
+const totalOrdersCount = computed(() => filteredOrders.value.length)
 
 const totalPages = computed(() => Math.ceil(filteredOrders.value.length / pageSize) || 1)
 
 const paginatedOrders = computed(() => {
-  return filteredOrders.value
+  const start = (currentPage.value - 1) * pageSize
+  return filteredOrders.value.slice(start, start + pageSize)
 })
 
 const isAllSelected = computed(() => {
   return paginatedOrders.value.length > 0 && paginatedOrders.value.every((o) => selectedOrderIds.value.includes(o.id))
 })
 
-const paginationPages = [1, 2, 3, 4, 5, 7]
+const paginationPages = computed(() => {
+  const pages: (number | string)[] = []
+  const maxVisible = 5
+  if (totalPages.value <= maxVisible) {
+    for (let i = 1; i <= totalPages.value; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (currentPage.value > 3) pages.push('...')
+    for (let i = Math.max(2, currentPage.value - 1); i <= Math.min(totalPages.value - 1, currentPage.value + 1); i++) pages.push(i)
+    if (currentPage.value < totalPages.value - 2) pages.push('...')
+    pages.push(totalPages.value)
+  }
+  return pages
+})
 
 // Methods
+function statusBadgeClass(status: string): string {
+  return orderStatusCssClass(status as OrderStatus)
+}
+
+function formatNumber(num: number): string {
+  return num.toLocaleString('en-NG')
+}
+
 function handleGlobalClick() {
   activeKebabId.value = null
 }
@@ -683,12 +581,14 @@ function resetAllFilters() {
   filterStatus.value = 'All'
   filterEvent.value = 'ALL'
   filterTier.value = 'ALL'
+  currentPage.value = 1
 }
 
 function onFiltersApplied(filters: { status: string; event: string; tier: string }) {
   filterStatus.value = filters.status
   filterEvent.value = filters.event
   filterTier.value = filters.tier
+  currentPage.value = 1
   toast.show({
     title: 'Filters Applied',
     message: `Showing orders matching your filter criteria`,
@@ -714,20 +614,44 @@ function handleAction(type: 'view-order' | 'view-tickets' | 'download-invoice' |
 }
 
 function onExportFormatSelected(format: string) {
-  // Handled in modal
+  toast.show({
+    title: 'Export Started',
+    message: `Exporting order records as ${format}...`,
+    type: 'success',
+  })
 }
 
-function onRefundIssued(order: Order, amount: number, reason: string) {
-  const target = ordersList.value.find((o) => o.id === order.id)
-  if (target) {
-    target.status = 'Refunded'
+async function onRefundIssued(order: Order, amount: number, reason: string) {
+  try {
+    await refundOrder(activeOrgId.value, order.id, reason)
+    toast.show({
+      title: 'Refund Processed',
+      message: `Refund of ₦${amount.toLocaleString()} issued for ${order.orderNumber}`,
+      type: 'success',
+    })
+  } catch (e) {
+    toast.show({
+      title: 'Refund Failed',
+      message: 'Could not process the refund. Please try again.',
+      type: 'error',
+    })
   }
 }
 
-function onOrderCancelled(order: Order, reason: string) {
-  const target = ordersList.value.find((o) => o.id === order.id)
-  if (target) {
-    target.status = 'Cancelled'
+async function onOrderCancelled(order: Order, reason: string) {
+  try {
+    const updated = await cancelOrder(order.id)
+    toast.show({
+      title: 'Order Cancelled',
+      message: `${order.orderNumber} has been cancelled successfully.`,
+      type: 'error',
+    })
+  } catch (e) {
+    toast.show({
+      title: 'Cancellation Failed',
+      message: 'Could not cancel the order. Please try again.',
+      type: 'error',
+    })
   }
 }
 </script>
@@ -1107,19 +1031,20 @@ function onOrderCancelled(order: Order, reason: string) {
   text-align: center;
 }
 
-.status--published,
+.status--pending,
+.status--partially-refunded {
+  background: #FEF9C3;
+  color: #CA8A04;
+}
+
 .status--completed {
   background: #F0FDF1;
   color: #16A34A;
 }
 
-.status--draft {
-  background: #FEF9C3;
-  color: #D97706;
-}
-
 .status--refunded,
-.status--cancelled {
+.status--cancelled,
+.status--failed {
   background: #FEE2E2;
   color: #DC2626;
 }

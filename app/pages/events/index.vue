@@ -262,11 +262,12 @@ const tableEvents = computed(() => {
     title: e.title,
     location: e.venueName || e.city || '—',
     date: formatDate(e.startsAt),
-    status: e.status === 'Published' ? 'Published' : 'Sales closed',
+    status: e.status === 'published' ? 'Published' : 'Sales closed',
     ticketsSold: e.ticketTypes.reduce((sum, tt) => sum + tt.quantitySold, 0),
-    revenue: formatPrice(e.ticketTypes.reduce((sum, tt) => sum + Number(tt.priceMinor) * tt.quantitySold, 0).toString(), e.ticketTypes[0]?.currency || 'NGN'),
-    coverImage: e.images.find(img => img.isCover)?.url || e.images[0]?.url,
-    bgGradient: getGradient(e.category?.name),
+     revenue: formatPrice(e.ticketTypes.reduce((sum, tt) => sum + Number(tt.priceMinor) * tt.quantitySold, 0).toString(), e.ticketTypes[0]?.currency || 'NGN'),
+     coverImage: e.images.find(img => img.isCover)?.url || e.images[0]?.url,
+     bgGradient: getGradient(e.category?.name),
+     time: formatTime(e.startsAt),
   }))
 })
 
