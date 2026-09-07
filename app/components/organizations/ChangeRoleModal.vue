@@ -3,52 +3,18 @@
     <Transition name="modal-fade">
       <div v-if="modelValue" class="modal-backdrop" @click.self="close">
         <div class="modal-container">
-          <!-- Modal Header -->
+          <!-- Header -->
           <div class="modal-header">
             <div>
-              <h3 class="modal-title">Invite a team member</h3>
-              <p class="modal-subtitle">Invite a new user to join your organization</p>
+              <h3 class="modal-title">Change role / manage access</h3>
+              <p class="modal-subtitle">Update the member's role(s) and event access. Changes take effect immediately.</p>
             </div>
-            <button type="button" class="btn-close" @click="close">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <button type="button" class="btn-close" @click="close">&times;</button>
           </div>
 
-          <!-- Modal Body Form -->
+          <!-- Body -->
           <form class="modal-body" @submit.prevent="handleSubmit">
-            <!-- Full Name Field -->
-            <div class="form-group">
-              <label class="form-label">
-                Full Name <span class="required-star">*</span>
-              </label>
-              <input
-                v-model="fullName"
-                type="text"
-                placeholder="e.g. Jane Doe"
-                class="form-input"
-                required
-                :disabled="isSubmitting"
-              />
-            </div>
-
-            <!-- Email Field -->
-            <div class="form-group">
-              <label class="form-label">
-                Email <span class="required-star">*</span>
-              </label>
-              <input
-                v-model="email"
-                type="email"
-                placeholder="janedoe@gmail.com"
-                class="form-input"
-                required
-                :disabled="isSubmitting"
-              />
-            </div>
-
-            <!-- Assign Roles Field -->
+            <!-- Assign Roles -->
             <div class="form-group">
               <label class="form-label">
                 Assign roles <span class="required-star">*</span>
@@ -78,13 +44,13 @@
                   @click.stop="toggleRole(opt.key)"
                 >
                   <span class="role-dot" :style="{ background: opt.color }"></span>
-                  <span class="role-item-name">{{ opt.label }}</span>
+                  <span>{{ opt.label }}</span>
                   <span v-if="selectedRoles.includes(opt.key)" class="check-mark">✓</span>
                 </button>
               </div>
             </div>
 
-            <!-- Event Access Field -->
+            <!-- Event Access -->
             <div class="form-group">
               <label class="form-label">
                 Event Access <span class="required-star">*</span>
@@ -101,29 +67,48 @@
               <p class="field-hint">Limit this member to specific events. Leave empty for full access.</p>
             </div>
 
-            <!-- Informational Notice Box -->
-            <div class="info-alert-box">
-              <div class="info-icon-circle">
-                <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p class="info-alert-text">
-                Ticket scanner access must be scoped to assigned events. All events is a product decision and recommended for non-scanner roles.
-              </p>
+            <!-- Green Info Alert -->
+            <div class="info-alert-box info-alert--green">
+              <div class="info-icon">ⓘ</div>
+              <p class="info-text">All events (recommended)</p>
             </div>
 
-            <!-- Error Display -->
-            <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
+            <!-- Role Permission Summary Section -->
+            <div class="summary-section">
+              <h4 class="summary-title">Role permission summary</h4>
+              <div class="summary-cards">
+                <div v-if="selectedRoles.includes('promoter')" class="summary-card">
+                  <span class="summary-dot dot--pink"></span>
+                  <span class="summary-role-name">Promoter</span>
+                  <span class="summary-desc">Create/Manage promo links, track commissions.</span>
+                </div>
+                <div v-if="selectedRoles.includes('sales') || selectedRoles.includes('manager')" class="summary-card">
+                  <span class="summary-dot dot--orange"></span>
+                  <span class="summary-role-name">Sales</span>
+                  <span class="summary-desc">Manage ticket sales and order.</span>
+                </div>
+                <div v-if="selectedRoles.includes('admin')" class="summary-card">
+                  <span class="summary-dot dot--blue"></span>
+                  <span class="summary-role-name">Admin</span>
+                  <span class="summary-desc">Full access to manage events, ticket sales, orders, and team.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Yellow Info Alert -->
+            <div class="info-alert-box info-alert--yellow">
+              <div class="info-icon">ⓘ</div>
+              <p class="info-text">All events (recommended)</p>
+            </div>
 
             <!-- Modal Footer Actions -->
             <div class="modal-footer">
               <button type="button" class="btn-cancel" :disabled="isSubmitting" @click="close">
                 Cancel
               </button>
-              <button type="submit" class="btn-submit" :disabled="isSubmitting || !email || !fullName">
+              <button type="submit" class="btn-save" :disabled="isSubmitting">
                 <span v-if="isSubmitting" class="spinner"></span>
-                <span>{{ isSubmitting ? 'Sending...' : 'Send Invitation' }}</span>
+                <span>{{ isSubmitting ? 'Saving...' : 'Save Changes' }}</span>
               </button>
             </div>
           </form>
@@ -135,28 +120,21 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useOrgState } from '~/composables/useOrgState'
-import { useToast } from '~/composables/useToast'
 
 const props = defineProps<{
   modelValue: boolean
+  member?: any
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  'invited': [member: { email: string; role: string; fullName: string }]
+  'saved': [payload: { memberId: string; roles: string[]; eventAccess: string }]
 }>()
 
-const { activeOrgId, inviteMember } = useOrgState()
-const toast = useToast()
-
-const fullName = ref('')
-const email = ref('')
 const selectedRoles = ref<string[]>(['admin', 'sales', 'promoter'])
 const eventAccess = ref('all')
 const showRoleDropdown = ref(false)
 const isSubmitting = ref(false)
-const errorMessage = ref('')
 
 const availableRoles = [
   { key: 'super_admin', label: 'Super Admin', color: '#9333ea' },
@@ -187,44 +165,29 @@ function removeRole(key: string) {
 function close() {
   emit('update:modelValue', false)
   showRoleDropdown.value = false
-  errorMessage.value = ''
 }
 
 async function handleSubmit() {
-  if (!email.value.trim() || !fullName.value.trim()) return
-  if (!activeOrgId.value) {
-    toast.error('No active organization selected.')
-    return
-  }
-
   isSubmitting.value = true
-  errorMessage.value = ''
-
   try {
-    const primaryRole = selectedRoles.value[0] || 'admin'
-    await inviteMember(activeOrgId.value, email.value.trim(), primaryRole)
-    emit('invited', {
-      email: email.value.trim(),
-      role: primaryRole,
-      fullName: fullName.value.trim(),
+    emit('saved', {
+      memberId: props.member?.id || '',
+      roles: selectedRoles.value,
+      eventAccess: eventAccess.value,
     })
-    toast.success(`Invitation successfully sent to ${email.value}!`)
-    fullName.value = ''
-    email.value = ''
     close()
-  } catch (e: any) {
-    console.error('Invite error:', e)
-    errorMessage.value = e?.response?.data?.message || 'Failed to send invitation. Please try again.'
   } finally {
     isSubmitting.value = false
   }
 }
 
-watch(() => props.modelValue, (newVal) => {
-  if (!newVal) {
-    showRoleDropdown.value = false
+watch(() => props.member, (newVal) => {
+  if (newVal) {
+    if (newVal.roleKey) {
+      selectedRoles.value = [newVal.roleKey]
+    }
   }
-})
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -236,7 +199,7 @@ watch(() => props.modelValue, (newVal) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 9999;
   padding: 1rem;
 }
 
@@ -244,18 +207,14 @@ watch(() => props.modelValue, (newVal) => {
   background: #ffffff;
   border-radius: 1.25rem;
   width: 100%;
-  max-width: 520px;
+  max-width: 540px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: popIn 0.2s ease-out;
   font-family: 'Outfit', sans-serif;
-}
-
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-header {
@@ -266,7 +225,7 @@ watch(() => props.modelValue, (newVal) => {
 }
 
 .modal-title {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: #0E2615;
   margin: 0;
@@ -281,28 +240,22 @@ watch(() => props.modelValue, (newVal) => {
 .btn-close {
   background: transparent;
   border: none;
+  font-size: 1.5rem;
   color: #9ca3af;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.5rem;
-  transition: all 0.15s ease;
-}
-.btn-close:hover {
-  color: #111827;
-  background: #f3f4f6;
 }
 
 .modal-body {
   padding: 0 1.75rem 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.15rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
   position: relative;
 }
 
@@ -316,23 +269,6 @@ watch(() => props.modelValue, (newVal) => {
   color: #ef4444;
 }
 
-.form-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  font-size: 0.875rem;
-  color: #111827;
-  outline: none;
-  transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
-}
-
-.form-input:focus {
-  border-color: #3FD246;
-  box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
-}
-
 .roles-chips-container {
   width: 100%;
   min-height: 48px;
@@ -343,11 +279,6 @@ watch(() => props.modelValue, (newVal) => {
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: border-color 0.15s ease;
-}
-
-.roles-chips-container:hover {
-  border-color: #3FD246;
 }
 
 .chips-wrapper {
@@ -375,8 +306,6 @@ watch(() => props.modelValue, (newVal) => {
   color: #16a34a;
   font-size: 0.9rem;
   cursor: pointer;
-  padding: 0;
-  line-height: 1;
 }
 
 .field-hint {
@@ -414,7 +343,6 @@ watch(() => props.modelValue, (newVal) => {
   color: #374151;
   cursor: pointer;
   text-align: left;
-  transition: background 0.12s ease;
   font-family: 'Outfit', sans-serif;
 }
 
@@ -431,7 +359,6 @@ watch(() => props.modelValue, (newVal) => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .check-mark {
@@ -470,32 +397,85 @@ watch(() => props.modelValue, (newVal) => {
 }
 
 .info-alert-box {
-  background: #eefce8;
   border-radius: 0.75rem;
-  padding: 0.85rem 1rem;
+  padding: 0.75rem 1rem;
   display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.info-alert--green {
+  background: #eefce8;
   border: 1px solid #cbf4c7;
-}
-
-.info-icon-circle {
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-}
-
-.info-alert-text {
-  font-size: 0.78rem;
   color: #166534;
-  margin: 0;
-  line-height: 1.45;
-  font-weight: 500;
 }
 
-.error-msg {
+.info-alert--yellow {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.info-icon {
+  font-weight: 800;
+}
+
+.info-text {
   font-size: 0.8rem;
-  color: #ef4444;
+  font-weight: 600;
   margin: 0;
+}
+
+/* Summary Section */
+.summary-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summary-title {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #0E2615;
+  margin: 0;
+}
+
+.summary-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summary-card {
+  background: #f8faf8;
+  border: 1px solid #eef2ee;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.summary-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot--pink { background: #db2777; }
+.dot--orange { background: #d97706; }
+.dot--blue { background: #0284c7; }
+
+.summary-role-name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #111827;
+  min-width: 75px;
+}
+
+.summary-desc {
+  font-size: 0.8rem;
+  color: #6b7280;
 }
 
 .modal-footer {
@@ -515,15 +495,10 @@ watch(() => props.modelValue, (newVal) => {
   font-weight: 600;
   color: #374151;
   cursor: pointer;
-  transition: all 0.15s ease;
   font-family: 'Outfit', sans-serif;
 }
-.btn-cancel:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-}
 
-.btn-submit {
+.btn-save {
   padding: 0.7rem 1.6rem;
   border-radius: 0.65rem;
   border: none;
@@ -532,31 +507,6 @@ watch(() => props.modelValue, (newVal) => {
   font-weight: 700;
   color: #ffffff;
   cursor: pointer;
-  transition: all 0.15s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
   font-family: 'Outfit', sans-serif;
-}
-.btn-submit:hover:not(:disabled) {
-  background: #2bb832;
-  box-shadow: 0 4px 15px rgba(63, 210, 70, 0.25);
-}
-.btn-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid #ffffff;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 </style>

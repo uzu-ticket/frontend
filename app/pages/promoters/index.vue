@@ -26,21 +26,76 @@
         <div class="stat-card">
           <span class="stat-label">Total Commission Earned</span>
           <div class="stat-value">93,000</div>
+          <div class="stat-trend">+12.4% from last 30 days</div>
         </div>
 
         <div class="stat-card">
           <span class="stat-label">Pending (After Event)</span>
           <div class="stat-value">12,842</div>
+          <div class="stat-trend">+8.6% from last 30 days</div>
         </div>
 
         <div class="stat-card">
           <span class="stat-label">Available to Withdraw</span>
           <div class="stat-value">18,000</div>
+          <div class="stat-trend">+5.2% from last 30 days</div>
         </div>
 
         <div class="stat-card">
           <span class="stat-label">Paid Out</span>
           <div class="stat-value">N75,000</div>
+          <div class="stat-trend">+3.1% from last 30 days</div>
+        </div>
+      </div>
+
+      <!-- Search & Filter Controls -->
+      <div class="controls-top-row">
+        <!-- Search -->
+        <div class="search-input-wrapper">
+          <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search event..."
+            class="search-input"
+          />
+          <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''">
+            &times;
+          </button>
+        </div>
+
+        <!-- Filter -->
+        <div class="filter-wrapper">
+          <button
+            type="button"
+            class="btn-control btn-filter"
+            :class="{ 'btn-control--active': filterStatus !== 'All' }"
+            @click.stop="showFilterDropdown = !showFilterDropdown"
+          >
+            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filter
+            <span v-if="filterStatus !== 'All'" class="filter-active-dot" />
+          </button>
+
+          <!-- Filter Dropdown -->
+          <Transition name="fade-drop">
+            <div v-if="showFilterDropdown" class="filter-dropdown" @click.stop>
+              <div class="filter-dropdown-title">Filter by Status</div>
+              <button
+                v-for="opt in statusOptions"
+                :key="opt"
+                class="filter-option"
+                :class="{ 'filter-option--active': filterStatus === opt }"
+                @click="filterStatus = opt; showFilterDropdown = false"
+              >
+                {{ opt }}
+              </button>
+            </div>
+          </Transition>
         </div>
       </div>
 
@@ -57,7 +112,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in commissions" :key="item.id" class="table-row">
+            <tr v-for="item in filteredCommissions" :key="item.id" class="table-row">
               <td class="event-name">{{ item.event }}</td>
               <td>{{ item.ticketsSold }}</td>
               <td>{{ item.commissionRate }}</td>
@@ -67,6 +122,9 @@
                   {{ item.status }}
                 </span>
               </td>
+            </tr>
+            <tr v-if="filteredCommissions.length === 0">
+              <td colspan="5" class="empty-cell">No matching commission logs found.</td>
             </tr>
           </tbody>
         </table>
@@ -84,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { PromoterEventCommission } from '~/types/promoter'
 
 definePageMeta({
@@ -98,6 +156,11 @@ useHead({
   ],
 })
 
+const searchQuery = ref('')
+const filterStatus = ref('All')
+const showFilterDropdown = ref(false)
+const statusOptions = ['All', 'Completed', 'Pending', 'Cancelled']
+
 const commissions = ref<PromoterEventCommission[]>([
   { id: '1', event: 'Summer Tech Camp', ticketsSold: 100, commissionRate: '10%', commissionEarned: 30000, status: 'Completed' },
   { id: '2', event: 'Music Fest 2026', ticketsSold: 105, commissionRate: '10%', commissionEarned: 14000, status: 'Completed' },
@@ -105,6 +168,14 @@ const commissions = ref<PromoterEventCommission[]>([
   { id: '4', event: 'Tech Connect Lagos', ticketsSold: 68, commissionRate: '10%', commissionEarned: 10000, status: 'Completed' },
   { id: '5', event: 'Food & Night Expo', ticketsSold: 35, commissionRate: '10%', commissionEarned: 20000, status: 'Pending' },
 ])
+
+const filteredCommissions = computed(() => {
+  return commissions.value.filter((item) => {
+    const matchesSearch = !searchQuery.value || item.event.toLowerCase().includes(searchQuery.value.toLowerCase().trim())
+    const matchesStatus = filterStatus.value === 'All' || item.status === filterStatus.value
+    return matchesSearch && matchesStatus
+  })
+})
 
 const router = useRouter()
 
@@ -219,25 +290,190 @@ function handleWithdraw() {
 }
 
 .stat-card {
-  background: #ffffff;
-  border-radius: 0.85rem;
-  border: 1px solid #eef2ee;
-  padding: 1.25rem;
+  background: #FAFDFA;
+  border: 1px solid rgba(63, 210, 70, 0.45);
+  border-radius: 0.9rem;
+  padding: 1.25rem 1.35rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(63, 210, 70, 0.08);
 }
 
 .stat-label {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .stat-value {
-  font-size: 1.5rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: #0E2615;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.stat-trend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3FD246;
+}
+
+/* Controls (Search & Filter) */
+.controls-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  position: relative;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.6rem 2.25rem 0.6rem 2.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 0.85rem;
+  color: #111827;
+  outline: none;
+  transition: all 0.15s ease;
+  font-family: 'Outfit', sans-serif;
+}
+
+.search-input:focus {
+  border-color: #3FD246;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 0.85rem;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.filter-wrapper {
+  position: relative;
+}
+
+.btn-control {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  font-family: 'Outfit', sans-serif;
+}
+
+.btn-control:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.btn-control--active {
+  border-color: #3FD246;
+  color: #16a34a;
+}
+
+.filter-active-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3FD246;
+  margin-left: 0.5rem;
+}
+
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  min-width: 160px;
+}
+
+.filter-dropdown-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.5rem 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 0.35rem;
+}
+
+.filter-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  font-family: 'Outfit', sans-serif;
+}
+
+.filter-option:hover {
+  background: #f3f4f6;
+}
+
+.filter-option--active {
+  background: #f0fdf4;
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.empty-cell {
+  text-align: center;
+  padding: 2.5rem 1rem !important;
+  color: #9ca3af;
+  font-size: 0.875rem;
 }
 
 /* Table */

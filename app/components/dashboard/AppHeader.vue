@@ -127,6 +127,12 @@ const headerConfig = computed(() => {
       subtitle: 'View and engage all ticket orders.',
     }
   }
+  if (path.startsWith('/organizations/invite')) {
+    return {
+      title: 'Team Members',
+      subtitle: 'Manage your team members, roles, and access across your organization.',
+    }
+  }
   if (path.startsWith('/organizations')) {
     return {
       title: 'My Organization',
@@ -154,7 +160,7 @@ const headerConfig = computed(() => {
   if (path.startsWith('/marketing')) {
     return {
       title: 'Marketing',
-      subtitle: 'Create and manage marketing campaigns and discounts.',
+      subtitle: 'Create and send targeted email campaigns, promote your events, and drive more ticket sales.',
     }
   }
   if (path.startsWith('/reports')) {

@@ -1,39 +1,32 @@
 <template>
   <div class="customers-page" @click="handleGlobalClick">
-    <!-- Stat Cards -->
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <span class="metric-label">Total Customers</span>
-        <div class="metric-value">12,842</div>
-        <div class="metric-trend">
-          <span class="trend-up">↑ +12.4%</span>
+    <!-- Main Unified Card -->
+    <div class="main-card">
+      <!-- Stat Cards (4 Cards Grid) -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">Total Customers</span>
+          <div class="metric-value">12,842</div>
+          <div class="metric-trend">+12.4% from last 30 days</div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Active (Last 30 days)</span>
+          <div class="metric-value">2,1358</div>
+          <div class="metric-trend">+8.6% from last 30 days</div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">New</span>
+          <div class="metric-value">342</div>
+          <div class="metric-trend">+5.2% from last 30 days</div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Duplicate/Used</span>
+          <div class="metric-value">214</div>
+          <div class="metric-trend">+3.1% from last 30 days</div>
         </div>
       </div>
-      <div class="metric-card">
-        <span class="metric-label">Active (Last 30 days)</span>
-        <div class="metric-value">2,1358</div>
-        <div class="metric-trend">
-          <span class="trend-up">↑ +8.6%</span>
-        </div>
-      </div>
-      <div class="metric-card">
-        <span class="metric-label">New</span>
-        <div class="metric-value">342</div>
-        <div class="metric-trend">
-          <span class="trend-up">↑ +5.2%</span>
-        </div>
-      </div>
-      <div class="metric-card">
-        <span class="metric-label">Duplicate/Used</span>
-        <div class="metric-value">214</div>
-        <div class="metric-trend">
-          <span class="trend-up">↑ +3.1%</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- Table Controls -->
-    <div class="table-controls-card">
+      <!-- Table Controls -->
       <div class="controls-top-row">
         <!-- Search -->
         <div class="search-input-wrapper">
@@ -428,59 +421,86 @@ function resetFilters() {
   font-family: 'Outfit', sans-serif;
 }
 
-/* Metrics Grid */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.metric-card {
+/* Main Unified Card */
+.main-card {
   background: #ffffff;
   border-radius: 1.25rem;
   border: 1px solid #eef2ee;
-  padding: 1.35rem 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Card Header */
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.header-text {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.metric-label {
-  font-size: 0.8rem;
-  font-weight: 600;
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0E2615;
+  margin: 0;
+}
+
+.card-subtitle {
+  font-size: 0.875rem;
   color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.metric-card {
+  background: #FAFDFA;
+  border: 1px solid rgba(63, 210, 70, 0.45);
+  border-radius: 0.9rem;
+  padding: 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(63, 210, 70, 0.08);
+}
+
+.metric-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4b5563;
 }
 
 .metric-value {
-  font-size: 1.7rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: #0E2615;
   line-height: 1.1;
-  letter-spacing: -0.01em;
-  margin-top: 0.2rem;
+  letter-spacing: -0.02em;
 }
 
 .metric-trend {
-  font-size: 0.75rem;
-  margin-top: 0.15rem;
-}
-
-.trend-up {
-  color: #16a34a;
-  font-weight: 700;
-}
-
-/* Table Controls */
-.table-controls-card {
-  background: #ffffff;
-  border-radius: 1.25rem;
-  border: 1px solid #eef2ee;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3FD246;
 }
 
 .controls-top-row {
