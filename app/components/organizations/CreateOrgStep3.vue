@@ -21,11 +21,22 @@
             class="form-input"
             :class="{ 'form-input--error': errors.country }"
           />
-          <svg xmlns="http://www.w3.org/2000/svg" class="select-arrow" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="select-arrow"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
           </svg>
         </div>
-        <span v-if="errors.country" class="field-error">{{ errors.country }}</span>
+        <span v-if="errors.country" class="field-error">{{
+          errors.country
+        }}</span>
       </div>
 
       <!-- State & City -->
@@ -42,7 +53,9 @@
             class="form-input"
             :class="{ 'form-input--error': errors.state }"
           />
-          <span v-if="errors.state" class="field-error">{{ errors.state }}</span>
+          <span v-if="errors.state" class="field-error">{{
+            errors.state
+          }}</span>
         </div>
 
         <div class="field-group">
@@ -74,7 +87,9 @@
           class="form-input"
           :class="{ 'form-input--error': errors.address }"
         />
-        <span v-if="errors.address" class="field-error">{{ errors.address }}</span>
+        <span v-if="errors.address" class="field-error">{{
+          errors.address
+        }}</span>
       </div>
 
       <!-- Support Email & Support Phone -->
@@ -91,26 +106,22 @@
             class="form-input"
             :class="{ 'form-input--error': errors.supportEmail }"
           />
-          <span v-if="errors.supportEmail" class="field-error">{{ errors.supportEmail }}</span>
+          <span v-if="errors.supportEmail" class="field-error">{{
+            errors.supportEmail
+          }}</span>
         </div>
 
         <div class="field-group">
           <label for="input-support-phone" class="field-label">
             Support Phone <span class="required-star">*</span>
           </label>
-          <div class="phone-input-wrapper" :class="{ 'phone-input-wrapper--error': errors.supportPhone }">
-            <div class="country-prefix">
-              <span class="flag-icon">🇳🇬</span>
-            </div>
-            <input
-              id="input-support-phone"
-              v-model="formData.supportPhone"
-              type="tel"
-              placeholder="+234 8114 456 7864"
-              class="phone-input"
-            />
-          </div>
-          <span v-if="errors.supportPhone" class="field-error">{{ errors.supportPhone }}</span>
+          <AppPhoneInput
+            id="input-support-phone"
+            v-model="formData.supportPhone"
+            placeholder="802 333 4566"
+            :error="errors.supportPhone"
+            default-country="NG"
+          />
         </div>
       </div>
     </div>
@@ -118,125 +129,388 @@
     <!-- Form Footer Actions -->
     <div class="form-footer">
       <button type="button" class="btn-back" @click="$emit('back')">
-        <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow-left" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="btn-arrow-left"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
         <span>Back</span>
       </button>
 
       <div class="footer-right-actions">
         <button type="button" class="btn-skip" @click="handleSkip">Skip</button>
-        <button type="submit" class="btn-next">
+        <AppButton type="submit" :loading="props.isSubmitting">
           <span>Next</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="btn-arrow"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
           </svg>
-        </button>
+        </AppButton>
       </div>
     </div>
   </form>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, watch } from "vue";
+import AppPhoneInput from "~/components/AppPhoneInput.vue";
+import AppButton from "~/components/AppButton.vue";
+
+const props = defineProps<{
+  initialData?: Partial<{
+    country: string;
+    state: string;
+    city: string;
+    address: string;
+    supportEmail: string;
+    supportPhone: string;
+  }>;
+  isSubmitting?: boolean;
+}>();
 
 const emit = defineEmits<{
-  back: []
-  skip: []
-  next: [data: typeof formData]
-}>()
+  back: [];
+  skip: [];
+  next: [data: typeof formData];
+}>();
 
 const formData = reactive({
-  country: '',
-  state: '',
-  city: '',
-  address: '',
-  supportEmail: '',
-  supportPhone: '',
-})
+  country: "",
+  state: "",
+  city: "",
+  address: "",
+  supportEmail: "",
+  supportPhone: "",
+});
+
+function hydrateForm(data?: Partial<typeof formData>) {
+  Object.assign(formData, {
+    country: "",
+    state: "",
+    city: "",
+    address: "",
+    supportEmail: "",
+    supportPhone: "",
+    ...data,
+  });
+}
+
+watch(
+  () => props.initialData,
+  (data) => {
+    hydrateForm(data as Partial<typeof formData> | undefined);
+  },
+  { immediate: true, deep: true },
+);
 
 const errors = reactive({
-  country: '',
-  state: '',
-  city: '',
-  address: '',
-  supportEmail: '',
-  supportPhone: '',
-})
+  country: "",
+  state: "",
+  city: "",
+  address: "",
+  supportEmail: "",
+  supportPhone: "",
+});
+
+watch(
+  () => formData.country,
+  (value) => {
+    if (value.trim()) errors.country = "";
+  },
+);
+
+watch(
+  () => formData.state,
+  (value) => {
+    if (value.trim()) errors.state = "";
+  },
+);
+
+watch(
+  () => formData.city,
+  (value) => {
+    if (value.trim()) errors.city = "";
+  },
+);
+
+watch(
+  () => formData.address,
+  (value) => {
+    if (value.trim()) errors.address = "";
+  },
+);
+
+watch(
+  () => formData.supportEmail,
+  (value) => {
+    if (value.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      errors.supportEmail = "";
+    }
+  },
+);
+
+watch(
+  () => formData.supportPhone,
+  (value) => {
+    if (value.trim()) errors.supportPhone = "";
+  },
+);
 
 function validate() {
-  let valid = true
-  Object.keys(errors).forEach(k => (errors[k as keyof typeof errors] = ''))
+  let valid = true;
+  Object.keys(errors).forEach((k) => (errors[k as keyof typeof errors] = ""));
 
-  if (!formData.country.trim()) { errors.country = 'Country is required.'; valid = false }
-  if (!formData.state.trim()) { errors.state = 'State is required.'; valid = false }
-  if (!formData.city.trim()) { errors.city = 'City is required.'; valid = false }
-  if (!formData.address.trim()) { errors.address = 'Office address is required.'; valid = false }
-  if (!formData.supportEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.supportEmail)) {
-    errors.supportEmail = 'Valid support email is required.'; valid = false
+  if (!formData.country.trim()) {
+    errors.country = "Country is required.";
+    valid = false;
   }
-  if (!formData.supportPhone.trim()) { errors.supportPhone = 'Support phone is required.'; valid = false }
+  if (!formData.state.trim()) {
+    errors.state = "State is required.";
+    valid = false;
+  }
+  if (!formData.city.trim()) {
+    errors.city = "City is required.";
+    valid = false;
+  }
+  if (!formData.address.trim()) {
+    errors.address = "Office address is required.";
+    valid = false;
+  }
+  if (
+    !formData.supportEmail.trim() ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.supportEmail)
+  ) {
+    errors.supportEmail = "Valid support email is required.";
+    valid = false;
+  }
+  if (!formData.supportPhone.trim()) {
+    errors.supportPhone = "Support phone is required.";
+    valid = false;
+  }
 
-  return valid
+  return valid;
 }
 
 function handleSubmit() {
-  if (!validate()) return
-  emit('next', { ...formData })
+  if (!validate()) return;
+  emit("next", { ...formData });
 }
 
 function handleSkip() {
-  emit('skip')
+  emit("skip");
 }
 </script>
 
 <style scoped>
-.step3-form { display: flex; flex-direction: column; }
+.step3-form {
+  display: flex;
+  flex-direction: column;
+}
 
-.form-header { margin-bottom: 1.75rem; }
-.form-title { font-size: 1.05rem; font-weight: 800; color: #0E2615; margin: 0 0 0.25rem; }
-.form-subtitle { font-size: 0.85rem; color: #6b7280; margin: 0; }
+.form-header {
+  margin-bottom: 1.75rem;
+}
+.form-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0e2615;
+  margin: 0 0 0.25rem;
+}
+.form-subtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+}
 
-.fields-stack { display: flex; flex-direction: column; gap: 1.35rem; margin-bottom: 2.25rem; }
-.two-col-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-.field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.fields-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  margin-bottom: 2.25rem;
+}
+.two-col-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
 
-.field-label { font-size: 0.825rem; font-weight: 700; color: #0E2615; }
-.required-star { color: #ef4444; }
+.field-label {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #0e2615;
+}
+.required-star {
+  color: #ef4444;
+}
 
 .form-input {
-  width: 100%; padding: 0.75rem 1rem; background: #ffffff;
-  border: 1px solid #e5e7eb; border-radius: 0.65rem;
-  font-size: 0.875rem; color: #1f2937; outline: none; transition: all 0.15s ease;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.65rem;
+  font-size: 0.875rem;
+  color: #1f2937;
+  outline: none;
+  transition: all 0.15s ease;
 }
-.form-input::placeholder { color: #9ca3af; }
-.form-input:focus { border-color: #3FD246; box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12); }
-.form-input--error { border-color: #ef4444 !important; }
+.form-input::placeholder {
+  color: #9ca3af;
+}
+.form-input:focus {
+  border-color: #3fd246;
+  box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
+}
+.form-input--error {
+  border-color: #ef4444 !important;
+}
 
-.select-wrapper { position: relative; }
-.select-arrow { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); width: 1.1rem; height: 1.1rem; color: #6b7280; pointer-events: none; }
+.select-wrapper {
+  position: relative;
+}
+.select-arrow {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #6b7280;
+  pointer-events: none;
+}
 
-.phone-input-wrapper { display: flex; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.65rem; overflow: hidden; transition: all 0.15s ease; }
-.phone-input-wrapper:focus-within { border-color: #3FD246; box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12); }
-.country-prefix { padding: 0.75rem 0.75rem 0.75rem 1rem; display: flex; align-items: center; }
-.flag-icon { font-size: 1.1rem; }
-.phone-input { flex: 1; border: none; outline: none; padding: 0.75rem 1rem 0.75rem 0.25rem; font-size: 0.875rem; color: #1f2937; background: transparent; }
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.65rem;
+  overflow: hidden;
+  transition: all 0.15s ease;
+}
+.phone-input-wrapper:focus-within {
+  border-color: #3fd246;
+  box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
+}
+.country-prefix {
+  padding: 0.75rem 0.75rem 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+}
+.flag-icon {
+  font-size: 1.1rem;
+}
+.phone-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0.75rem 1rem 0.75rem 0.25rem;
+  font-size: 0.875rem;
+  color: #1f2937;
+  background: transparent;
+}
 
-.field-error { font-size: 0.75rem; color: #ef4444; }
+.field-error {
+  font-size: 0.75rem;
+  color: #ef4444;
+}
 
-.form-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f3f4f6; padding-top: 1.5rem; }
+.form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 1.5rem;
+}
 
-.btn-back { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.75rem; background: #ffffff; border: 1px solid #e5e7eb; color: #0E2615; font-weight: 700; font-size: 0.85rem; border-radius: 0.65rem; cursor: pointer; transition: all 0.15s ease; }
-.btn-back:hover { background: #f9fafb; border-color: #d1d5db; }
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.75rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #0e2615;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-back:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
 
-.footer-right-actions { display: flex; align-items: center; gap: 1rem; }
+.footer-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 
-.btn-skip { padding: 0.65rem 1.25rem; background: transparent; border: none; color: #6b7280; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-decoration: underline; transition: color 0.15s; }
-.btn-skip:hover { color: #0E2615; }
+.btn-skip {
+  padding: 0.65rem 1.25rem;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.15s;
+}
+.btn-skip:hover {
+  color: #0e2615;
+}
 
-.btn-next { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.75rem; background: #3FD246; color: #ffffff; font-weight: 700; font-size: 0.85rem; border-radius: 0.65rem; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(63, 210, 70, 0.22); transition: all 0.15s ease; }
-.btn-next:hover { background: #34c03b; transform: translateY(-1px); }
-.btn-arrow, .btn-arrow-left { width: 1rem; height: 1rem; }
+.btn-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.75rem;
+  background: #3fd246;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border-radius: 0.65rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(63, 210, 70, 0.22);
+  transition: all 0.15s ease;
+}
+.btn-next:hover {
+  background: #34c03b;
+  transform: translateY(-1px);
+}
+.btn-arrow,
+.btn-arrow-left {
+  width: 1rem;
+  height: 1rem;
+}
 
-@media (max-width: 640px) { .two-col-row { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  .two-col-row {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

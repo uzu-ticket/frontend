@@ -23,10 +23,6 @@
             <stop offset="0%" stop-color="#3FD246" stop-opacity="0.45" />
             <stop offset="100%" stop-color="#3FD246" stop-opacity="0.02" />
           </linearGradient>
-          <linearGradient id="greenGradientAlt" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#10B981" stop-opacity="0.3" />
-            <stop offset="100%" stop-color="#10B981" stop-opacity="0.0" />
-          </linearGradient>
         </defs>
 
         <!-- Grid Lines -->
@@ -37,69 +33,138 @@
         <line x1="40" y1="230" x2="630" y2="230" stroke="#f3f4f6" stroke-dasharray="4 4" />
         <line x1="40" y1="270" x2="630" y2="270" stroke="#e5e7eb" />
 
-        <!-- Area Fill 1 -->
+        <!-- Dynamic Area Fill -->
         <path
-          d="M 40,270 L 40,60 C 80,40 120,110 160,50 C 200,80 240,160 280,70 C 320,60 360,180 400,60 C 440,130 480,80 520,110 C 560,70 600,60 630,50 L 630,270 Z"
+          v-if="areaPath"
+          :d="areaPath"
           fill="url(#greenGradient)"
         />
 
-        <!-- Area Fill 2 (Secondary Wave) -->
+        <!-- Dynamic Main Curve Line -->
         <path
-          d="M 40,270 L 40,110 C 80,80 120,180 160,90 C 200,140 240,70 280,110 C 320,150 360,70 400,100 C 440,150 480,100 520,160 C 560,90 600,100 630,80 L 630,270 Z"
-          fill="url(#greenGradientAlt)"
-        />
-
-        <!-- Main Smooth Curve Line -->
-        <path
-          d="M 40,60 C 80,40 120,110 160,50 C 200,80 240,160 280,70 C 320,60 360,180 400,60 C 440,130 480,80 520,110 C 560,70 600,60 630,50"
+          v-if="linePath"
+          :d="linePath"
           fill="none"
           stroke="#3FD246"
           stroke-width="2.5"
         />
 
-        <!-- Secondary Smooth Curve Line -->
-        <path
-          d="M 40,110 C 80,80 120,180 160,90 C 200,140 240,70 280,110 C 320,150 360,70 400,100 C 440,150 480,100 520,160 C 560,90 600,100 630,80"
-          fill="none"
-          stroke="#10B981"
-          stroke-width="1.8"
-          stroke-dasharray="3 3"
-        />
-
         <!-- Data Node Circles -->
-        <circle cx="40" cy="60" r="3.5" fill="#3FD246" stroke="#ffffff" stroke-width="1.5" />
-        <circle cx="160" cy="50" r="3.5" fill="#3FD246" stroke="#ffffff" stroke-width="1.5" />
-        <circle cx="280" cy="70" r="3.5" fill="#3FD246" stroke="#ffffff" stroke-width="1.5" />
-        <circle cx="400" cy="60" r="3.5" fill="#3FD246" stroke="#ffffff" stroke-width="1.5" />
-        <circle cx="520" cy="110" r="3.5" fill="#3FD246" stroke="#ffffff" stroke-width="1.5" />
-        <circle cx="630" cy="50" r="3.5" fill="#3FD246" stroke="#ffffff" stroke-width="1.5" />
+        <circle
+          v-for="(pt, idx) in plotPoints"
+          :key="idx"
+          :cx="pt.x"
+          :cy="pt.y"
+          r="3.5"
+          fill="#3FD246"
+          stroke="#ffffff"
+          stroke-width="1.5"
+        />
       </svg>
 
       <!-- Y Axis Labels -->
       <div class="y-axis">
-        <span>800</span>
-        <span>700</span>
-        <span>600</span>
-        <span>500</span>
-        <span>400</span>
-        <span>300</span>
-        <span>200</span>
-        <span>100</span>
-        <span>0</span>
+        <span v-for="label in yAxisLabels" :key="label">{{ label }}</span>
       </div>
 
       <!-- X Axis Labels -->
       <div class="x-axis">
-        <span>Aug 5</span>
-        <span>Aug 6</span>
-        <span>Aug 7</span>
-        <span>Aug 8</span>
-        <span>Aug 9</span>
-        <span>Aug 10</span>
+        <span v-for="label in xAxisLabels" :key="label">{{ label }}</span>
       </div>
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const props = defineProps<{
+  chartData?: { day: string; orders: number; revenue: number }[]
+}>()
+
+const chartData = computed(() => props.chartData ?? [])
+
+function niceMax(value: number): number {
+  if (value <= 0) return 100
+  const magnitude = Math.pow(10, Math.floor(Math.log10(value)))
+  const residual = value / magnitude
+  let nice: number
+  if (residual <= 1) nice = 1
+  else if (residual <= 2) nice = 2
+  else if (residual <= 5) nice = 5
+  else nice = 10
+  return nice * magnitude
+}
+
+const maxRevenue = computed(() => {
+  if (chartData.value.length === 0) return 100
+  const max = Math.max(...chartData.value.map((d) => d.revenue))
+  return niceMax(max)
+})
+
+const yAxisLabels = computed(() => {
+  const max = maxRevenue.value
+  const step = max / 4
+  return [0, step, step * 2, step * 3, max].map((v) => Math.round(v).toLocaleString())
+})
+
+const xAxisLabels = computed(() => chartData.value.map((d) => d.day))
+
+const plotPoints = computed(() => {
+  const data = chartData.value
+  if (data.length === 0) return []
+  const max = maxRevenue.value
+  const left = 40
+  const right = 630
+  const top = 30
+  const bottom = 230
+  const width = right - left
+  const height = bottom - top
+
+  return data.map((d, i) => {
+    const x = data.length === 1 ? (left + right) / 2 : left + (i / (data.length - 1)) * width
+    const y = top + (1 - d.revenue / max) * height
+    return { x, y }
+  })
+})
+
+function catmullRomToBezier(points: { x: number; y: number }[]): string {
+  if (points.length === 0) return ''
+  if (points.length === 1) return `M ${points[0].x},${points[0].y}`
+
+  let path = `M ${points[0].x},${points[0].y}`
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)]
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    const p3 = points[Math.min(points.length - 1, i + 2)]
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6
+    const cp1y = p1.y + (p2.y - p0.y) / 6
+    const cp2x = p2.x - (p3.x - p1.x) / 6
+    const cp2y = p2.y - (p3.y - p1.y) / 6
+
+    path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`
+  }
+
+  return path
+}
+
+const linePath = computed(() => catmullRomToBezier(plotPoints.value))
+
+const areaPath = computed(() => {
+  const points = plotPoints.value
+  if (points.length === 0) return ''
+  const left = 40
+  const right = 630
+  const bottom = 270
+  const line = catmullRomToBezier(points)
+  const firstX = points[0].x
+  const lastX = points[points.length - 1].x
+  return `${line} L ${lastX},${bottom} L ${firstX},${bottom} Z`
+})
+</script>
 
 <style scoped>
 .sales-chart-card {
@@ -158,7 +223,6 @@
   color: #6b7280;
 }
 
-/* Chart Wrapper */
 .chart-wrapper {
   position: relative;
   flex: 1;

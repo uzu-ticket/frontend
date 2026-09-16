@@ -47,7 +47,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in payouts" :key="item.id" class="table-row">
+            <tr v-for="item in paginatedPayouts" :key="item.id" class="table-row">
               <td>{{ item.date }}</td>
               <td class="amount-cell">N{{ item.amount.toLocaleString() }}</td>
               <td>
@@ -61,33 +61,19 @@
         </table>
       </div>
 
-      <!-- Pagination Footer -->
-      <div class="table-pagination-footer">
-        <div class="pagination-info">
-          Showing 1 of 24 orders
-        </div>
-        <div class="pagination-controls">
-          <button
-            v-for="page in [1, 2, 3, 4, 5, 7]"
-            :key="page"
-            type="button"
-            class="page-btn"
-            :class="{ 'page-btn--active': currentPage === page }"
-            @click="currentPage = page"
-          >
-            {{ page }}
-          </button>
-          <button type="button" class="page-btn page-next-btn">
-            &gt;
-          </button>
-        </div>
-      </div>
+      <AppPagination
+        v-model="currentPage"
+        :total-pages="totalPages"
+        :total-items="payouts.length"
+        :page-size="pageSize"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import AppPagination from '~/components/ui/AppPagination.vue'
 
 definePageMeta({
   layout: 'dashboard',
@@ -101,6 +87,7 @@ useHead({
 })
 
 const currentPage = ref(1)
+const pageSize = 5
 
 const payouts = ref([
   { id: '1', date: 'Sept 12, 2026', amount: 29000, status: 'Completed', reference: 'UTX-9231' },
@@ -111,6 +98,13 @@ const payouts = ref([
   { id: '6', date: 'Sept 12, 2026', amount: 10000, status: 'Completed', reference: 'UTX-9231' },
   { id: '7', date: 'Sept 12, 2026', amount: 15000, status: 'Completed', reference: 'UTX-9231' },
 ])
+
+const totalPages = computed(() => Math.ceil(payouts.value.length / pageSize) || 1)
+
+const paginatedPayouts = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return payouts.value.slice(start, start + pageSize)
+})
 </script>
 
 <style scoped>
@@ -304,56 +298,5 @@ const payouts = ref([
 .status--failed {
   background: #fef2f2;
   color: #dc2626;
-}
-
-/* Pagination */
-.table-pagination-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.pagination-info {
-  font-size: 0.82rem;
-  color: #6b7280;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.page-btn {
-  min-width: 32px;
-  height: 32px;
-  padding: 0 0.5rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
-}
-
-.page-btn:hover {
-  border-color: #3FD246;
-  color: #16a34a;
-}
-
-.page-btn--active {
-  background: #3FD246;
-  border-color: #3FD246;
-  color: #ffffff;
-}
-
-.page-next-btn {
-  font-size: 0.9rem;
 }
 </style>

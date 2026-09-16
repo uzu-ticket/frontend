@@ -1,6 +1,10 @@
 <template>
   <div :class="wrapperClasses">
-    <label v-if="label" :for="inputId" class="block text-sm font-medium text-gray-700 mb-1.5">
+    <label
+      v-if="label"
+      :for="inputId"
+      class="block text-sm font-medium text-gray-700 mb-1.5"
+    >
       {{ label }}
     </label>
 
@@ -21,9 +25,10 @@
         :aria-haspopup="true"
         :aria-expanded="isPickerOpen"
         tabindex="0"
-        @click="!disabled && !readonly && openPicker"
-        @keydown.space.prevent="!disabled && !readonly && openPicker"
-        @keydown.enter="!disabled && !readonly && openPicker"
+        @mousedown.prevent
+        @click="togglePicker()"
+        @keydown.space.prevent="togglePicker()"
+        @keydown.enter.prevent="togglePicker()"
       >
         <span class="flag" aria-hidden="true">{{ selectedCountry.flag }}</span>
         <span class="dial-code">{{ selectedCountry.dialCode }}</span>
@@ -60,72 +65,64 @@
         @focus="onInputFocus"
         @blur="onInputBlur"
       />
-    </div>
 
-    <!-- Country Picker Overlay -->
-    <Transition name="picker-fade">
-      <Teleport to="body" v-if="isPickerOpen">
-        <div class="picker-overlay" @click="closePicker">
-          <div
-            class="country-picker"
-            :style="pickerStyle"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Select a country"
-            @click.stop
-            @keydown.escape.window="closePicker"
+      <div
+        v-if="isPickerOpen"
+        class="country-picker"
+        :class="`country-picker--${pickerPlacement}`"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Select a country"
+        @click.stop
+        @keydown.escape.window="closePicker"
+      >
+        <div class="picker-search-row">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="picker-search-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
           >
-            <div class="picker-search-row">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="picker-search-icon"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                ref="searchRef"
-                v-model="searchQuery"
-                type="text"
-                class="picker-search-input"
-                placeholder="Search country"
-                autocomplete="off"
-              />
-            </div>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            ref="searchRef"
+            v-model="searchQuery"
+            type="text"
+            class="picker-search-input"
+            placeholder="Search country"
+            autocomplete="off"
+          />
+        </div>
 
-            <div class="picker-list">
-              <button
-                v-for="country in filteredCountries"
-                :key="country.code"
-                class="picker-item"
-                :class="{
-                  'picker-item--selected': country.code === selectedCountry.code,
-                }"
-                @click="selectCountry(country)"
-              >
-                <span class="picker-flag">{{ country.flag }}</span>
-                <span class="picker-name">{{ country.name }}</span>
-                <span class="picker-dial">{{ country.dialCode }}</span>
-              </button>
+        <div class="picker-list">
+          <button
+            v-for="country in filteredCountries"
+            :key="country.code"
+            type="button"
+            class="picker-item"
+            :class="{
+              'picker-item--selected': country.code === selectedCountry.code,
+            }"
+            @click="selectCountry(country)"
+          >
+            <span class="picker-flag">{{ country.flag }}</span>
+            <span class="picker-name">{{ country.name }}</span>
+            <span class="picker-dial">{{ country.dialCode }}</span>
+          </button>
 
-              <div
-                v-if="filteredCountries.length === 0"
-                class="picker-no-results"
-              >
-                No results found
-              </div>
-            </div>
+          <div v-if="filteredCountries.length === 0" class="picker-no-results">
+            No results found
           </div>
         </div>
-      </Teleport>
-    </Transition>
+      </div>
+    </div>
 
     <p v-if="hint" class="mt-1.5 text-sm text-gray-500">
       {{ hint }}
@@ -137,251 +134,277 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick, useId } from 'vue'
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onUnmounted,
+  nextTick,
+  useId,
+} from "vue";
 
 export interface PhoneCountry {
-  code: string
-  name: string
-  dialCode: string
-  flag: string
+  code: string;
+  name: string;
+  dialCode: string;
+  flag: string;
 }
 
 interface Props {
-  modelValue?: string
-  label?: string
-  placeholder?: string
-  hint?: string
-  error?: string
-  disabled?: boolean
-  readonly?: boolean
-  size?: 'sm' | 'md' | 'lg'
-  defaultCountry?: string
+  modelValue?: string;
+  label?: string;
+  placeholder?: string;
+  hint?: string;
+  error?: string;
+  disabled?: boolean;
+  readonly?: boolean;
+  size?: "sm" | "md" | "lg";
+  defaultCountry?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: '',
-  placeholder: '802 333 4566',
-  size: 'md',
-  defaultCountry: 'NG',
-})
+  modelValue: "",
+  placeholder: "802 333 4566",
+  size: "md",
+  defaultCountry: "NG",
+});
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  'update:countryCode': [value: string]
-  blur: [event: FocusEvent]
-  focus: [event: FocusEvent]
-  'update:country': [country: PhoneCountry]
-}>()
+  "update:modelValue": [value: string];
+  "update:countryCode": [value: string];
+  blur: [event: FocusEvent];
+  focus: [event: FocusEvent];
+  "update:country": [country: PhoneCountry];
+}>();
 
 const countries: PhoneCountry[] = [
-  { code: 'NG', name: 'Nigeria', dialCode: '+234', flag: '🇳🇬' },
-  { code: 'US', name: 'United States', dialCode: '+1', flag: '🇺🇸' },
-  { code: 'GB', name: 'United Kingdom', dialCode: '+44', flag: '🇬🇧' },
-  { code: 'CA', name: 'Canada', dialCode: '+1', flag: '🇨🇦' },
-  { code: 'DE', name: 'Germany', dialCode: '+49', flag: '🇩🇪' },
-  { code: 'FR', name: 'France', dialCode: '+33', flag: '🇫🇷' },
-  { code: 'ZA', name: 'South Africa', dialCode: '+27', flag: '🇿🇦' },
-  { code: 'KE', name: 'Kenya', dialCode: '+254', flag: '🇰🇪' },
-  { code: 'GH', name: 'Ghana', dialCode: '+233', flag: '🇬🇭' },
-  { code: 'IN', name: 'India', dialCode: '+91', flag: '🇮🇳' },
-  { code: 'AU', name: 'Australia', dialCode: '+61', flag: '🇦🇺' },
-  { code: 'BR', name: 'Brazil', dialCode: '+55', flag: '🇧🇷' },
-  { code: 'PT', name: 'Portugal', dialCode: '+351', flag: '🇵🇹' },
-  { code: 'ES', name: 'Spain', dialCode: '+34', flag: '🇪🇸' },
-  { code: 'IT', name: 'Italy', dialCode: '+39', flag: '🇮🇹' },
-  { code: 'NL', name: 'Netherlands', dialCode: '+31', flag: '🇳🇱' },
-  { code: 'SE', name: 'Sweden', dialCode: '+46', flag: '🇸🇪' },
-  { code: 'NO', name: 'Norway', dialCode: '+47', flag: '🇳🇴' },
-  { code: 'PK', name: 'Pakistan', dialCode: '+92', flag: '🇵🇰' },
-  { code: 'BD', name: 'Bangladesh', dialCode: '+880', flag: '🇧🇩' },
-  { code: 'PH', name: 'Philippines', dialCode: '+63', flag: '🇵🇭' },
-  { code: 'TH', name: 'Thailand', dialCode: '+66', flag: '🇹🇭' },
-  { code: 'JP', name: 'Japan', dialCode: '+81', flag: '🇯🇵' },
-  { code: 'KR', name: 'South Korea', dialCode: '+82', flag: '🇰🇷' },
-  { code: 'SG', name: 'Singapore', dialCode: '+65', flag: '🇸🇬' },
-  { code: 'HK', name: 'Hong Kong', dialCode: '+852', flag: '🇭🇰' },
-  { code: 'AE', name: 'United Arab Emirates', dialCode: '+971', flag: '🇦🇪' },
-  { code: 'SA', name: 'Saudi Arabia', dialCode: '+966', flag: '🇸🇦' },
-  { code: 'MX', name: 'Mexico', dialCode: '+52', flag: '🇲🇽' },
-]
+  { code: "NG", name: "Nigeria", dialCode: "+234", flag: "🇳🇬" },
+  { code: "US", name: "United States", dialCode: "+1", flag: "🇺🇸" },
+  { code: "GB", name: "United Kingdom", dialCode: "+44", flag: "🇬🇧" },
+  { code: "CA", name: "Canada", dialCode: "+1", flag: "🇨🇦" },
+  { code: "DE", name: "Germany", dialCode: "+49", flag: "🇩🇪" },
+  { code: "FR", name: "France", dialCode: "+33", flag: "🇫🇷" },
+  { code: "ZA", name: "South Africa", dialCode: "+27", flag: "🇿🇦" },
+  { code: "KE", name: "Kenya", dialCode: "+254", flag: "🇰🇪" },
+  { code: "GH", name: "Ghana", dialCode: "+233", flag: "🇬🇭" },
+  { code: "IN", name: "India", dialCode: "+91", flag: "🇮🇳" },
+  { code: "AU", name: "Australia", dialCode: "+61", flag: "🇦🇺" },
+  { code: "BR", name: "Brazil", dialCode: "+55", flag: "🇧🇷" },
+  { code: "PT", name: "Portugal", dialCode: "+351", flag: "🇵🇹" },
+  { code: "ES", name: "Spain", dialCode: "+34", flag: "🇪🇸" },
+  { code: "IT", name: "Italy", dialCode: "+39", flag: "🇮🇹" },
+  { code: "NL", name: "Netherlands", dialCode: "+31", flag: "🇳🇱" },
+  { code: "SE", name: "Sweden", dialCode: "+46", flag: "🇸🇪" },
+  { code: "NO", name: "Norway", dialCode: "+47", flag: "🇳🇴" },
+  { code: "PK", name: "Pakistan", dialCode: "+92", flag: "🇵🇰" },
+  { code: "BD", name: "Bangladesh", dialCode: "+880", flag: "🇧🇩" },
+  { code: "PH", name: "Philippines", dialCode: "+63", flag: "🇵🇭" },
+  { code: "TH", name: "Thailand", dialCode: "+66", flag: "🇹🇭" },
+  { code: "JP", name: "Japan", dialCode: "+81", flag: "🇯🇵" },
+  { code: "KR", name: "South Korea", dialCode: "+82", flag: "🇰🇷" },
+  { code: "SG", name: "Singapore", dialCode: "+65", flag: "🇸🇬" },
+  { code: "HK", name: "Hong Kong", dialCode: "+852", flag: "🇭🇰" },
+  { code: "AE", name: "United Arab Emirates", dialCode: "+971", flag: "🇦🇪" },
+  { code: "SA", name: "Saudi Arabia", dialCode: "+966", flag: "🇸🇦" },
+  { code: "MX", name: "Mexico", dialCode: "+52", flag: "🇲🇽" },
+];
 
-const inputId = useId()
-const inputRef = ref<HTMLInputElement | null>(null)
-const triggerRef = ref<HTMLElement | null>(null)
-const searchRef = ref<HTMLInputElement | null>(null)
+const inputId = useId();
+const inputRef = ref<HTMLInputElement | null>(null);
+const triggerRef = ref<HTMLElement | null>(null);
+const searchRef = ref<HTMLInputElement | null>(null);
 
-const phoneRaw = ref('')
-const searchQuery = ref('')
-const isPickerOpen = ref(false)
-const pickerStyle = ref<Record<string, string>>({})
+const phoneRaw = ref("");
+const searchQuery = ref("");
+const isPickerOpen = ref(false);
+const pickerPlacement = ref<"top" | "bottom">("bottom");
 
 const selectedCountry = ref<PhoneCountry>(
   countries.find((c) => c.code === props.defaultCountry) ?? countries[0]!,
-)
+);
 
 function parseModelValue(val: string | undefined) {
-  const digits = (val ?? '').replace(/\D/g, '')
+  const digits = (val ?? "").replace(/\D/g, "");
   if (!digits) {
-    phoneRaw.value = ''
-    return
+    phoneRaw.value = "";
+    return;
   }
-  let matched = false
+  let matched = false;
   const sorted = countries
     .slice()
-    .sort((a, b) => b.dialCode.length - a.dialCode.length)
+    .sort((a, b) => b.dialCode.length - a.dialCode.length);
   for (const c of sorted) {
-    const dcDigits = c.dialCode.slice(1)
+    const dcDigits = c.dialCode.slice(1);
     if (dcDigits && digits.startsWith(dcDigits)) {
-      selectedCountry.value = c
-      phoneRaw.value = digits.slice(dcDigits.length)
-      matched = true
-      break
+      selectedCountry.value = c;
+      phoneRaw.value = digits.slice(dcDigits.length);
+      matched = true;
+      break;
     }
   }
   if (!matched) {
-    phoneRaw.value = digits
+    phoneRaw.value = digits;
   }
 }
 
-watch(() => props.modelValue, parseModelValue, { immediate: true })
+watch(() => props.modelValue, parseModelValue, { immediate: true });
 
 const filteredCountries = computed(() => {
-  if (!searchQuery.value.trim()) return countries
-  const q = searchQuery.value.toLowerCase().trim()
+  if (!searchQuery.value.trim()) return countries;
+  const q = searchQuery.value.toLowerCase().trim();
   return countries.filter(
     (c) =>
       c.name.toLowerCase().includes(q) ||
       c.code.toLowerCase().includes(q) ||
-      c.dialCode.includes(q.replace('+', '')),
-  )
-})
+      c.dialCode.includes(q.replace("+", "")),
+  );
+});
 
 const baseClasses =
-  'block w-full bg-gray-50 text-gray-800 placeholder-gray-400 transition-all duration-200 disabled:cursor-not-allowed'
+  "block w-full bg-gray-50 text-gray-800 placeholder-gray-400 transition-all duration-200 disabled:cursor-not-allowed";
 
-const sizeClasses: Record<'sm' | 'md' | 'lg', string> = {
-  sm: 'text-sm py-2.5',
-  md: 'text-base py-3.5',
-  lg: 'text-lg py-4',
-}
+const sizeClasses: Record<"sm" | "md" | "lg", string> = {
+  sm: "text-sm py-2.5",
+  md: "text-base py-3.5",
+  lg: "text-lg py-4",
+};
 
-const inputClasses = computed(() => [
-  baseClasses,
-  sizeClasses[props.size],
-  'flex-1 bg-transparent border-0 outline-none pl-3 pr-4',
-].filter(Boolean).join(' '))
+const inputClasses = computed(() =>
+  [
+    baseClasses,
+    sizeClasses[props.size],
+    "flex-1 bg-transparent border-0 outline-none pl-3 pr-4",
+  ]
+    .filter(Boolean)
+    .join(" "),
+);
 
-const wrapperClasses = 'w-full'
+const wrapperClasses = "w-full";
 
 function handleInput(event: Event) {
-  const target = event.target as HTMLInputElement
-  const digits = target.value.replace(/\D/g, '')
+  const target = event.target as HTMLInputElement;
+  const digits = target.value.replace(/\D/g, "");
   if (target.value !== digits) {
-    target.value = digits
+    target.value = digits;
   }
-  phoneRaw.value = digits
-  const full = digits
-    ? `${selectedCountry.value.dialCode}${digits}`
-    : ''
-  emit('update:modelValue', full)
-  emit('update:countryCode', selectedCountry.value.code)
+  phoneRaw.value = digits;
+  const full = digits ? `${selectedCountry.value.dialCode}${digits}` : "";
+  emit("update:modelValue", full);
+  emit("update:countryCode", selectedCountry.value.code);
 }
 
 function onInputFocus(event: FocusEvent) {
-  isPickerOpen.value = false
-  emit('focus', event)
+  isPickerOpen.value = false;
+  emit("focus", event);
 }
 
 function onInputBlur(event: FocusEvent) {
+  const nextTarget = event.relatedTarget as Node | null;
+  const isInsidePicker =
+    nextTarget &&
+    (nextTarget === triggerRef.value ||
+      (nextTarget instanceof HTMLElement &&
+        nextTarget.closest(".country-picker")));
+
   setTimeout(() => {
-    if (isPickerOpen.value) return
-    emit('blur', event)
-  }, 150)
+    if (isPickerOpen.value && isInsidePicker) return;
+    if (isPickerOpen.value) return;
+    emit("blur", event);
+  }, 150);
+}
+
+function updatePickerPlacement() {
+  if (!triggerRef.value || !isPickerOpen.value) return;
+
+  const triggerRect = triggerRef.value.getBoundingClientRect();
+  const gap = 8;
+  const pickerHeight = 240;
+  const spaceAbove = triggerRect.top - gap;
+  const spaceBelow = window.innerHeight - triggerRect.bottom - gap;
+
+  pickerPlacement.value =
+    spaceBelow >= pickerHeight || spaceBelow >= spaceAbove ? "bottom" : "top";
+}
+
+function handleViewportChange() {
+  updatePickerPlacement();
+}
+
+function togglePicker() {
+  if (props.disabled || props.readonly) return;
+
+  isPickerOpen.value = !isPickerOpen.value;
+  if (isPickerOpen.value) {
+    searchQuery.value = "";
+    nextTick(() => {
+      updatePickerPlacement();
+      searchRef.value?.focus();
+    });
+  }
 }
 
 function openPicker() {
-  isPickerOpen.value = true
-  searchQuery.value = ''
+  if (props.disabled || props.readonly) return;
+  isPickerOpen.value = true;
+  searchQuery.value = "";
   nextTick(() => {
-    positionPicker()
-    searchRef.value?.focus()
-  })
-}
-
-function positionPicker() {
-  const el = triggerRef.value
-  if (!el) {
-    pickerStyle.value = {}
-    return
-  }
-  const rect = el.getBoundingClientRect()
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
-  pickerStyle.value = {
-    position: 'fixed',
-    top: `${rect.bottom + scrollTop}px`,
-    left: `${rect.left + scrollLeft}px`,
-    width: `${rect.width}px`,
-    zIndex: '9999',
-  }
+    updatePickerPlacement();
+    searchRef.value?.focus();
+  });
 }
 
 function closePicker() {
-  isPickerOpen.value = false
-  searchQuery.value = ''
+  isPickerOpen.value = false;
+  searchQuery.value = "";
 }
 
 function selectCountry(country: PhoneCountry) {
-  selectedCountry.value = country
-  searchQuery.value = ''
-  closePicker()
-  const full = phoneRaw.value ? `${country.dialCode}${phoneRaw.value}` : ''
-  emit('update:modelValue', full)
-  emit('update:countryCode', country.code)
-  emit('update:country', country)
-  nextTick(() => inputRef.value?.focus())
+  selectedCountry.value = country;
+  searchQuery.value = "";
+  closePicker();
+  const full = phoneRaw.value ? `${country.dialCode}${phoneRaw.value}` : "";
+  emit("update:modelValue", full);
+  emit("update:countryCode", country.code);
+  emit("update:country", country);
+  nextTick(() => inputRef.value?.focus());
 }
 
 function onDocKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && isPickerOpen.value) {
-    closePicker()
-    inputRef.value?.focus()
-  }
-}
-
-function onResizeOrScroll() {
-  if (isPickerOpen.value) {
-    positionPicker()
+  if (event.key === "Escape" && isPickerOpen.value) {
+    closePicker();
+    inputRef.value?.focus();
   }
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', onDocKeydown)
-  window.addEventListener('resize', onResizeOrScroll)
-  window.addEventListener('scroll', onResizeOrScroll, true)
-})
+  window.addEventListener("keydown", onDocKeydown);
+  window.addEventListener("resize", handleViewportChange);
+  window.addEventListener("scroll", handleViewportChange, true);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', onDocKeydown)
-  window.removeEventListener('resize', onResizeOrScroll)
-  window.removeEventListener('scroll', onResizeOrScroll, true)
-})
+  window.removeEventListener("keydown", onDocKeydown);
+  window.removeEventListener("resize", handleViewportChange);
+  window.removeEventListener("scroll", handleViewportChange, true);
+});
 </script>
 
 <style scoped>
 .phone-input-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
   width: 100%;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 0.65rem;
-  overflow: hidden;
+  overflow: visible;
   transition: all 0.15s ease;
 }
 
 .phone-input-wrapper:focus-within {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
 
@@ -406,17 +429,18 @@ onUnmounted(() => {
   gap: 0.35rem;
   padding: 0 0.75rem;
   height: 100%;
-  background: #f9fafb;
+  background: #ffffff;
   border-right: 1px solid #e5e7eb;
   cursor: pointer;
   user-select: none;
   transition: background 0.15s ease;
-  min-width: 84px;
+  min-width: 90px;
+  flex-shrink: 0;
   justify-content: center;
 }
 
 .country-selector:hover {
-  background: #f3f4f6;
+  background: #ffffff;
 }
 
 .country-selector--disabled {
@@ -447,6 +471,8 @@ onUnmounted(() => {
 
 /* Phone Input Field */
 .phone-input-wrapper input {
+  flex: 1 1 auto;
+  width: 100%;
   background: transparent;
 }
 
@@ -459,22 +485,27 @@ onUnmounted(() => {
 }
 
 /* Country Picker Overlay */
-.picker-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  background: rgba(15, 23, 42, 0.4);
-}
-
 .country-picker {
-  width: 280px;
-  max-height: 55vh;
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-height: 240px;
   background: #ffffff;
   border-radius: 0.875rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  z-index: 30;
+}
+
+.country-picker--bottom {
+  top: calc(100% + 8px);
+}
+
+.country-picker--top {
+  bottom: calc(100% + 8px);
 }
 
 .picker-search-row {
@@ -527,7 +558,7 @@ onUnmounted(() => {
 
 .picker-item--selected {
   background: #ecfdf5;
-  color: #0E2615;
+  color: #0e2615;
   font-weight: 700;
 }
 
@@ -563,4 +594,3 @@ onUnmounted(() => {
   opacity: 0;
 }
 </style>
-</script>

@@ -298,33 +298,12 @@
         </table>
       </div>
 
-      <!-- Pagination Footer -->
-      <div class="table-pagination-footer">
-        <div class="pagination-info">
-           Showing {{ (currentPage - 1) * pageSize + 1 }} of {{ totalOrdersCount }} orders
-        </div>
-
-        <div class="pagination-controls">
-          <button
-            v-for="page in paginationPages"
-            :key="page"
-            type="button"
-            class="page-btn"
-            :class="{ 'page-btn--active': currentPage === page }"
-            @click="currentPage = typeof page === 'number' ? page : currentPage"
-          >
-            {{ page }}
-          </button>
-          <button
-            type="button"
-            class="page-btn page-next-btn"
-            :disabled="currentPage >= totalPages"
-            @click="currentPage = Math.min(totalPages, currentPage + 1)"
-          >
-            &gt;
-          </button>
-        </div>
-      </div>
+      <AppPagination
+        v-model="currentPage"
+        :total-pages="totalPages"
+        :total-items="totalOrdersCount"
+        :page-size="pageSize"
+      />
     </div>
 
     <!-- Modals -->
@@ -384,6 +363,7 @@ import DownloadInvoiceModal from '~/components/orders/DownloadInvoiceModal.vue'
 import IssueRefundModal from '~/components/orders/IssueRefundModal.vue'
 import CancelOrderModal from '~/components/orders/CancelOrderModal.vue'
 import OrderFilterModal from '~/components/orders/OrderFilterModal.vue'
+import AppPagination from '~/components/ui/AppPagination.vue'
 
 import { useToast } from '~/composables/useToast'
 import { useOrders } from '~/composables/useOrders'
@@ -1158,61 +1138,6 @@ async function onOrderCancelled(order: Order, reason: string) {
   font-weight: 700;
   font-size: 0.8rem;
   cursor: pointer;
-}
-
-/* Pagination Footer */
-.table-pagination-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 1.5rem;
-  margin-top: 1rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.pagination-info {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #0E2615;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.page-btn {
-  width: 2.1rem;
-  height: 2.1rem;
-  border-radius: 0.4rem;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #374151;
-  font-size: 0.8rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.page-btn:hover:not(:disabled) {
-  border-color: #3FD246;
-  color: #3FD246;
-}
-
-.page-btn--active {
-  border-color: #3FD246;
-  background: #F0FDF1;
-  color: #16A34A;
-  box-shadow: 0 0 0 1px #3FD246;
-}
-
-.page-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 /* Transitions */

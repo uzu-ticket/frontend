@@ -96,11 +96,11 @@
 
             <!-- Table Rows -->
             <template v-else>
-              <tr
-                v-for="member in filteredMembers"
-                :key="member.id"
-                class="table-row"
-              >
+            <tr
+              v-for="member in paginatedMembers"
+              :key="member.id"
+              class="table-row"
+            >
                 <!-- Name with circular avatar -->
                 <td>
                   <div class="member-name-cell">
@@ -159,25 +159,12 @@
         </table>
       </div>
 
-      <!-- Pagination Footer -->
-      <div class="table-pagination-footer">
-        <div class="pagination-info">
-          Showing 1 of {{ totalCount }} orders
-        </div>
-        <div class="pagination-controls">
-          <button
-            v-for="page in [1, 2, 3, 4, 5, 7]"
-            :key="page"
-            type="button"
-            class="page-btn"
-            :class="{ 'page-btn--active': currentPage === page }"
-            @click="currentPage = page"
-          >
-            {{ page }}
-          </button>
-          <button type="button" class="page-btn page-next-btn">&gt;</button>
-        </div>
-      </div>
+      <AppPagination
+        v-model="currentPage"
+        :total-pages="totalPages"
+        :total-items="totalCount"
+        :page-size="pageSize"
+      />
     </div>
 
     <!-- Teleported Kebab Action Dropdown Menu (Overlaps table cleanly) -->
@@ -242,6 +229,7 @@ import MemberDetailDrawer from '~/components/organizations/MemberDetailDrawer.vu
 import ChangeRoleModal from '~/components/organizations/ChangeRoleModal.vue'
 import RevokeAccessModal from '~/components/organizations/RevokeAccessModal.vue'
 import AppSkeleton from '~/components/ui/AppSkeleton.vue'
+import AppPagination from '~/components/ui/AppPagination.vue'
 import { useOrgState } from '~/composables/useOrgState'
 import { useToast } from '~/composables/useToast'
 
@@ -271,6 +259,7 @@ const activeKebabMember = ref<any>(null)
 const kebabPos = ref({ top: '0px', left: '0px' })
 const loadingMembers = ref(false)
 const currentPage = ref(1)
+const pageSize = 10
 
 interface MemberItem {
   id: string
@@ -314,7 +303,14 @@ const selectedRoleLabel = computed(() => {
   return found ? found.label : 'All Roles'
 })
 
-const totalCount = computed(() => 24)
+const totalCount = computed(() => filteredMembers.value.length)
+
+const totalPages = computed(() => Math.ceil(filteredMembers.value.length / pageSize) || 1)
+
+const paginatedMembers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredMembers.value.slice(start, start + pageSize)
+})
 
 function formatRoleName(role?: string): string {
   if (!role) return 'Member'
@@ -901,57 +897,6 @@ function handleMemberInvited(payload: any) {
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
-}
-
-/* Pagination Footer */
-.table-pagination-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 1rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.pagination-info {
-  font-size: 0.82rem;
-  color: #6b7280;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.page-btn {
-  min-width: 32px;
-  height: 32px;
-  padding: 0 0.5rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
-}
-
-.page-btn:hover {
-  border-color: #3FD246;
-  color: #16a34a;
-}
-
-.page-btn--active {
-  background: #e0f9e3;
-  border: 1.5px solid #3FD246;
-  color: #16a34a;
-  font-weight: 800;
-}
-
-.page-next-btn {
-  font-size: 0.9rem;
 }
 
 @media (max-width: 768px) {

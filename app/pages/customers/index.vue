@@ -189,32 +189,12 @@
         </table>
       </div>
 
-      <!-- Pagination Footer -->
-      <div class="table-pagination-footer">
-        <div class="pagination-info">
-          Showing 1 of {{ totalCustomersCount }} orders
-        </div>
-        <div class="pagination-controls">
-          <button
-            v-for="page in paginationPages"
-            :key="page"
-            type="button"
-            class="page-btn"
-            :class="{ 'page-btn--active': currentPage === page }"
-            @click="currentPage = page"
-          >
-            {{ page }}
-          </button>
-          <button
-            type="button"
-            class="page-btn page-next-btn"
-            :disabled="currentPage >= totalPages"
-            @click="currentPage = Math.min(totalPages, currentPage + 1)"
-          >
-            &gt;
-          </button>
-        </div>
-      </div>
+      <AppPagination
+        v-model="currentPage"
+        :total-pages="totalPages"
+        :total-items="filteredCustomers.length"
+        :page-size="pageSize"
+      />
     </div>
   </div>
 </template>
@@ -223,6 +203,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppSkeleton from '~/components/ui/AppSkeleton.vue'
+import AppPagination from '~/components/ui/AppPagination.vue'
 import type { Customer } from '~/types/customers'
 
 const isLoading = ref(false)
@@ -372,8 +353,6 @@ const currentPage = ref(1)
 const pageSize = 10
 
 const statusOptions = ['All', 'Active', 'Inactive', 'Invalid']
-const totalCustomersCount = 24
-const paginationPages = [1, 2, 3, 4, 5, 7]
 
 // Computed
 const filteredCustomers = computed(() => {
@@ -391,7 +370,10 @@ const filteredCustomers = computed(() => {
 
 const totalPages = computed(() => Math.ceil(filteredCustomers.value.length / pageSize) || 1)
 
-const paginatedCustomers = computed(() => filteredCustomers.value)
+const paginatedCustomers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredCustomers.value.slice(start, start + pageSize)
+})
 
 // Methods
 function handleGlobalClick() {
@@ -838,57 +820,6 @@ function resetFilters() {
 .reset-empty-btn:hover {
   border-color: #3FD246;
   color: #16a34a;
-}
-
-/* Pagination */
-.table-pagination-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.pagination-info {
-  font-size: 0.82rem;
-  color: #6b7280;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.page-btn {
-  min-width: 32px;
-  height: 32px;
-  padding: 0 0.5rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
-}
-
-.page-btn:hover {
-  border-color: #3FD246;
-  color: #16a34a;
-}
-
-.page-btn--active {
-  background: #3FD246;
-  border-color: #3FD246;
-  color: #ffffff;
-}
-
-.page-next-btn {
-  font-size: 0.9rem;
 }
 
 /* Transitions */

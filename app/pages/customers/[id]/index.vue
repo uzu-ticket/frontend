@@ -126,7 +126,7 @@
               </thead>
               <tbody>
                 <tr
-                  v-for="purchase in purchases"
+                  v-for="purchase in paginatedPurchases"
                   :key="purchase.id"
                   class="table-row"
                   @click="goToTicket(purchase)"
@@ -146,27 +146,12 @@
             </table>
           </div>
 
-          <!-- Pagination Footer -->
-          <div class="table-pagination-footer">
-            <div class="pagination-info">
-              Showing 1 of 24 orders
-            </div>
-            <div class="pagination-controls">
-              <button
-                v-for="page in [1,2,3,4,5,7]"
-                :key="page"
-                type="button"
-                class="page-btn"
-                :class="{ 'page-btn--active': currentPage === page }"
-                @click="currentPage = page"
-              >
-                {{ page }}
-              </button>
-              <button type="button" class="page-btn page-next-btn">
-                &gt;
-              </button>
-            </div>
-          </div>
+          <AppPagination
+            v-model="currentPage"
+            :total-pages="totalPages"
+            :total-items="purchases.length"
+            :page-size="pageSize"
+          />
         </div>
 
         <!-- Activity Tab -->
@@ -199,6 +184,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AppPagination from '~/components/ui/AppPagination.vue'
 import type { Customer, CustomerPurchase, CustomerActivity } from '~/types/customers'
 
 definePageMeta({
@@ -217,6 +203,7 @@ const tabs = [
 const activeTab = ref('overview')
 const isEditing = ref(false)
 const currentPage = ref(1)
+const pageSize = 5
 
 const customer = ref<Customer>({
   id: 'cust-1',
@@ -258,6 +245,13 @@ const activities = ref<CustomerActivity[]>([
   { id: 'a4', date: 'Sept 23, 2026', description: 'Purchased 2 tickets for Summer Tech Event' },
   { id: 'a5', date: 'Sept 23, 2026', description: 'Purchased 2 tickets for Summer Tech Event' },
 ])
+
+const totalPages = computed(() => Math.ceil(purchases.value.length / pageSize) || 1)
+
+const paginatedPurchases = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return purchases.value.slice(start, start + pageSize)
+})
 
 function goToTicket(purchase: CustomerPurchase) {
   router.push(`/customers/${route.params.id}/ticket/tkt-1`)
@@ -555,46 +549,6 @@ function goToTicket(purchase: CustomerPurchase) {
 .pstatus--cancelled { background: #fef2f2; color: #dc2626; }
 .pstatus--refunded  { background: #fff7ed; color: #ea580c; }
 .pstatus--pending   { background: #fefce8; color: #ca8a04; }
-
-/* Pagination */
-.table-pagination-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.pagination-info {
-  font-size: 0.82rem;
-  color: #6b7280;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.page-btn {
-  min-width: 32px;
-  height: 32px;
-  padding: 0 0.5rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
-}
-
-.page-btn:hover { border-color: #3FD246; color: #16a34a; }
-.page-btn--active { background: #3FD246; border-color: #3FD246; color: #ffffff; }
-.page-next-btn { font-size: 0.9rem; }
 
 /* Activity */
 .activity-title {

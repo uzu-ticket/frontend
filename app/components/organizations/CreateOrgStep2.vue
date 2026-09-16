@@ -3,7 +3,9 @@
     <!-- Header -->
     <div class="form-header">
       <h3 class="form-title">Branding</h3>
-      <p class="form-subtitle">Add your organization's branding and social presence.</p>
+      <p class="form-subtitle">
+        Add your organization's branding and social presence.
+      </p>
     </div>
 
     <div class="fields-stack">
@@ -15,10 +17,7 @@
             Organization Logo <span class="required-star">*</span>
           </label>
 
-          <div
-            class="logo-upload-box"
-            @click="triggerLogoInput"
-          >
+          <div class="logo-upload-box" @click="triggerLogoInput">
             <input
               ref="logoInputRef"
               type="file"
@@ -28,12 +27,27 @@
             />
 
             <template v-if="logoPreview">
-              <img :src="logoPreview" alt="Organization Logo" class="preview-logo-img" />
+              <img
+                :src="logoPreview"
+                alt="Organization Logo"
+                class="preview-logo-img"
+              />
             </template>
             <template v-else>
               <div class="logo-icon-circle">
-                <svg xmlns="http://www.w3.org/2000/svg" class="photo-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="photo-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
               </div>
             </template>
@@ -43,14 +57,9 @@
 
         <!-- Right: Cover Image (Optional) -->
         <div class="field-group">
-          <label class="field-label">
-            Cover Image (Optional)
-          </label>
+          <label class="field-label"> Cover Image (Optional) </label>
 
-          <div
-            class="cover-upload-box"
-            @click="triggerCoverInput"
-          >
+          <div class="cover-upload-box" @click="triggerCoverInput">
             <input
               ref="coverInputRef"
               type="file"
@@ -60,17 +69,35 @@
             />
 
             <template v-if="coverPreview">
-              <img :src="coverPreview" alt="Cover Image" class="preview-cover-img" />
+              <img
+                :src="coverPreview"
+                alt="Cover Image"
+                class="preview-cover-img"
+              />
             </template>
             <template v-else>
-              <div class="cloud-icon-wrapper">
-                <svg xmlns="http://www.w3.org/2000/svg" class="cloud-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
+              <div class="cover-upload-content">
+                <div class="cloud-icon-wrapper">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="cloud-icon"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                </div>
+                <p class="drop-text">
+                  Drag and drop an image here or
+                  <span class="browse-link">browse files</span>
+                </p>
               </div>
-              <p class="drop-text">
-                Drag and drop an image here or <span class="browse-link">browse files</span>
-              </p>
             </template>
           </div>
           <span class="upload-hint-text">Recommended size 1300x 800px</span>
@@ -136,73 +163,122 @@
     <!-- Form Footer Actions -->
     <div class="form-footer">
       <button type="button" class="btn-back" @click="$emit('back')">
-        <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow-left" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="btn-arrow-left"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
         <span>Back</span>
       </button>
 
-      <button type="submit" class="btn-next">
+      <AppButton type="submit" :loading="props.isSubmitting">
         <span>Next</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="btn-arrow"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
-      </button>
+      </AppButton>
     </div>
   </form>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from "vue";
+import AppButton from "~/components/AppButton.vue";
+
+const props = defineProps<{
+  initialData?: Partial<{
+    facebook: string;
+    twitter: string;
+    instagram: string;
+    linkedin: string;
+  }>;
+  isSubmitting?: boolean;
+}>();
 
 const emit = defineEmits<{
-  back: []
-  next: [data: typeof formData]
-}>()
+  back: [];
+  next: [data: typeof formData];
+}>();
 
-const logoInputRef = ref<HTMLInputElement | null>(null)
-const coverInputRef = ref<HTMLInputElement | null>(null)
+const logoInputRef = ref<HTMLInputElement | null>(null);
+const coverInputRef = ref<HTMLInputElement | null>(null);
 
-const logoPreview = ref<string | null>(null)
-const coverPreview = ref<string | null>(null)
+const logoPreview = ref<string | null>(null);
+const coverPreview = ref<string | null>(null);
 
 const formData = reactive({
   logoFile: null as File | null,
   coverFile: null as File | null,
-  facebook: '',
-  twitter: '',
-  instagram: '',
-  linkedin: '',
-})
+  facebook: "",
+  twitter: "",
+  instagram: "",
+  linkedin: "",
+});
+
+function hydrateForm(data?: Partial<typeof formData>) {
+  Object.assign(formData, {
+    logoFile: null,
+    coverFile: null,
+    facebook: "",
+    twitter: "",
+    instagram: "",
+    linkedin: "",
+    ...data,
+  });
+}
+
+watch(
+  () => props.initialData,
+  (data) => {
+    hydrateForm(data as Partial<typeof formData> | undefined);
+  },
+  { immediate: true, deep: true },
+);
 
 function triggerLogoInput() {
-  logoInputRef.value?.click()
+  logoInputRef.value?.click();
 }
 
 function triggerCoverInput() {
-  coverInputRef.value?.click()
+  coverInputRef.value?.click();
 }
 
 function handleLogoChange(e: Event) {
-  const target = e.target as HTMLInputElement
+  const target = e.target as HTMLInputElement;
   if (target.files && target.files[0]) {
-    const file = target.files[0]
-    formData.logoFile = file
-    logoPreview.value = URL.createObjectURL(file)
+    const file = target.files[0];
+    formData.logoFile = file;
+    logoPreview.value = URL.createObjectURL(file);
   }
 }
 
 function handleCoverChange(e: Event) {
-  const target = e.target as HTMLInputElement
+  const target = e.target as HTMLInputElement;
   if (target.files && target.files[0]) {
-    const file = target.files[0]
-    formData.coverFile = file
-    coverPreview.value = URL.createObjectURL(file)
+    const file = target.files[0];
+    formData.coverFile = file;
+    coverPreview.value = URL.createObjectURL(file);
   }
 }
 
 function handleSubmit() {
-  emit('next', { ...formData })
+  emit("next", { ...formData });
 }
 </script>
 
@@ -219,7 +295,7 @@ function handleSubmit() {
 .form-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.25rem;
 }
 
@@ -242,6 +318,12 @@ function handleSubmit() {
   gap: 1.25rem;
 }
 
+.branding-row {
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 4.75rem;
+  align-items: start;
+}
+
 .mt-3 {
   margin-top: 0.75rem;
 }
@@ -255,7 +337,7 @@ function handleSubmit() {
 .field-label {
   font-size: 0.825rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .required-star {
@@ -268,9 +350,9 @@ function handleSubmit() {
 
 /* Upload Boxes */
 .logo-upload-box {
-  height: 150px;
-  background: #F9FAFB;
-  border: 1.5px dashed #D1D5DB;
+  height: 198px;
+  background: #ffffff;
+  border: 1.5px dashed #cbd5e1;
   border-radius: 0.75rem;
   display: flex;
   align-items: center;
@@ -281,24 +363,24 @@ function handleSubmit() {
 }
 
 .logo-upload-box:hover {
-  background: #f3f4f6;
-  border-color: #3FD246;
+  background: #fbfffb;
+  border-color: #3fd246;
 }
 
 .logo-icon-circle {
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 5.4rem;
+  height: 5.4rem;
   border-radius: 50%;
-  background: #E5E7EB;
+  background: #dce7eb;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9CA3AF;
+  color: #9ca3af;
 }
 
 .photo-icon {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.15rem;
+  height: 2.15rem;
 }
 
 .preview-logo-img {
@@ -308,15 +390,14 @@ function handleSubmit() {
 }
 
 .cover-upload-box {
-  height: 110px;
-  background: #F3F4F6;
-  border: 1px dashed #E5E7EB;
+  height: 198px;
+  background: #ffffff;
+  border: 1.5px dashed #cbd5e1;
   border-radius: 0.75rem;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
   cursor: pointer;
   text-align: center;
   transition: all 0.15s ease;
@@ -324,28 +405,40 @@ function handleSubmit() {
 }
 
 .cover-upload-box:hover {
-  background: #eef0f2;
-  border-color: #3FD246;
+  background: #fbfffb;
+  border-color: #3fd246;
+}
+
+.cover-upload-content {
+  width: 100%;
+  height: 126px;
+  background: #eef1f2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border-radius: 0.65rem 0.65rem 0 0;
 }
 
 .cloud-icon-wrapper {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.4rem;
 }
 
 .cloud-icon {
   width: 1.5rem;
   height: 1.5rem;
-  color: #3FD246;
+  color: #3fd246;
 }
 
 .drop-text {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #4b5563;
   margin: 0;
 }
 
 .browse-link {
-  color: #3FD246;
+  color: #3fd246;
   font-weight: 700;
 }
 
@@ -358,7 +451,7 @@ function handleSubmit() {
 .upload-hint-text {
   font-size: 0.725rem;
   font-weight: 700;
-  color: #9CA3AF;
+  color: #9ca3af;
   letter-spacing: 0.02em;
   margin-top: 0.25rem;
 }
@@ -371,7 +464,7 @@ function handleSubmit() {
 .social-title {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 1rem;
 }
 
@@ -392,7 +485,7 @@ function handleSubmit() {
 }
 
 .form-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
 
@@ -412,7 +505,7 @@ function handleSubmit() {
   padding: 0.65rem 1.75rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  color: #0E2615;
+  color: #0e2615;
   font-weight: 700;
   font-size: 0.85rem;
   border-radius: 0.65rem;
@@ -430,7 +523,7 @@ function handleSubmit() {
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.75rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -446,7 +539,8 @@ function handleSubmit() {
   transform: translateY(-1px);
 }
 
-.btn-arrow, .btn-arrow-left {
+.btn-arrow,
+.btn-arrow-left {
   width: 1rem;
   height: 1rem;
 }
