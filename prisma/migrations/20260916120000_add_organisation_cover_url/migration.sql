@@ -1,0 +1,1 @@
+ALTER TABLE "organisations" ADD COLUMN "cover_url" TEXT;

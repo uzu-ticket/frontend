@@ -31,6 +31,7 @@ enum OrgRole {
   promoter
   ticket_scanner
   customer_support
+  marketing
 }
 
 enum KybStatus {
@@ -284,8 +285,22 @@ model Organisation {
   slug    String @unique
   description String?
   logoUrl String? @map("logo_url")
+  coverUrl String? @map("cover_url")
   contactEmail String @map("contact_email")
   contactPhone String? @map("contact_phone")
+  industry String?
+  country String?
+  state String?
+  city String?
+  address String?
+  supportEmail String? @map("support_email")
+  supportPhone String? @map("support_phone")
+  facebook String?
+  twitter String?
+  instagram String?
+  linkedin String?
+  registeredBusinessName String? @map("registered_business_name")
+  bankName String? @map("bank_name")
 
   cacNumber                String?   @map("cac_number")
   kybStatus                KybStatus @default(unverified) @map("kyb_status")

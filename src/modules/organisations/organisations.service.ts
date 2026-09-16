@@ -10,6 +10,7 @@ import { CreateOrganisationDto } from "./dto/create-organisation.dto";
 import { UpdateOrganisationDto } from "./dto/update-organisation.dto";
 import { InviteMemberDto } from "./dto/invite-member.dto";
 import { SubmitKybDto } from "./dto/submit-kyb.dto";
+import { StorageService } from "../../common/storage/storage.service";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Owner",
@@ -48,12 +49,12 @@ export class OrganisationsService {
     private readonly audit: AuditService,
     private readonly permissions: PermissionsService,
     private readonly config: AppConfigService,
+    private readonly storage: StorageService,
     @Inject(NOTIFICATION_PROVIDER) private readonly notifications: NotificationProvider,
   ) {}
 
-
   async create(userId: string, dto: CreateOrganisationDto) {
-    const baseSlug = slugify(dto.name) || "organisation";
+    const baseSlug = slugify(dto.slug || dto.name) || "organisation";
     let slug = baseSlug;
     let suffix = 1;
     // eslint-disable-next-line no-await-in-loop
@@ -71,6 +72,24 @@ export class OrganisationsService {
           contactPhone: dto.contactPhone,
           description: dto.description,
           logoUrl: dto.logoUrl,
+          coverUrl: dto.coverUrl,
+          industry: dto.industry,
+          country: dto.country,
+          state: dto.state,
+          city: dto.city,
+          address: dto.address,
+          supportEmail: dto.supportEmail,
+          supportPhone: dto.supportPhone,
+          facebook: dto.facebook,
+          twitter: dto.twitter,
+          instagram: dto.instagram,
+          linkedin: dto.linkedin,
+          registeredBusinessName: dto.registeredBusinessName,
+          bankName: dto.bankName,
+          cacNumber: dto.cacNumber,
+          settlementBankCode: dto.settlementBankCode,
+          settlementAccountNumber: dto.settlementAccountNumber,
+          settlementAccountName: dto.settlementAccountName,
           createdBy: userId,
         },
       });
@@ -167,7 +186,6 @@ export class OrganisationsService {
     };
   }
 
-
   async declineInvite(organisationId: string, memberId: string, userId: string) {
     const member = await this.prisma.organisationMember.findUnique({ where: { id: memberId } });
     if (!member || member.organisationId !== organisationId) {
@@ -204,6 +222,46 @@ export class OrganisationsService {
     return org;
   }
 
+  async uploadAssets(
+    organisationId: string,
+    userId: string,
+    files: {
+      logo?: Express.Multer.File[];
+      cover?: Express.Multer.File[];
+    },
+  ) {
+    await this.permissions.assertPermission(userId, organisationId, Permission.OrgEditProfile);
+
+    const logo = files.logo?.[0];
+    const cover = files.cover?.[0];
+    if (!logo && !cover) {
+      throw new BadRequestException("At least one organisation image is required");
+    }
+
+    const data: { logoUrl?: string; coverUrl?: string } = {};
+    if (logo) {
+      data.logoUrl = await this.storage.uploadOrganisationAsset(organisationId, "logo", logo);
+    }
+    if (cover) {
+      data.coverUrl = await this.storage.uploadOrganisationAsset(organisationId, "cover", cover);
+    }
+
+    const organisation = await this.prisma.organisation.update({
+      where: { id: organisationId },
+      data,
+    });
+    await this.audit.log({
+      organisationId,
+      actorUserId: userId,
+      action: "organisation.assets_updated",
+      entityType: "organisation",
+      entityId: organisationId,
+      metadata: data,
+    });
+
+    return organisation;
+  }
+
   async listMembers(organisationId: string, userId: string) {
     await this.assertMember(organisationId, userId);
     return this.prisma.organisationMember.findMany({
@@ -221,8 +279,8 @@ export class OrganisationsService {
         data: {
           id: newId(),
           email: dto.email,
-          fullName: dto.email.split('@')[0],
-          passwordHash: '',
+          fullName: dto.email.split("@")[0],
+          passwordHash: "",
           isEmailVerified: false,
         },
       });
@@ -274,7 +332,10 @@ export class OrganisationsService {
         text: `${inviterName} invited you to join ${orgName} as ${dto.role} on UzuTicket. Accept here: ${inviteUrl}`,
       });
     } catch (err) {
-      this.logger.error(`Failed to send invitation email to ${dto.email}`, err instanceof Error ? err.stack : undefined);
+      this.logger.error(
+        `Failed to send invitation email to ${dto.email}`,
+        err instanceof Error ? err.stack : undefined,
+      );
     }
 
     await this.audit.log({
@@ -338,7 +399,6 @@ export class OrganisationsService {
     return { success: true };
   }
 
-
   async acceptInvite(organisationId: string, memberId: string, userId: string) {
     const member = await this.prisma.organisationMember.findUnique({
       where: { id: memberId },
@@ -357,10 +417,13 @@ export class OrganisationsService {
     }
 
     const isSameUser = member.userId === userId;
-    const isSameEmail = member.user?.email && currentUser.email && member.user.email.toLowerCase() === currentUser.email.toLowerCase();
+    const isSameEmail =
+      member.user?.email && currentUser.email && member.user.email.toLowerCase() === currentUser.email.toLowerCase();
 
     if (!isSameUser && !isSameEmail) {
-      throw new ForbiddenException(`This invite was sent to ${member.user?.email || "another email"}. You are currently logged in as ${currentUser.email}.`);
+      throw new ForbiddenException(
+        `This invite was sent to ${member.user?.email || "another email"}. You are currently logged in as ${currentUser.email}.`,
+      );
     }
 
     const updated = await this.prisma.organisationMember.update({
@@ -379,7 +442,6 @@ export class OrganisationsService {
     });
     return updated;
   }
-
 
   async revokeMember(organisationId: string, memberId: string, actorUserId: string) {
     await this.permissions.assertPermission(actorUserId, organisationId, Permission.OrgManageRoles);

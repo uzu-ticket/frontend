@@ -16,6 +16,12 @@ export const envSchema = z.object({
   APP_BASE_URL: z.string().url(),
   CORS_ORIGINS: z.string().default(""),
 
+  AWS_REGION: z.string().default("us-east-1"),
+  AWS_S3_BUCKET: z.string().min(1).optional(),
+  AWS_S3_PUBLIC_BASE_URL: z.string().url().optional(),
+  AWS_ACCESS_KEY_ID: z.string().min(1).optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
   MQTT_URL: z.string().min(1),
@@ -32,6 +38,8 @@ export const envSchema = z.object({
 
   PAYSTACK_SECRET_KEY: z.string().min(1),
   PAYSTACK_PUBLIC_KEY: z.string().min(1),
+  BOUCLOUD_API_TOKEN: z.string().min(1).optional(),
+  BOUCLOUD_API_BASE_URL: z.string().url().default("https://api.ninja.boucloud.io"),
 
   PLATFORM_FEE_PERCENT_BPS: z.coerce.number().int().min(0).default(500),
   PLATFORM_FEE_FIXED_MINOR: z.coerce.number().int().min(0).default(10000),

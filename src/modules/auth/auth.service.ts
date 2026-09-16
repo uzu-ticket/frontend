@@ -111,10 +111,7 @@ export class AuthService {
     return user;
   }
 
-  async requestPasswordReset(
-    contact: string,
-    channel: "email" | "phone",
-  ): Promise<{ token?: string; code?: string }> {
+  async requestPasswordReset(contact: string, channel: "email" | "phone"): Promise<{ token?: string; code?: string }> {
     const result: { token?: string; code?: string } = {};
     if (channel === "email") {
       const user = await this.prisma.user.findUnique({ where: { email: contact } });
@@ -131,7 +128,10 @@ export class AuthService {
           text: `Reset your password: ${link}`,
         });
       } catch (e) {
-        this.logger.error(`Failed to send password reset email to ${contact}`, e instanceof Error ? e.stack : undefined);
+        this.logger.error(
+          `Failed to send password reset email to ${contact}`,
+          e instanceof Error ? e.stack : undefined,
+        );
       }
     } else {
       const user = await this.prisma.user.findUnique({ where: { phone: contact } });

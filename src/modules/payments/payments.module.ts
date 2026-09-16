@@ -10,11 +10,18 @@ import { WalletsModule } from "../wallets/wallets.module";
 import { DeliveryModule } from "../delivery/delivery.module";
 import { WithdrawalsModule } from "../withdrawals/withdrawals.module";
 import { RealtimeModule } from "../realtime/realtime.module";
+import { PaystackController } from "./paystack.controller";
+import { PaystackService } from "./paystack.service";
 
 @Module({
   imports: [TicketsModule, WalletsModule, DeliveryModule, WithdrawalsModule, RealtimeModule],
-  controllers: [PaymentsController, PaystackWebhookController],
-  providers: [PaymentsService, PaymentReconciliationCron, { provide: PAYMENT_PROVIDER, useClass: PaystackProvider }],
-  exports: [PaymentsService],
+  controllers: [PaymentsController, PaystackController, PaystackWebhookController],
+  providers: [
+    PaymentsService,
+    PaystackService,
+    PaymentReconciliationCron,
+    { provide: PAYMENT_PROVIDER, useClass: PaystackProvider },
+  ],
+  exports: [PaymentsService, PaystackService],
 })
 export class PaymentsModule {}

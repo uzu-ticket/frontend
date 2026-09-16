@@ -30,6 +30,26 @@ export class AppConfigService {
       .filter(Boolean);
   }
 
+  get awsRegion(): string {
+    return this.config.get("AWS_REGION", { infer: true });
+  }
+
+  get awsS3Bucket(): string | undefined {
+    return this.config.get("AWS_S3_BUCKET", { infer: true });
+  }
+
+  get awsS3PublicBaseUrl(): string | undefined {
+    return this.config.get("AWS_S3_PUBLIC_BASE_URL", { infer: true });
+  }
+
+  get awsAccessKeyId(): string | undefined {
+    return this.config.get("AWS_ACCESS_KEY_ID", { infer: true });
+  }
+
+  get awsSecretAccessKey(): string | undefined {
+    return this.config.get("AWS_SECRET_ACCESS_KEY", { infer: true });
+  }
+
   get databaseUrl(): string {
     return this.config.get("DATABASE_URL", { infer: true });
   }
@@ -81,6 +101,14 @@ export class AppConfigService {
 
   get paystackPublicKey(): string {
     return this.config.get("PAYSTACK_PUBLIC_KEY", { infer: true });
+  }
+
+  get boucloudApiToken(): string | undefined {
+    return this.config.get("BOUCLOUD_API_TOKEN", { infer: true });
+  }
+
+  get boucloudApiBaseUrl(): string {
+    return this.config.get("BOUCLOUD_API_BASE_URL", { infer: true });
   }
 
   get platformFeePercentBps(): number {

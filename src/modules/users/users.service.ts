@@ -39,10 +39,7 @@ export class UsersService {
     const q = query.trim();
     const users = await this.prisma.user.findMany({
       where: {
-        OR: [
-          { email: { contains: q, mode: "insensitive" } },
-          { fullName: { contains: q, mode: "insensitive" } },
-        ],
+        OR: [{ email: { contains: q, mode: "insensitive" } }, { fullName: { contains: q, mode: "insensitive" } }],
       },
       take: 10,
       select: {

@@ -37,9 +37,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       if (exception.code === "P2002") {
+        const target = Array.isArray(exception.meta?.target)
+          ? exception.meta.target.join(", ")
+          : String(exception.meta?.target ?? "field");
+        const message = target.includes("slug")
+          ? "An organisation with this slug already exists. Choose a different organisation URL."
+          : `A resource with this ${target} already exists.`;
         return {
           status: HttpStatus.CONFLICT,
-          body: { message: "Resource already exists", meta: exception.meta },
+          body: { message },
         };
       }
       if (exception.code === "P2025") {

@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
+import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import { ApiTags } from "@nestjs/swagger";
-import { IsOptional, IsString } from "class-validator";
+import { Transform } from "class-transformer";
 import { CurrentUser, AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { PlatformAdminGuard } from "../../common/auth/platform-admin.guard";
 import { Public } from "../../common/decorators/public.decorator";
@@ -9,6 +10,17 @@ import { CreateOrganisationDto } from "./dto/create-organisation.dto";
 import { UpdateOrganisationDto } from "./dto/update-organisation.dto";
 import { InviteMemberDto } from "./dto/invite-member.dto";
 import { SubmitKybDto } from "./dto/submit-kyb.dto";
+import { CacService } from "./cac.service";
+import { IsOptional, IsString, Matches, MinLength } from "class-validator";
+import { CAC_NUMBER_PATTERN, normalizeCacNumber } from "../../common/cac/cac-number";
+
+class CacSearchDto {
+  @IsString()
+  @MinLength(4)
+  @Matches(CAC_NUMBER_PATTERN, { message: "CAC number must start with RC, BN, or IT and contain 4 to 8 digits." })
+  @Transform(({ value }) => (typeof value === "string" ? normalizeCacNumber(value) : value))
+  searchTerm!: string;
+}
 
 class RejectKybDto {
   @IsOptional()
@@ -19,7 +31,10 @@ class RejectKybDto {
 @ApiTags("organisations")
 @Controller("organisations")
 export class OrganisationsController {
-  constructor(private readonly organisationsService: OrganisationsService) {}
+  constructor(
+    private readonly organisationsService: OrganisationsService,
+    private readonly cac: CacService,
+  ) {}
 
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateOrganisationDto) {
@@ -36,12 +51,16 @@ export class OrganisationsController {
     return this.organisationsService.findMyPendingInvites(user.id);
   }
 
+  @Post("cac/search")
+  searchCac(@Body() query: CacSearchDto) {
+    return this.cac.search(normalizeCacNumber(query.searchTerm));
+  }
+
   @Public()
   @Get("invitations/info/:memberId")
   getInviteInfo(@Param("memberId") memberId: string) {
     return this.organisationsService.getInviteInfo(memberId);
   }
-
 
   @Get(":organisationId")
   findOne(@CurrentUser() user: AuthenticatedUser, @Param("organisationId") organisationId: string) {
@@ -55,6 +74,30 @@ export class OrganisationsController {
     @Body() dto: UpdateOrganisationDto,
   ) {
     return this.organisationsService.update(organisationId, user.id, dto);
+  }
+
+  @Post(":organisationId/uploads")
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: "logo", maxCount: 1 },
+        { name: "cover", maxCount: 1 },
+      ],
+      {
+        limits: { fileSize: 5 * 1024 * 1024 },
+        fileFilter: (_request, file, callback) => {
+          callback(null, file.mimetype.startsWith("image/"));
+        },
+      },
+    ),
+  )
+  uploadAssets(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @UploadedFiles()
+    files: { logo?: Express.Multer.File[]; cover?: Express.Multer.File[] },
+  ) {
+    return this.organisationsService.uploadAssets(organisationId, user.id, files);
   }
 
   @Get(":organisationId/members")
@@ -106,7 +149,6 @@ export class OrganisationsController {
   ) {
     return this.organisationsService.resendInvite(organisationId, memberId, user.id);
   }
-
 
   @Post(":organisationId/kyb")
   submitKyb(

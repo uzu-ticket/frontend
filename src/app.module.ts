@@ -12,6 +12,7 @@ import { CommonAuthModule } from "./common/auth/common-auth.module";
 import { JwtAuthGuard } from "./common/auth/jwt-auth.guard";
 import { RedisModule } from "./common/redis/redis.module";
 import { NotificationsModule } from "./common/notifications/notifications.module";
+import { StorageModule } from "./common/storage/storage.module";
 
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
@@ -37,6 +38,7 @@ import { IntegrationsModule } from "./modules/integrations/integrations.module";
     PrismaModule,
     RedisModule,
     NotificationsModule,
+    StorageModule,
     AuditModule,
     CommonAuthModule,
     ScheduleModule.forRoot(),

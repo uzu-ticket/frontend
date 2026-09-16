@@ -55,6 +55,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, Permission[]> = {
   sales: [Permission.EventViewDashboard, Permission.OrderView, Permission.OrderResendTicket],
   customer_support: [Permission.OrderView, Permission.OrderResendTicket],
   ticket_scanner: [Permission.ScannerScan],
+  marketing: [Permission.EventViewDashboard],
   promoter: [],
 };
 
