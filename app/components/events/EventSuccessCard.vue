@@ -3,33 +3,59 @@
     <div class="success-card-content">
       <!-- Celebration Image -->
       <div class="illustration-box">
-        <img src="/event-live.png" alt="Your Event is Live!" class="success-img" />
+        <img
+          src="/event-live.png"
+          alt="Your Event is Live!"
+          class="success-img"
+        />
       </div>
 
       <!-- Heading Stack -->
       <h2 class="success-heading">Your Event is Live!</h2>
-      <p class="success-subheading">Your organization is all set up and ready to go</p>
+      <p class="success-subheading">
+        Your organization is all set up and ready to go
+      </p>
 
       <!-- Event Link Card Box -->
       <div class="event-link-box">
         <label class="link-label">Event Link</label>
         <div class="link-input-pill">
-          <span class="link-url">{{ eventLink }}</span>
+          <NuxtLink :to="eventPath" class="link-url">{{ eventLink }}</NuxtLink>
         </div>
       </div>
 
       <!-- Buttons -->
       <div class="success-buttons-row">
         <button class="btn-copy-link" @click="copyLink">
-          <svg xmlns="http://www.w3.org/2000/svg" class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="btn-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+            />
           </svg>
-          <span>{{ copied ? 'Link Copied!' : 'Copy Event Link' }}</span>
+          <span>{{ copied ? "Link Copied!" : "Copy Event Link" }}</span>
         </button>
 
-        <NuxtLink to="/events" class="btn-back-event">
-          <svg xmlns="http://www.w3.org/2000/svg" class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        <NuxtLink :to="eventPath" class="btn-back-event">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="btn-icon"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+              clip-rule="evenodd"
+            />
           </svg>
           <span>Back to Event</span>
         </NuxtLink>
@@ -39,16 +65,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from "vue";
 
-const eventLink = 'https://uzuticket.com/events/summer-tech-conference'
-const copied = ref(false)
+const props = defineProps<{
+  eventId: string | null;
+}>();
+
+const eventPath = computed(() =>
+  props.eventId ? `/events/${props.eventId}` : "/events",
+);
+const eventLink = computed(() => {
+  if (!props.eventId) return eventPath.value;
+  if (import.meta.client) return `${window.location.origin}${eventPath.value}`;
+  return eventPath.value;
+});
+const copied = ref(false);
 
 function copyLink() {
   if (import.meta.client) {
-    navigator.clipboard.writeText(eventLink)
-    copied.value = true
-    setTimeout(() => { copied.value = false }, 2500)
+    navigator.clipboard.writeText(eventLink.value);
+    copied.value = true;
+    setTimeout(() => {
+      copied.value = false;
+    }, 2500);
   }
 }
 </script>
@@ -85,7 +124,7 @@ function copyLink() {
 .success-heading {
   font-size: 1.75rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.5rem;
 }
 
@@ -98,7 +137,7 @@ function copyLink() {
 /* Event Link Box */
 .event-link-box {
   width: 100%;
-  background: #F0F4F8;
+  background: #f0f4f8;
   border-radius: 0.875rem;
   padding: 1.25rem 1.5rem;
   text-align: left;
@@ -115,7 +154,7 @@ function copyLink() {
 }
 
 .link-input-pill {
-  background: #E0E7FF;
+  background: #e0e7ff;
   border-radius: 0.5rem;
   padding: 0.65rem 1rem;
 }
@@ -123,7 +162,7 @@ function copyLink() {
 .link-url {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #2563EB;
+  color: #2563eb;
   text-decoration: underline;
   word-break: break-all;
 }
@@ -140,7 +179,7 @@ function copyLink() {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.75rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.875rem;
@@ -163,7 +202,7 @@ function copyLink() {
   padding: 0.75rem 1.5rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  color: #0E2615;
+  color: #0e2615;
   font-weight: 700;
   font-size: 0.875rem;
   border-radius: 0.65rem;

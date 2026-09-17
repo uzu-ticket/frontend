@@ -33,7 +33,11 @@
                 class="table-td"
               >
                 <!-- Custom Slot for Column -->
-                <slot :name="`cell-${col.key}`" :item="item" :value="item[col.key]">
+                <slot
+                  :name="`cell-${col.key}`"
+                  :item="item"
+                  :value="item[col.key]"
+                >
                   {{ item[col.key] }}
                 </slot>
               </td>
@@ -57,7 +61,10 @@
       <!-- Showing X of Y info -->
       <div class="footer-info">
         <slot name="footer" :total="items.length" :current-page="currentPage">
-          <span class="showing-text">Showing {{ showingFrom }} - {{ showingTo }} of {{ items.length }} events</span>
+          <span class="showing-text"
+            >Showing {{ showingFrom }} - {{ showingTo }} of
+            {{ items.length }} events</span
+          >
         </slot>
       </div>
 
@@ -68,8 +75,17 @@
           :disabled="currentPage === 1"
           @click="currentPage--"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="page-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="page-icon"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+              clip-rule="evenodd"
+            />
           </svg>
           <span>Prev</span>
         </button>
@@ -90,8 +106,17 @@
           @click="currentPage++"
         >
           <span>Next</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="page-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="page-icon"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+              clip-rule="evenodd"
+            />
           </svg>
         </button>
       </div>
@@ -100,58 +125,58 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed } from "vue";
 
 export interface TableColumn {
-  key: string
-  label: string
-  width?: string
-  align?: 'left' | 'center' | 'right'
+  key: string;
+  label: string;
+  width?: string;
+  align?: "left" | "center" | "right";
 }
 
 const props = withDefaults(
   defineProps<{
-    columns: TableColumn[]
-    items: Record<string, any>[]
-    pageSize?: number
-    clickableRows?: boolean
+    columns: TableColumn[];
+    items: Record<string, any>[];
+    pageSize?: number;
+    clickableRows?: boolean;
   }>(),
   {
     pageSize: 5,
     clickableRows: false,
-  }
-)
+  },
+);
 
 const emit = defineEmits<{
-  'row-click': [item: Record<string, any>, index: number]
-}>()
+  "row-click": [item: Record<string, any>, index: number];
+}>();
 
 function handleRowClick(item: Record<string, any>, index: number) {
   if (props.clickableRows) {
-    emit('row-click', item, index)
+    emit("row-click", item, index);
   }
 }
 
-const currentPage = ref(1)
+const currentPage = ref(1);
 
 const totalPages = computed(() => {
-  return Math.ceil(props.items.length / props.pageSize) || 1
-})
+  return Math.ceil(props.items.length / props.pageSize) || 1;
+});
 
 const paginatedItems = computed(() => {
-  const start = (currentPage.value - 1) * props.pageSize
-  return props.items.slice(start, start + props.pageSize)
-})
+  const start = (currentPage.value - 1) * props.pageSize;
+  return props.items.slice(start, start + props.pageSize);
+});
 
 const showingFrom = computed(() => {
-  if (props.items.length === 0) return 0
-  return (currentPage.value - 1) * props.pageSize + 1
-})
+  if (props.items.length === 0) return 0;
+  return (currentPage.value - 1) * props.pageSize + 1;
+});
 
 const showingTo = computed(() => {
-  const to = currentPage.value * props.pageSize
-  return to > props.items.length ? props.items.length : to
-})
+  const to = currentPage.value * props.pageSize;
+  return to > props.items.length ? props.items.length : to;
+});
 </script>
 
 <style scoped>
@@ -162,7 +187,7 @@ const showingTo = computed(() => {
 
 .table-responsive {
   width: 100%;
-  overflow-x: auto;
+  overflow: visible;
 }
 
 .custom-table {
@@ -267,7 +292,7 @@ const showingTo = computed(() => {
 .page-btn:hover:not(:disabled) {
   background: #f9fafb;
   border-color: #d1d5db;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .page-btn:disabled {
@@ -276,8 +301,8 @@ const showingTo = computed(() => {
 }
 
 .page-btn--active {
-  background: #3FD246;
-  border-color: #3FD246;
+  background: #3fd246;
+  border-color: #3fd246;
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(63, 210, 70, 0.25);
 }

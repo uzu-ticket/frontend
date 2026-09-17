@@ -4,22 +4,51 @@
     <div
       class="time-trigger"
       :class="{ 'time-trigger--open': isOpen, 'time-trigger--error': error }"
-      @click="isOpen = !isOpen"
+      @click="toggleOpen"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" class="trigger-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="trigger-icon"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="1.8"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
       </svg>
-      <span class="trigger-value" :class="{ 'trigger-placeholder': !displayValue }">
+      <span
+        class="trigger-value"
+        :class="{ 'trigger-placeholder': !displayValue }"
+      >
         {{ displayValue || placeholder }}
       </span>
-      <svg xmlns="http://www.w3.org/2000/svg" class="trigger-chevron" :class="{ rotated: isOpen }" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="trigger-chevron"
+        :class="{ rotated: isOpen }"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+          clip-rule="evenodd"
+        />
       </svg>
     </div>
 
     <!-- Time Picker Dropdown -->
     <Transition name="picker-drop">
-      <div v-if="isOpen" class="time-dropdown">
+      <div
+        v-if="isOpen"
+        ref="dropdownRef"
+        class="time-dropdown"
+        :class="{ 'time-dropdown--up': placement === 'up' }"
+      >
         <!-- Columns: Hour | Minute | AM/PM -->
         <div class="time-columns">
           <!-- Hours -->
@@ -75,8 +104,12 @@
 
         <!-- Footer -->
         <div class="time-footer">
-          <button type="button" class="btn-clear-time" @click="clearTime">Clear</button>
-          <button type="button" class="btn-apply-time" @click="applyTime">Apply</button>
+          <button type="button" class="btn-clear-time" @click="clearTime">
+            Clear
+          </button>
+          <button type="button" class="btn-apply-time" @click="applyTime">
+            Apply
+          </button>
         </div>
       </div>
     </Transition>
@@ -86,65 +119,106 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
 
 const props = withDefaults(
   defineProps<{
-    modelValue?: string
-    placeholder?: string
-    error?: string
+    modelValue?: string;
+    placeholder?: string;
+    error?: string;
   }>(),
   {
-    placeholder: 'Select time',
-    modelValue: '',
-  }
-)
+    placeholder: "Select time",
+    modelValue: "",
+  },
+);
 
 const emit = defineEmits<{
-  'update:modelValue': [val: string]
-}>()
+  "update:modelValue": [val: string];
+}>();
 
-const isOpen = ref(false)
-const wrapperRef = ref<HTMLElement | null>(null)
+const isOpen = ref(false);
+const wrapperRef = ref<HTMLElement | null>(null);
+const dropdownRef = ref<HTMLElement | null>(null);
+const placement = ref<"down" | "up">("down");
 
-const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
-const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
+const hours = Array.from({ length: 12 }, (_, i) =>
+  String(i + 1).padStart(2, "0"),
+);
+const minutes = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, "0"),
+);
 
 const parseInitial = () => {
   if (props.modelValue) {
-    const match = props.modelValue.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i)
+    const match = props.modelValue.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
     if (match) {
-      return { h: String(parseInt(match[1])).padStart(2, '0'), m: match[2], p: match[3].toUpperCase() as 'AM' | 'PM' }
+      return {
+        h: String(parseInt(match[1])).padStart(2, "0"),
+        m: match[2],
+        p: match[3].toUpperCase() as "AM" | "PM",
+      };
     }
   }
-  return { h: '09', m: '00', p: 'AM' as 'AM' | 'PM' }
+  return { h: "09", m: "00", p: "AM" as "AM" | "PM" };
+};
+
+const initial = parseInitial();
+const selectedHour = ref(initial.h);
+const selectedMinute = ref(initial.m);
+const period = ref<"AM" | "PM">(initial.p);
+
+const displayValue = computed(() => props.modelValue || "");
+
+async function updatePlacement() {
+  await nextTick();
+  if (!wrapperRef.value || !dropdownRef.value) return;
+
+  const triggerRect = wrapperRef.value.getBoundingClientRect();
+  const dropdownHeight = dropdownRef.value.getBoundingClientRect().height;
+  const spaceBelow = window.innerHeight - triggerRect.bottom;
+  const spaceAbove = triggerRect.top;
+
+  placement.value =
+    spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow ? "up" : "down";
 }
 
-const initial = parseInitial()
-const selectedHour = ref(initial.h)
-const selectedMinute = ref(initial.m)
-const period = ref<'AM' | 'PM'>(initial.p)
-
-const displayValue = computed(() => props.modelValue || '')
+function toggleOpen() {
+  isOpen.value = !isOpen.value;
+  if (isOpen.value) updatePlacement();
+}
 
 function applyTime() {
-  emit('update:modelValue', `${selectedHour.value}:${selectedMinute.value} ${period.value}`)
-  isOpen.value = false
+  emit(
+    "update:modelValue",
+    `${selectedHour.value}:${selectedMinute.value} ${period.value}`,
+  );
+  isOpen.value = false;
 }
 
 function clearTime() {
-  emit('update:modelValue', '')
-  isOpen.value = false
+  emit("update:modelValue", "");
+  isOpen.value = false;
 }
 
 function handleClickOutside(e: MouseEvent) {
   if (wrapperRef.value && !wrapperRef.value.contains(e.target as Node)) {
-    isOpen.value = false
+    isOpen.value = false;
   }
 }
 
-onMounted(() => document.addEventListener('click', handleClickOutside))
-onUnmounted(() => document.removeEventListener('click', handleClickOutside))
+function handleViewportChange() {
+  if (isOpen.value) updatePlacement();
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+  window.addEventListener("resize", handleViewportChange);
+});
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+  window.removeEventListener("resize", handleViewportChange);
+});
 </script>
 
 <style scoped>
@@ -166,11 +240,23 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   user-select: none;
 }
 
-.time-trigger:hover { border-color: #d1d5db; }
-.time-trigger--open { border-color: #3FD246; box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12); }
-.time-trigger--error { border-color: #ef4444; }
+.time-trigger:hover {
+  border-color: #d1d5db;
+}
+.time-trigger--open {
+  border-color: #3fd246;
+  box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
+}
+.time-trigger--error {
+  border-color: #ef4444;
+}
 
-.trigger-icon { width: 1.1rem; height: 1.1rem; color: #6b7280; flex-shrink: 0; }
+.trigger-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #6b7280;
+  flex-shrink: 0;
+}
 
 .trigger-value {
   flex: 1;
@@ -179,16 +265,22 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   color: #1f2937;
 }
 
-.trigger-placeholder { color: #9ca3af; font-weight: 400; }
+.trigger-placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
 
 .trigger-chevron {
-  width: 1.1rem; height: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
   color: #6b7280;
   transition: transform 0.2s ease;
   flex-shrink: 0;
 }
 
-.rotated { transform: rotate(180deg); }
+.rotated {
+  transform: rotate(180deg);
+}
 
 /* Dropdown */
 .time-dropdown {
@@ -202,6 +294,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   width: 260px;
   padding: 1rem;
+}
+
+.time-dropdown--up {
+  top: auto;
+  bottom: calc(100% + 6px);
 }
 
 .time-columns {
@@ -244,8 +341,14 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   transition: all 0.12s ease;
 }
 
-.time-cell:hover { background: #f0fdf1; color: #3FD246; }
-.time-cell--selected { background: #3FD246; color: #ffffff; }
+.time-cell:hover {
+  background: #f0fdf1;
+  color: #3fd246;
+}
+.time-cell--selected {
+  background: #3fd246;
+  color: #ffffff;
+}
 
 /* Period Column */
 .period-col {
@@ -269,8 +372,14 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   transition: all 0.12s ease;
 }
 
-.period-btn:hover { background: #e5e7eb; }
-.period-btn--selected { background: #0E2615; color: #3FD246; border-color: #3FD246; }
+.period-btn:hover {
+  background: #e5e7eb;
+}
+.period-btn--selected {
+  background: #0e2615;
+  color: #3fd246;
+  border-color: #3fd246;
+}
 
 /* Footer */
 .time-footer {
@@ -280,7 +389,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   padding-top: 0.75rem;
 }
 
-.btn-clear-time, .btn-apply-time {
+.btn-clear-time,
+.btn-apply-time {
   flex: 1;
   padding: 0.5rem 0;
   font-size: 0.8rem;
@@ -291,13 +401,35 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   transition: all 0.15s;
 }
 
-.btn-clear-time { background: #f3f4f6; color: #6b7280; }
-.btn-clear-time:hover { background: #e5e7eb; }
-.btn-apply-time { background: #3FD246; color: #ffffff; }
-.btn-apply-time:hover { background: #34c03b; }
+.btn-clear-time {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.btn-clear-time:hover {
+  background: #e5e7eb;
+}
+.btn-apply-time {
+  background: #3fd246;
+  color: #ffffff;
+}
+.btn-apply-time:hover {
+  background: #34c03b;
+}
 
-.error-text { font-size: 0.75rem; color: #ef4444; margin-top: 0.3rem; display: block; }
+.error-text {
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin-top: 0.3rem;
+  display: block;
+}
 
-.picker-drop-enter-active, .picker-drop-leave-active { transition: all 0.15s ease; }
-.picker-drop-enter-from, .picker-drop-leave-to { opacity: 0; transform: translateY(6px); }
+.picker-drop-enter-active,
+.picker-drop-leave-active {
+  transition: all 0.15s ease;
+}
+.picker-drop-enter-from,
+.picker-drop-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
 </style>

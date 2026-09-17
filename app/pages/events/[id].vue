@@ -4,8 +4,17 @@
       <!-- Back Link -->
       <div class="back-row">
         <NuxtLink to="/events" class="btn-back-link">
-          <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="back-icon"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+              clip-rule="evenodd"
+            />
           </svg>
           <span>Back to events</span>
         </NuxtLink>
@@ -19,10 +28,19 @@
 
       <!-- Error State -->
       <div v-else-if="!event" class="error-state">
-        <p class="error-text">{{ error || 'Event not found' }}</p>
+        <p class="error-text">{{ error || "Event not found" }}</p>
         <NuxtLink to="/events" class="btn-back-link">
-          <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="back-icon"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+              clip-rule="evenodd"
+            />
           </svg>
           <span>Back to events</span>
         </NuxtLink>
@@ -34,316 +52,521 @@
         <div class="hero-section">
           <!-- Left: Cover Banner -->
           <div class="banner-wrapper">
-          <div class="banner-placeholder">
-            <svg xmlns="http://www.w3.org/2000/svg" class="banner-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <img
+              v-if="coverImage"
+              :src="coverImage"
+              :alt="eventName"
+              class="banner-image"
+            />
+            <div v-else class="banner-placeholder">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="banner-icon"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
           </div>
-        </div>
 
-        <!-- Right: Event Info Stack -->
-        <div class="info-stack">
-          <div class="title-header-row">
-            <h1 class="detail-event-title">{{ eventName }}</h1>
-            <span class="status-badge">{{ statusLabel }}</span>
-          </div>
+          <!-- Right: Event Info Stack -->
+          <div class="info-stack">
+            <div class="title-header-row">
+              <h1 class="detail-event-title">{{ eventName }}</h1>
+              <span class="status-badge">{{ statusLabel }}</span>
+            </div>
 
             <p class="event-description">
               {{ eventDescription }}
             </p>
 
-          <div class="meta-list">
-            <div class="meta-item">
-              <svg xmlns="http://www.w3.org/2000/svg" class="meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-               <span>{{ formattedStartDate }}</span>
+            <div class="meta-list">
+              <div class="meta-item">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="meta-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <span>{{ formattedStartDate }}</span>
+              </div>
+
+              <div class="meta-item">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="meta-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span>{{ formattedTimeRange }}</span>
+              </div>
+
+              <div class="meta-item">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="meta-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                <span>{{ eventVenue }}</span>
+              </div>
             </div>
 
-            <div class="meta-item">
-              <svg xmlns="http://www.w3.org/2000/svg" class="meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-               <span>{{ formattedTimeRange }}</span>
+            <!-- Action Buttons -->
+            <div class="hero-actions-row">
+              <button
+                v-if="eventStatus === 'draft'"
+                class="btn-publish"
+                :disabled="isActionLoading"
+                @click="handlePublish"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="btn-action-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  />
+                </svg>
+                <span>{{
+                  isActionLoading ? "Publishing..." : "Publish Event"
+                }}</span>
+              </button>
+
+              <button
+                v-if="eventStatus === 'published'"
+                class="btn-cancel-event"
+                :disabled="isActionLoading"
+                @click="handleCancel"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="btn-action-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                  />
+                </svg>
+                <span>{{
+                  isActionLoading ? "Cancelling..." : "Cancel Event"
+                }}</span>
+              </button>
+
+              <button class="btn-edit" @click="router.push(`/events/create?eventId=${event.id}`)">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="btn-action-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                <span>Edit Event</span>
+              </button>
+
+              <button class="btn-share" @click="shareEvent">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="btn-action-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                  />
+                </svg>
+                <span>{{ copied ? "Link Copied!" : "Share Event" }}</span>
+              </button>
             </div>
-
-            <div class="meta-item">
-              <svg xmlns="http://www.w3.org/2000/svg" class="meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-               <span>{{ eventVenue }}</span>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="hero-actions-row">
-            <button v-if="eventStatus === 'draft'" class="btn-publish" :disabled="isActionLoading" @click="handlePublish">
-              <svg xmlns="http://www.w3.org/2000/svg" class="btn-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-              <span>{{ isActionLoading ? 'Publishing...' : 'Publish Event' }}</span>
-            </button>
-
-            <button v-if="eventStatus === 'published'" class="btn-cancel-event" :disabled="isActionLoading" @click="handleCancel">
-              <svg xmlns="http://www.w3.org/2000/svg" class="btn-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-              </svg>
-              <span>{{ isActionLoading ? 'Cancelling...' : 'Cancel Event' }}</span>
-            </button>
-
-            <button class="btn-edit" @click="router.push('/events/create')">
-              <svg xmlns="http://www.w3.org/2000/svg" class="btn-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              <span>Edit Event</span>
-            </button>
-
-            <button class="btn-share" @click="shareEvent">
-              <svg xmlns="http://www.w3.org/2000/svg" class="btn-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-              <span>{{ copied ? 'Link Copied!' : 'Share Event' }}</span>
-            </button>
           </div>
         </div>
-      </div>
 
-      <!-- Event Information Section -->
-      <div class="section-block">
-        <h2 class="section-heading">Event Information</h2>
+        <!-- Event Information Section -->
+        <div class="section-block">
+          <h2 class="section-heading">Event Information</h2>
 
-        <div class="info-cards-grid">
-          <!-- Card 1: Event Details -->
-          <div class="detail-card">
-            <h3 class="card-subheading">Event Details</h3>
-            <div class="kv-stack">
-              <div class="kv-row">
-                <span class="kv-key">Category</span>
-                <span class="kv-val">{{ eventCategory }}</span>
-              </div>
-              <div class="kv-row">
-                <span class="kv-key">Event Type</span>
-                <span class="kv-val">{{ eventStatus.charAt(0).toUpperCase() + eventStatus.slice(1) }}</span>
-              </div>
-              <div class="kv-row">
-                <span class="kv-key">Visibility</span>
-                <span class="kv-val">{{ eventVisibility.charAt(0).toUpperCase() + eventVisibility.slice(1) }}</span>
-              </div>
-              <div class="kv-row">
-                <span class="kv-key">Time Zone</span>
-                <span class="kv-val">West Africa Time (WAT)</span>
+          <div class="info-cards-grid">
+            <!-- Card 1: Event Details -->
+            <div class="detail-card">
+              <h3 class="card-subheading">Event Details</h3>
+              <div class="kv-stack">
+                <div class="kv-row">
+                  <span class="kv-key">Category</span>
+                  <span class="kv-val">{{ eventCategory }}</span>
+                </div>
+                <div class="kv-row">
+                  <span class="kv-key">Event Type</span>
+                  <span class="kv-val">{{ eventType }}</span>
+                </div>
+                <div class="kv-row">
+                  <span class="kv-key">Visibility</span>
+                  <span class="kv-val">{{
+                    eventVisibility.charAt(0).toUpperCase() +
+                    eventVisibility.slice(1)
+                  }}</span>
+                </div>
+                <div class="kv-row">
+                  <span class="kv-key">Time Zone</span>
+                  <span class="kv-val">{{ eventLocation }}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Card 2: Schedule -->
-          <div class="detail-card">
-            <h3 class="card-subheading">Schedule</h3>
-            <div class="kv-stack">
-               <div class="kv-row">
-                <span class="kv-key">Start Date & Time</span>
-                <span class="kv-val">{{ eventDate ? eventDate.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—' }}</span>
-              </div>
-              <div class="kv-row">
-                <span class="kv-key">End Date & Time</span>
-                <span class="kv-val">{{ eventEndDate ? eventEndDate.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—' }}</span>
-              </div>
-              <div class="kv-row">
-                <span class="kv-key">Doors Open</span>
-                <span class="kv-val">{{ doorsOpenTime }}</span>
-              </div>
-              <div class="kv-row">
-                <span class="kv-key">Doors Close</span>
-                <span class="kv-val">{{ doorsCloseTime }}</span>
+            <!-- Card 2: Schedule -->
+            <div class="detail-card">
+              <h3 class="card-subheading">Schedule</h3>
+              <div class="kv-stack">
+                <div class="kv-row">
+                  <span class="kv-key">Start Date & Time</span>
+                  <span class="kv-val">{{
+                    eventDate
+                      ? eventDate.toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
+                      : "—"
+                  }}</span>
+                </div>
+                <div class="kv-row">
+                  <span class="kv-key">End Date & Time</span>
+                  <span class="kv-val">{{
+                    eventEndDate
+                      ? eventEndDate.toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
+                      : "—"
+                  }}</span>
+                </div>
+                <div class="kv-row">
+                  <span class="kv-key">Doors Open</span>
+                  <span class="kv-val">{{ doorsOpenTime }}</span>
+                </div>
+                <div class="kv-row">
+                  <span class="kv-key">Doors Close</span>
+                  <span class="kv-val">{{ doorsCloseTime }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Media Section -->
-      <div class="section-block">
-        <h2 class="section-heading">Media</h2>
+        <!-- Media Section -->
+        <div class="section-block">
+          <h2 class="section-heading">Media</h2>
 
-        <div class="media-grid">
-          <div
-            v-for="(img, idx) in eventImages"
-            :key="img.id || idx"
-            class="media-thumb-card"
-            :class="`media-thumb--${idx + 1}`"
-          >
-            <img v-if="img.url" :src="img.url" alt="Event media" class="media-thumb-img" />
-            <div v-else class="media-thumb-overlay">
-              <svg xmlns="http://www.w3.org/2000/svg" class="media-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <div class="media-grid">
+            <div
+              v-for="(img, idx) in eventImages"
+              :key="img.id || idx"
+              class="media-thumb-card"
+              :class="`media-thumb--${idx + 1}`"
+            >
+              <img
+                v-if="img.url"
+                :src="img.url"
+                alt="Event media"
+                class="media-thumb-img"
+              />
+              <div v-else class="media-thumb-overlay">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="media-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Add More Card -->
+            <div class="add-media-card" @click="triggerUpload">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="plus-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clip-rule="evenodd"
+                />
               </svg>
+              <span class="add-text">Add More</span>
             </div>
           </div>
-
-          <!-- Add More Card -->
-          <div class="add-media-card" @click="triggerUpload">
-            <svg xmlns="http://www.w3.org/2000/svg" class="plus-icon" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-            </svg>
-            <span class="add-text">Add More</span>
-          </div>
         </div>
-      </div>
-    </template>
+      </template>
+    </div>
   </div>
-</div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useEvents } from '~/composables/useEvents'
-import { useToast } from '~/composables/useToast'
-import type { Event } from '~/types/event'
+import { ref, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { useEvents } from "~/composables/useEvents";
+import { useToast } from "~/composables/useToast";
+import type { Event } from "~/types/event";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
-const router = useRouter()
-const route = useRoute()
-const { fetchEvent, publishEvent, cancelEvent, loading, error } = useEvents()
-const toast = useToast()
+const router = useRouter();
+const route = useRoute();
+const { fetchEvent, publishEvent, cancelEvent, loading, error } = useEvents();
+const toast = useToast();
 
-const eventId = computed(() => route.params.id as string)
-const event = ref<Event | null>(null)
-const copied = ref(false)
-const isActionLoading = ref(false)
+const eventId = computed(() => route.params.id as string);
+const event = ref<Event | null>(null);
+const copied = ref(false);
+const isActionLoading = ref(false);
 
 async function handlePublish() {
-  if (!event.value) return
-  isActionLoading.value = true
+  if (!event.value) return;
+  isActionLoading.value = true;
   try {
-    const updated = await publishEvent(event.value.id)
-    event.value = updated
+    const updated = await publishEvent(event.value.id);
+    event.value = updated;
     toast.show({
-      title: 'Event Published',
+      title: "Event Published",
       message: `${updated.title} is now live and accepting orders.`,
-      type: 'success',
-    })
+      type: "success",
+    });
   } catch {
     toast.show({
-      title: 'Publish Failed',
-      message: error.value || 'Could not publish event.',
-      type: 'error',
-    })
+      title: "Publish Failed",
+      message: error.value || "Could not publish event.",
+      type: "error",
+    });
   } finally {
-    isActionLoading.value = false
+    isActionLoading.value = false;
   }
 }
 
 async function handleCancel() {
-  if (!event.value) return
-  isActionLoading.value = true
+  if (!event.value) return;
+  isActionLoading.value = true;
   try {
-    const updated = await cancelEvent(event.value.id)
-    event.value = updated
+    const updated = await cancelEvent(event.value.id);
+    event.value = updated;
     toast.show({
-      title: 'Event Cancelled',
+      title: "Event Cancelled",
       message: `${updated.title} has been cancelled.`,
-      type: 'info',
-    })
+      type: "info",
+    });
   } catch {
     toast.show({
-      title: 'Cancellation Failed',
-      message: error.value || 'Could not cancel event.',
-      type: 'error',
-    })
+      title: "Cancellation Failed",
+      message: error.value || "Could not cancel event.",
+      type: "error",
+    });
   } finally {
-    isActionLoading.value = false
+    isActionLoading.value = false;
   }
 }
 
 onMounted(async () => {
   try {
-    event.value = await fetchEvent(eventId.value)
+    event.value = await fetchEvent(eventId.value);
   } catch {
     toast.show({
-      title: 'Failed to Load Event',
-      message: error.value || 'Could not load the event details. Please try again.',
-      type: 'error',
-    })
+      title: "Failed to Load Event",
+      message:
+        error.value || "Could not load the event details. Please try again.",
+      type: "error",
+    });
   }
-})
+});
 
-const eventName = computed(() => event.value?.title || 'Event')
-const eventDescription = computed(() => event.value?.description || '')
-const eventCategory = computed(() => event.value?.category?.name || '—')
-const eventVisibility = computed(() => event.value?.visibility || 'public')
-const eventStatus = computed(() => event.value?.status || 'draft')
-const eventDate = computed(() => event.value ? new Date(event.value.startsAt) : null)
-const eventEndDate = computed(() => event.value?.endsAt ? new Date(event.value.endsAt) : null)
-const eventVenue = computed(() => event.value?.venueName || event.value?.city || '—')
+const eventName = computed(() => event.value?.title || "Event");
+const eventDescription = computed(() => event.value?.description || "");
+const eventCategory = computed(() => event.value?.category?.name || "—");
+const eventVisibility = computed(() => event.value?.visibility || "public");
+const eventStatus = computed(() => event.value?.status || "draft");
+const eventType = computed(() => (event.value?.isPaid ? "Paid" : "Free"));
+const eventDate = computed(() =>
+  event.value ? new Date(event.value.startsAt) : null,
+);
+const eventEndDate = computed(() =>
+  event.value?.endsAt ? new Date(event.value.endsAt) : null,
+);
+const eventVenue = computed(
+  () =>
+    [
+      event.value?.venueName,
+      event.value?.venueAddress,
+      event.value?.city,
+      event.value?.state,
+      event.value?.country,
+    ]
+      .filter(Boolean)
+      .join(", ") || "—",
+);
+const eventLocation = computed(
+  () =>
+    [event.value?.city, event.value?.state, event.value?.country]
+      .filter(Boolean)
+      .join(", ") || "—",
+);
+const coverImage = computed(
+  () =>
+    event.value?.images.find((image) => image.isCover)?.url ||
+    event.value?.images[0]?.url ||
+    "",
+);
 const doorsOpenTime = computed(() => {
-  if (!eventDate.value) return '—'
-  const d = new Date(eventDate.value.getTime() - 60 * 60 * 1000)
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-})
+  if (!eventDate.value) return "—";
+  const d = new Date(eventDate.value.getTime() - 60 * 60 * 1000);
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+});
 const doorsCloseTime = computed(() => {
-  if (!event.value?.salesCloseAt) return '—'
-  const d = new Date(event.value.salesCloseAt)
-  if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
-})
-const eventImages = computed(() => event.value?.images || [])
+  if (!event.value?.salesCloseAt) return "—";
+  const d = new Date(event.value.salesCloseAt);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+});
+const eventImages = computed(() => event.value?.images || []);
 
 const formattedStartDate = computed(() => {
-  if (!eventDate.value) return '—'
-  return eventDate.value.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  })
-})
+  if (!eventDate.value) return "—";
+  return eventDate.value.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+});
 
 const formattedTimeRange = computed(() => {
-  if (!eventDate.value) return '—'
-  const start = eventDate.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  if (!eventDate.value) return "—";
+  const start = eventDate.value.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
   const end = eventEndDate.value
-    ? eventEndDate.value.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    : ''
-  return end ? `${start} - ${end}` : start
-})
+    ? eventEndDate.value.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "";
+  return end ? `${start} - ${end}` : start;
+});
 
 const statusLabel = computed(() => {
   const statusMap: Record<string, string> = {
-    draft: 'Draft',
-    pending_kyb: 'Pending KYB',
-    published: 'Published',
-    sales_closed: 'Sales Closed',
-    live: 'Live',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-  }
-  return statusMap[eventStatus.value] || eventStatus.value
-})
+    draft: "Draft",
+    pending_kyb: "Pending KYB",
+    published: "Published",
+    sales_closed: "Sales Closed",
+    live: "Live",
+    completed: "Completed",
+    cancelled: "Cancelled",
+  };
+  return statusMap[eventStatus.value] || eventStatus.value;
+});
 
 async function shareEvent() {
   try {
-    await navigator.clipboard.writeText(`https://uzuticket.com/events/${eventId.value}`)
-    copied.value = true
-    setTimeout(() => { copied.value = false }, 2000)
+    await navigator.clipboard.writeText(
+      `https://uzuticket.com/events/${eventId.value}`,
+    );
+    copied.value = true;
+    setTimeout(() => {
+      copied.value = false;
+    }, 2000);
   } catch {}
 }
 
 function triggerUpload() {
   toast.show({
-    title: 'Upload Media',
-    message: 'Upload media dialog is not yet available',
-    type: 'info',
-  })
+    title: "Upload Media",
+    message: "Upload media dialog is not yet available",
+    type: "info",
+  });
 }
 
 useHead({
   title: computed(() => `${eventName.value} — Uzu Ticket`),
-})
+});
 </script>
 
 <style scoped>
@@ -371,13 +594,15 @@ useHead({
   width: 2rem;
   height: 2rem;
   border: 3px solid #e5e7eb;
-  border-top-color: #3FD246;
+  border-top-color: #3fd246;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
@@ -414,8 +639,13 @@ useHead({
   text-decoration: none;
   transition: color 0.15s ease;
 }
-.btn-back-link:hover { color: #0E2615; }
-.back-icon { width: 1rem; height: 1rem; }
+.btn-back-link:hover {
+  color: #0e2615;
+}
+.back-icon {
+  width: 1rem;
+  height: 1rem;
+}
 
 /* Hero Section */
 .hero-section {
@@ -442,6 +672,13 @@ useHead({
   color: #ffffff;
 }
 
+.banner-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
 .banner-icon {
   width: 4rem;
   height: 4rem;
@@ -465,15 +702,15 @@ useHead({
 .detail-event-title {
   font-size: 1.6rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
   line-height: 1.2;
   letter-spacing: -0.01em;
 }
 
 .status-badge {
-  background: #DCFCE7;
-  color: #16A34A;
+  background: #dcfce7;
+  color: #16a34a;
   font-size: 0.8rem;
   font-weight: 700;
   padding: 0.35rem 0.85rem;
@@ -522,7 +759,7 @@ useHead({
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.5rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -532,8 +769,14 @@ useHead({
   box-shadow: 0 4px 14px rgba(63, 210, 70, 0.22);
   transition: all 0.15s ease;
 }
-.btn-publish:hover:not(:disabled) { background: #34c03b; transform: translateY(-1px); }
-.btn-publish:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-publish:hover:not(:disabled) {
+  background: #34c03b;
+  transform: translateY(-1px);
+}
+.btn-publish:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .btn-cancel-event {
   display: inline-flex;
@@ -549,8 +792,13 @@ useHead({
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.btn-cancel-event:hover:not(:disabled) { background: #fee2e2; }
-.btn-cancel-event:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-cancel-event:hover:not(:disabled) {
+  background: #fee2e2;
+}
+.btn-cancel-event:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .btn-edit {
   display: inline-flex;
@@ -562,18 +810,21 @@ useHead({
   border-radius: 0.65rem;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.btn-edit:hover { background: #f9fafb; border-color: #d1d5db; }
+.btn-edit:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
 
 .btn-share {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.5rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -583,7 +834,10 @@ useHead({
   box-shadow: 0 4px 14px rgba(63, 210, 70, 0.22);
   transition: all 0.15s ease;
 }
-.btn-share:hover { background: #34c03b; transform: translateY(-1px); }
+.btn-share:hover {
+  background: #34c03b;
+  transform: translateY(-1px);
+}
 
 .btn-action-icon {
   width: 1rem;
@@ -598,7 +852,7 @@ useHead({
 .section-heading {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 1.25rem;
 }
 
@@ -620,7 +874,7 @@ useHead({
 .card-subheading {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 1.25rem;
 }
 
@@ -709,8 +963,8 @@ useHead({
 }
 
 .add-media-card:hover {
-  border-color: #3FD246;
-  color: #3FD246;
+  border-color: #3fd246;
+  color: #3fd246;
   background: #f0fdf1;
 }
 

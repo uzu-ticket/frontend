@@ -3,7 +3,10 @@
     <!-- Top Row: Badge, Org Name, Invited By, and Role Badge -->
     <div class="invitation-top-row">
       <div class="invitation-info">
-        <div class="org-badge" :style="{ backgroundColor: badgeBg, color: badgeColor }">
+        <div
+          class="org-badge"
+          :style="{ backgroundColor: badgeBg, color: badgeColor }"
+        >
           {{ initials }}
         </div>
         <div class="invitation-details">
@@ -20,37 +23,33 @@
 
     <!-- Bottom Row: Action Buttons (Accept, Decline) -->
     <div class="invitation-actions">
-      <button class="btn-accept" @click="$emit('accept')">
-        Accept
-      </button>
-      <button class="btn-decline" @click="$emit('decline')">
-        Decline
-      </button>
+      <button class="btn-accept" @click="$emit('accept')">Accept</button>
+      <button class="btn-decline" @click="$emit('decline')">Decline</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 interface Props {
-  id?: string | number
-  orgName: string
-  invitedBy: string
-  role?: string
-  initials: string
-  badgeBg?: string
-  badgeColor?: string
+  id?: string | number;
+  orgName: string;
+  invitedBy: string;
+  role?: string;
+  initials: string;
+  badgeBg?: string;
+  badgeColor?: string;
 }
 
 withDefaults(defineProps<Props>(), {
-  role: 'Admin',
-  badgeBg: '#fce7f3',
-  badgeColor: '#db2777',
-})
+  role: "Admin",
+  badgeBg: "#fce7f3",
+  badgeColor: "#db2777",
+});
 
 defineEmits<{
-  accept: []
-  decline: []
-}>()
+  accept: [];
+  decline: [];
+}>();
 </script>
 
 <style scoped>
@@ -94,7 +93,7 @@ defineEmits<{
 .org-name {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.15rem;
   line-height: 1.2;
 }
@@ -106,7 +105,7 @@ defineEmits<{
 
 .role-badge {
   background: #e8f9e9;
-  color: #3FD246;
+  color: #3fd246;
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.3rem 0.9rem;
@@ -123,7 +122,7 @@ defineEmits<{
 
 .btn-accept {
   padding: 0.6rem 2rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -142,7 +141,7 @@ defineEmits<{
   padding: 0.6rem 2rem;
   background: #ffffff;
   border: 1.5px solid #e5e7eb;
-  color: #0E2615;
+  color: #0e2615;
   font-weight: 700;
   font-size: 0.85rem;
   border-radius: 0.65rem;
@@ -163,7 +162,8 @@ defineEmits<{
   .invitation-actions {
     width: 100%;
   }
-  .btn-accept, .btn-decline {
+  .btn-accept,
+  .btn-decline {
     flex: 1;
     text-align: center;
     padding: 0.75rem 1rem;

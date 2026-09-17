@@ -1,9 +1,14 @@
 <template>
-  <div class="event-card">
+  <div class="event-card" @click="emit('open', event.id)">
     <!-- Cover Image Header -->
     <div class="card-cover" :style="{ background: event.bgGradient }">
       <!-- Background Image if available -->
-      <img v-if="event.coverImage" :src="event.coverImage" :alt="event.title" class="cover-img" />
+      <img
+        v-if="event.coverImage"
+        :src="event.coverImage"
+        :alt="event.title"
+        class="cover-img"
+      />
 
       <!-- Top Right 3-Dots Action Button & Dropdown -->
       <div class="action-menu-wrapper" @click.stop>
@@ -12,44 +17,109 @@
           aria-label="Event Options"
           @click="isMenuOpen = !isMenuOpen"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="dots-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="dots-icon"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+            />
           </svg>
         </button>
 
         <!-- Context Actions Dropdown -->
         <div v-if="isMenuOpen" class="context-menu">
           <button class="menu-item" @click="handleAction('edit')">
-            <svg xmlns="http://www.w3.org/2000/svg" class="item-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="item-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
             </svg>
             <span>Edit</span>
           </button>
 
           <button class="menu-item" @click="handleAction('duplicate')">
-            <svg xmlns="http://www.w3.org/2000/svg" class="item-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="item-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
             <span>Duplicate</span>
           </button>
 
           <button class="menu-item" @click="handleAction('analytics')">
-            <svg xmlns="http://www.w3.org/2000/svg" class="item-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="item-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
             </svg>
             <span>View analytics</span>
           </button>
 
           <button class="menu-item" @click="handleAction('close-sales')">
-            <svg xmlns="http://www.w3.org/2000/svg" class="item-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="item-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             <span>Close sales</span>
           </button>
 
-          <button class="menu-item menu-item--delete" @click="handleAction('delete')">
-            <svg xmlns="http://www.w3.org/2000/svg" class="item-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          <button
+            class="menu-item menu-item--delete"
+            @click="handleAction('delete')"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="item-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
             </svg>
             <span>Delete</span>
           </button>
@@ -60,7 +130,11 @@
       <div class="status-badge-wrapper">
         <span
           class="status-badge"
-          :class="event.status === 'Published' ? 'status-badge--published' : 'status-badge--closed'"
+          :class="
+            event.status === 'Published'
+              ? 'status-badge--published'
+              : 'status-badge--closed'
+          "
         >
           {{ event.status }}
         </span>
@@ -72,16 +146,42 @@
       <h3 class="event-title">{{ event.title }}</h3>
 
       <div class="info-row">
-        <svg xmlns="http://www.w3.org/2000/svg" class="info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="info-icon"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+          />
         </svg>
         <span class="info-text">{{ event.location }}</span>
       </div>
 
       <div class="info-row">
-        <svg xmlns="http://www.w3.org/2000/svg" class="info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="info-icon"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
         <span class="info-text">{{ event.date }}</span>
       </div>
@@ -103,51 +203,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from "vue";
 
 export interface EventItem {
-  id: string
-  title: string
-  location: string
-  date: string
-  time: string
-  status: 'Published' | 'Sales closed'
-  ticketsSold: number
-  revenue: string
-  coverImage?: string
-  bgGradient?: string
+  id: string;
+  title: string;
+  venue?: string;
+  location: string;
+  date: string;
+  time: string;
+  status: string;
+  ticketsSold: number;
+  revenue: string;
+  category?: string;
+  eventType?: "paid" | "free";
+  startsAt?: string;
+  coverImage?: string;
+  bgGradient?: string;
 }
 
 const props = defineProps<{
-  event: EventItem
-}>()
+  event: EventItem;
+}>();
 
 const emit = defineEmits<{
-  action: [type: string, eventId: string]
-}>()
+  action: [type: string, eventId: string];
+  open: [eventId: string];
+}>();
 
-const isMenuOpen = ref(false)
+const isMenuOpen = ref(false);
 
 function handleAction(type: string) {
-  isMenuOpen.value = false
-  emit('action', type, props.event.id)
+  isMenuOpen.value = false;
+  emit("action", type, props.event.id);
 }
 
 function closeMenu() {
-  isMenuOpen.value = false
+  isMenuOpen.value = false;
 }
 
 onMounted(() => {
   if (import.meta.client) {
-    window.addEventListener('click', closeMenu)
+    window.addEventListener("click", closeMenu);
   }
-})
+});
 
 onUnmounted(() => {
   if (import.meta.client) {
-    window.removeEventListener('click', closeMenu)
+    window.removeEventListener("click", closeMenu);
   }
-})
+});
 </script>
 
 <style scoped>
@@ -158,9 +263,12 @@ onUnmounted(() => {
   border: 1px solid #eef2ee;
   overflow: visible;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
 }
 
 .event-card:hover {
@@ -235,8 +343,14 @@ onUnmounted(() => {
 }
 
 @keyframes popoverFade {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .menu-item {
@@ -257,16 +371,16 @@ onUnmounted(() => {
 
 .menu-item:hover {
   background: #f9fafb;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .menu-item--delete {
-  color: #EF4444;
+  color: #ef4444;
 }
 
 .menu-item--delete:hover {
-  background: #FEF2F2;
-  color: #DC2626;
+  background: #fef2f2;
+  color: #dc2626;
 }
 
 .item-icon {
@@ -291,13 +405,13 @@ onUnmounted(() => {
 }
 
 .status-badge--published {
-  background: #0E2615;
-  color: #3FD246;
+  background: #0e2615;
+  color: #3fd246;
 }
 
 .status-badge--closed {
-  background: #FEF3C7;
-  color: #D97706;
+  background: #fef3c7;
+  color: #d97706;
 }
 
 /* Card Body */
@@ -311,7 +425,7 @@ onUnmounted(() => {
 .event-title {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.6rem;
   line-height: 1.3;
 }
@@ -357,7 +471,7 @@ onUnmounted(() => {
 .metric-num {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   line-height: 1.2;
 }
 

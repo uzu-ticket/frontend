@@ -23,7 +23,9 @@
             class="form-input"
             :class="{ 'form-input--error': errors.eventName }"
           />
-          <span v-if="errors.eventName" class="field-error">{{ errors.eventName }}</span>
+          <span v-if="errors.eventName" class="field-error">{{
+            errors.eventName
+          }}</span>
         </div>
 
         <!-- Category -->
@@ -55,9 +57,13 @@
               class="form-textarea"
               :class="{ 'form-textarea--error': errors.description }"
             />
-            <span class="char-counter">{{ formData.description.length }}/200</span>
+            <span class="char-counter"
+              >{{ formData.description.length }}/200</span
+            >
           </div>
-          <span v-if="errors.description" class="field-error">{{ errors.description }}</span>
+          <span v-if="errors.description" class="field-error">{{
+            errors.description
+          }}</span>
         </div>
 
         <!-- Event Slot -->
@@ -68,7 +74,9 @@
           <div class="radio-cards-grid">
             <div
               class="radio-card"
-              :class="{ 'radio-card--selected': formData.eventSlot === 'single' }"
+              :class="{
+                'radio-card--selected': formData.eventSlot === 'single',
+              }"
               @click="formData.eventSlot = 'single'"
             >
               <div class="radio-indicator">
@@ -76,57 +84,70 @@
               </div>
               <div class="radio-card-content">
                 <h4 class="card-option-title">Single Slot</h4>
-                <p class="card-option-desc">One ticket gives access to the event.</p>
+                <p class="card-option-desc">
+                  One ticket gives access to the event.
+                </p>
               </div>
             </div>
 
             <div
               class="radio-card"
-              :class="{ 'radio-card--selected': formData.eventSlot === 'multiple' }"
+              :class="{
+                'radio-card--selected': formData.eventSlot === 'multiple',
+              }"
               @click="formData.eventSlot = 'multiple'"
             >
               <div class="radio-indicator">
-                <div v-if="formData.eventSlot === 'multiple'" class="radio-dot" />
+                <div
+                  v-if="formData.eventSlot === 'multiple'"
+                  class="radio-dot"
+                />
               </div>
               <div class="radio-card-content">
                 <h4 class="card-option-title">Multiple Slot</h4>
-                <p class="card-option-desc">Divide your event into multiple sessions or time slots.</p>
+                <p class="card-option-desc">
+                  Divide your event into multiple sessions or time slots.
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Visibility -->
+        <!-- Event Type -->
         <div class="field-group">
           <label class="field-label">
-            Visibility <span class="required-star">*</span>
+            Event Type <span class="required-star">*</span>
           </label>
           <div class="radio-cards-grid">
             <div
               class="radio-card"
-              :class="{ 'radio-card--selected': formData.visibility === 'public' }"
-              @click="formData.visibility = 'public'"
+              :class="{ 'radio-card--selected': formData.eventType === 'paid' }"
+              @click="formData.eventType = 'paid'"
             >
               <div class="radio-indicator">
-                <div v-if="formData.visibility === 'public'" class="radio-dot" />
+                <div v-if="formData.eventType === 'paid'" class="radio-dot" />
               </div>
               <div class="radio-card-content">
-                <h4 class="card-option-title">Public</h4>
-                <p class="card-option-desc">Visible to everyone on UzuTicket.</p>
+                <h4 class="card-option-title">Paid</h4>
+                <p class="card-option-desc">
+                  Attendees purchase tickets to attend.
+                </p>
               </div>
             </div>
 
             <div
               class="radio-card"
-              :class="{ 'radio-card--selected': formData.visibility === 'rsvp' }"
-              @click="formData.visibility = 'rsvp'"
+              :class="{ 'radio-card--selected': formData.eventType === 'free' }"
+              @click="formData.eventType = 'free'"
             >
               <div class="radio-indicator">
-                <div v-if="formData.visibility === 'rsvp'" class="radio-dot" />
+                <div v-if="formData.eventType === 'free'" class="radio-dot" />
               </div>
               <div class="radio-card-content">
-                <h4 class="card-option-title">RSVP</h4>
-                <p class="card-option-desc">Only people with the direct link can access this event.</p>
+                <h4 class="card-option-title">Free</h4>
+                <p class="card-option-desc">
+                  Everyone can attend without paying.
+                </p>
               </div>
             </div>
           </div>
@@ -137,16 +158,34 @@
       <div class="form-right-col">
         <label class="field-label">Add cover Image (Optional)</label>
         <div class="dropzone-box" @click="triggerFileInput">
-          <input ref="fileInput" type="file" accept="image/*" class="file-input-hidden" @change="handleFileSelect" />
-          
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            class="file-input-hidden"
+            @change="handleFileSelect"
+          />
+
           <div class="dropzone-content">
             <div class="upload-icon-circle">
-              <svg xmlns="http://www.w3.org/2000/svg" class="cloud-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="cloud-icon"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
               </svg>
             </div>
             <p class="upload-prompt">
-              Drag and drop an image here or <span class="browse-highlight">browse files</span>
+              Drag and drop an image here or
+              <span class="browse-highlight">browse files</span>
             </p>
           </div>
         </div>
@@ -162,7 +201,9 @@
     <div v-if="formData.eventSlot === 'multiple'" class="event-slots-section">
       <div class="slots-header">
         <h3 class="slots-title">Set Your Event Slot</h3>
-        <p class="slots-subtitle">Add the different time slots or sessions for your event.</p>
+        <p class="slots-subtitle">
+          Add the different time slots or sessions for your event.
+        </p>
       </div>
 
       <div class="slots-stack">
@@ -170,31 +211,47 @@
           <!-- Left Content -->
           <div class="slot-card-left">
             <div class="drag-handle" title="Drag to reorder">
-              <svg xmlns="http://www.w3.org/2000/svg" class="drag-icon" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M7 4a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0zM7 16a2 2 0 11-4 0 2 2 0 014 0zM17 4a2 2 0 11-4 0 2 2 0 014 0zM17 10a2 2 0 11-4 0 2 2 0 014 0zM17 16a2 2 0 11-4 0 2 2 0 014 0z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="drag-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  d="M7 4a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0zM7 16a2 2 0 11-4 0 2 2 0 014 0zM17 4a2 2 0 11-4 0 2 2 0 014 0zM17 10a2 2 0 11-4 0 2 2 0 014 0zM17 16a2 2 0 11-4 0 2 2 0 014 0z"
+                />
               </svg>
             </div>
 
             <div class="slot-body">
               <h4 class="slot-name">{{ slotItem.name }}</h4>
-              
+
               <div class="slot-inputs-row">
                 <!-- Date -->
                 <div class="slot-field">
                   <label class="slot-field-label">Date</label>
-                  <DatePicker v-model="slotItem.dateObj" placeholder="Pick date" />
+                  <DatePicker
+                    v-model="slotItem.dateObj"
+                    placeholder="Pick date"
+                  />
                 </div>
 
                 <!-- Start Time -->
                 <div class="slot-field">
                   <label class="slot-field-label">Start Time</label>
-                  <TimePicker v-model="slotItem.startTime" placeholder="Start time" />
+                  <TimePicker
+                    v-model="slotItem.startTime"
+                    placeholder="Start time"
+                  />
                 </div>
 
                 <!-- End Time -->
                 <div class="slot-field">
                   <label class="slot-field-label">End Time</label>
-                  <TimePicker v-model="slotItem.endTime" placeholder="End time" />
+                  <TimePicker
+                    v-model="slotItem.endTime"
+                    placeholder="End time"
+                  />
                 </div>
               </div>
             </div>
@@ -203,13 +260,40 @@
           <!-- Right Actions -->
           <div class="slot-actions">
             <button type="button" class="btn-slot-edit" title="Edit slot">
-              <svg xmlns="http://www.w3.org/2000/svg" class="action-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="action-svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
               </svg>
             </button>
-            <button type="button" class="btn-slot-delete" title="Delete slot" @click="slots.splice(index, 1)">
-              <svg xmlns="http://www.w3.org/2000/svg" class="action-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <button
+              type="button"
+              class="btn-slot-delete"
+              title="Delete slot"
+              @click="slots.splice(index, 1)"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="action-svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
             </button>
           </div>
@@ -225,8 +309,17 @@
 
       <button type="submit" class="btn-save-continue">
         <span>Save & Continue</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="btn-arrow"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
       </button>
     </div>
@@ -234,75 +327,127 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import AppSelect from '~/components/ui/AppSelect.vue'
-import DatePicker from '~/components/ui/DatePicker.vue'
-import TimePicker from '~/components/ui/TimePicker.vue'
+import { reactive, ref, watch } from "vue";
+import AppSelect from "~/components/ui/AppSelect.vue";
+import DatePicker from "~/components/ui/DatePicker.vue";
+import TimePicker from "~/components/ui/TimePicker.vue";
 
 const emit = defineEmits<{
-  cancel: []
-  next: [data: typeof formData]
-}>()
+  cancel: [];
+  next: [data: typeof formData];
+}>();
 
-const fileInput = ref<HTMLInputElement | null>(null)
+const props = defineProps<{
+  initialData?: Partial<typeof formData> & {
+    slots?: Array<{
+      name: string;
+      dateObj?: Date | string | null;
+      startTime?: string;
+      endTime?: string;
+    }>;
+  };
+}>();
+
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const categoryOptions = [
-  { value: 'Technology', label: 'Technology', subLabel: 'Tech & Innovation' },
-  { value: 'Music', label: 'Music & Concerts', subLabel: 'Live performances' },
-  { value: 'Business', label: 'Business & Corporate', subLabel: 'Professional events' },
-  { value: 'Arts', label: 'Arts & Culture', subLabel: 'Creative events' },
-  { value: 'Sports', label: 'Sports & Fitness', subLabel: 'Active events' },
-  { value: 'Food', label: 'Food & Drinks', subLabel: 'Culinary experiences' },
-  { value: 'Comedy', label: 'Comedy & Entertainment', subLabel: 'Fun events' },
-]
+  { value: "Technology", label: "Technology", subLabel: "Tech & Innovation" },
+  { value: "Music", label: "Music & Concerts", subLabel: "Live performances" },
+  {
+    value: "Business",
+    label: "Business & Corporate",
+    subLabel: "Professional events",
+  },
+  { value: "Arts", label: "Arts & Culture", subLabel: "Creative events" },
+  { value: "Sports", label: "Sports & Fitness", subLabel: "Active events" },
+  { value: "Food", label: "Food & Drinks", subLabel: "Culinary experiences" },
+  { value: "Comedy", label: "Comedy & Entertainment", subLabel: "Fun events" },
+];
 
 const formData = reactive({
-  eventName: '',
-  category: '',
-  description: '',
-  eventSlot: 'multiple',
-  visibility: 'public',
+  eventName: "",
+  category: "",
+  description: "",
+  eventSlot: "multiple",
+  visibility: "public",
+  eventType: "paid",
   coverImage: null as File | null,
-})
+});
 
 const slots = reactive([
-  { name: 'Morning Session', dateObj: null as Date | null, startTime: '09:00 AM', endTime: '11:00 AM' },
-  { name: 'Afternoon Session', dateObj: null as Date | null, startTime: '09:00 AM', endTime: '11:00 AM' },
-])
+  {
+    name: "Morning Session",
+    dateObj: null as Date | null,
+    startTime: "09:00 AM",
+    endTime: "11:00 AM",
+  },
+  {
+    name: "Afternoon Session",
+    dateObj: null as Date | null,
+    startTime: "09:00 AM",
+    endTime: "11:00 AM",
+  },
+]);
 
 const errors = reactive({
-  eventName: '',
-  category: '',
-  description: '',
-})
+  eventName: "",
+  category: "",
+  description: "",
+});
+
+watch(
+  () => props.initialData,
+  (data) => {
+    if (!data) return;
+    Object.assign(formData, data);
+    if (data.slots) {
+      slots.splice(0, slots.length, ...data.slots.map((slot) => ({
+        name: slot.name,
+        dateObj: slot.dateObj ? new Date(slot.dateObj) : null,
+        startTime: slot.startTime || "09:00 AM",
+        endTime: slot.endTime || "11:00 AM",
+      })));
+    }
+  },
+  { immediate: true, deep: true },
+);
 
 function triggerFileInput() {
-  fileInput.value?.click()
+  fileInput.value?.click();
 }
 
 function handleFileSelect(event: Event) {
-  const target = event.target as HTMLInputElement
+  const target = event.target as HTMLInputElement;
   if (target.files && target.files[0]) {
-    formData.coverImage = target.files[0]
+    formData.coverImage = target.files[0];
   }
 }
 
 function validate() {
-  let valid = true
-  errors.eventName = ''
-  errors.category = ''
-  errors.description = ''
+  let valid = true;
+  errors.eventName = "";
+  errors.category = "";
+  errors.description = "";
 
-  if (!formData.eventName.trim()) { errors.eventName = 'Event name is required.'; valid = false }
-  if (!formData.category) { errors.category = 'Category is required.'; valid = false }
-  if (!formData.description.trim()) { errors.description = 'Description is required.'; valid = false }
+  if (!formData.eventName.trim()) {
+    errors.eventName = "Event name is required.";
+    valid = false;
+  }
+  if (!formData.category) {
+    errors.category = "Category is required.";
+    valid = false;
+  }
+  if (!formData.description.trim()) {
+    errors.description = "Description is required.";
+    valid = false;
+  }
 
-  return valid
+  return valid;
 }
 
 function handleSubmit() {
-  if (!validate()) return
-  emit('next', { ...formData, slots: [...slots] })
+  if (!validate()) return;
+  emit("next", { ...formData, slots: [...slots] });
 }
 </script>
 
@@ -319,7 +464,7 @@ function handleSubmit() {
 .form-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.25rem;
 }
 
@@ -359,7 +504,7 @@ function handleSubmit() {
 .field-label {
   font-size: 0.825rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .required-star {
@@ -383,7 +528,7 @@ function handleSubmit() {
 }
 
 .form-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
 
@@ -411,7 +556,7 @@ function handleSubmit() {
 }
 
 .form-select:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
 
@@ -446,7 +591,7 @@ function handleSubmit() {
 }
 
 .form-textarea:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
 
@@ -483,8 +628,8 @@ function handleSubmit() {
 }
 
 .radio-card--selected {
-  background: #F0FDF1;
-  border-color: #3FD246;
+  background: #f0fdf1;
+  border-color: #3fd246;
 }
 
 .radio-indicator {
@@ -500,20 +645,20 @@ function handleSubmit() {
 }
 
 .radio-card--selected .radio-indicator {
-  border-color: #3FD246;
+  border-color: #3fd246;
 }
 
 .radio-dot {
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 50%;
-  background: #3FD246;
+  background: #3fd246;
 }
 
 .card-option-title {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.15rem;
 }
 
@@ -526,8 +671,8 @@ function handleSubmit() {
 
 /* Dropzone Upload Box */
 .dropzone-box {
-  background: #F3F4F6;
-  border: 1.5px dashed #D1D5DB;
+  background: #f3f4f6;
+  border: 1.5px dashed #d1d5db;
   border-radius: 0.875rem;
   padding: 2.25rem 1.25rem;
   cursor: pointer;
@@ -536,7 +681,7 @@ function handleSubmit() {
 }
 
 .dropzone-box:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   background: #f0fdf1;
 }
 
@@ -556,7 +701,7 @@ function handleSubmit() {
   height: 2.75rem;
   border-radius: 50%;
   background: #ffffff;
-  color: #3FD246;
+  color: #3fd246;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -577,7 +722,7 @@ function handleSubmit() {
 }
 
 .browse-highlight {
-  color: #3FD246;
+  color: #3fd246;
   font-weight: 700;
   text-decoration: underline;
 }
@@ -609,7 +754,7 @@ function handleSubmit() {
 .slots-title {
   font-size: 1rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.2rem;
 }
 
@@ -664,7 +809,7 @@ function handleSubmit() {
 .slot-name {
   font-size: 0.9rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -720,7 +865,8 @@ function handleSubmit() {
   padding-left: 1.25rem;
 }
 
-.btn-slot-edit, .btn-slot-delete {
+.btn-slot-edit,
+.btn-slot-delete {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.6rem;
@@ -733,11 +879,21 @@ function handleSubmit() {
   transition: all 0.15s;
 }
 
-.btn-slot-edit { color: #4b5563; }
-.btn-slot-edit:hover { background: #f9fafb; color: #0E2615; }
+.btn-slot-edit {
+  color: #4b5563;
+}
+.btn-slot-edit:hover {
+  background: #f9fafb;
+  color: #0e2615;
+}
 
-.btn-slot-delete { color: #ef4444; border-color: #fecaca; }
-.btn-slot-delete:hover { background: #fef2f2; }
+.btn-slot-delete {
+  color: #ef4444;
+  border-color: #fecaca;
+}
+.btn-slot-delete:hover {
+  background: #fef2f2;
+}
 
 .action-svg {
   width: 1rem;
@@ -762,7 +918,7 @@ function handleSubmit() {
   padding: 0.65rem 1.75rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  color: #0E2615;
+  color: #0e2615;
   font-weight: 700;
   font-size: 0.85rem;
   border-radius: 0.65rem;
@@ -779,7 +935,7 @@ function handleSubmit() {
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.75rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;

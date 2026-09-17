@@ -79,13 +79,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import DatePicker from '~/components/ui/DatePicker.vue'
 import TimePicker from '~/components/ui/TimePicker.vue'
 
 const emit = defineEmits<{
   back: []
   next: [data: any]
+}>()
+
+const props = defineProps<{
+  initialData?: {
+    salesClose?: string
+    customCloseDate?: Date | null
+    customCloseTime?: string
+    reminders?: string[]
+  }
 }>()
 
 const salesCloseOptions = [
@@ -105,6 +114,18 @@ const customCloseDate = ref<Date | null>(null)
 const customCloseTime = ref('')
 
 const reminders = ref<string[]>(['24h', '1h'])
+
+watch(
+  () => props.initialData,
+  (data) => {
+    if (!data) return
+    if (data.salesClose) salesClose.value = data.salesClose
+    if (data.customCloseDate !== undefined) customCloseDate.value = data.customCloseDate
+    if (data.customCloseTime !== undefined) customCloseTime.value = data.customCloseTime
+    if (data.reminders) reminders.value = [...data.reminders]
+  },
+  { immediate: true, deep: true },
+)
 
 function toggleReminder(val: string) {
   const idx = reminders.value.indexOf(val)

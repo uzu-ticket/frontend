@@ -10,6 +10,37 @@
     <div class="form-body-grid">
       <!-- Left Column: Form Fields -->
       <div class="form-left-col">
+        <!-- Start & End Date + Time -->
+        <div class="two-col-grid">
+          <!-- Start Date & Time -->
+          <div class="field-group">
+            <label class="field-label">
+              Start Date & Time <span class="required-star">*</span>
+            </label>
+            <div class="date-time-row">
+              <DatePicker
+                v-model="formData.startDate"
+                placeholder="Start date"
+              />
+              <TimePicker
+                v-model="formData.startTime"
+                placeholder="Start time"
+              />
+            </div>
+          </div>
+
+          <!-- End Date & Time -->
+          <div class="field-group">
+            <label class="field-label">
+              End Date & Time <span class="required-star">*</span>
+            </label>
+            <div class="date-time-row">
+              <DatePicker v-model="formData.endDate" placeholder="End date" />
+              <TimePicker v-model="formData.endTime" placeholder="End time" />
+            </div>
+          </div>
+        </div>
+
         <!-- Venue Name -->
         <div class="field-group">
           <label for="input-venue-name" class="field-label">
@@ -78,31 +109,6 @@
             searchable
           />
         </div>
-
-        <!-- Start & End Date + Time -->
-        <div class="two-col-grid">
-          <!-- Start Date & Time -->
-          <div class="field-group">
-            <label class="field-label">
-              Start Date & Time <span class="required-star">*</span>
-            </label>
-            <div class="date-time-row">
-              <DatePicker v-model="formData.startDate" placeholder="Start date" />
-              <TimePicker v-model="formData.startTime" placeholder="Start time" />
-            </div>
-          </div>
-
-          <!-- End Date & Time -->
-          <div class="field-group">
-            <label class="field-label">
-              End Date & Time <span class="required-star">*</span>
-            </label>
-            <div class="date-time-row">
-              <DatePicker v-model="formData.endDate" placeholder="End date" />
-              <TimePicker v-model="formData.endTime" placeholder="End time" />
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Right Column: Interactive Map Graphic -->
@@ -113,7 +119,9 @@
             <div class="map-road map-road-1" />
             <div class="map-road map-road-2" />
             <div class="map-pin-box">
-              <div class="map-tooltip">Victoria Island, Lagos 106104, Lagos, Nigeria</div>
+              <div class="map-tooltip">
+                Victoria Island, Lagos 106104, Lagos, Nigeria
+              </div>
               <div class="pin-icon-wrap">📍</div>
             </div>
           </div>
@@ -124,16 +132,34 @@
     <!-- Footer Actions -->
     <div class="form-footer">
       <button type="button" class="btn-back" @click="$emit('back')">
-        <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="btn-arrow"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
         <span>Back</span>
       </button>
 
       <button type="submit" class="btn-save-continue">
         <span>Save & Continue</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="btn-arrow"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
       </button>
     </div>
@@ -141,50 +167,79 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
-import AppSelect from '~/components/ui/AppSelect.vue'
-import DatePicker from '~/components/ui/DatePicker.vue'
-import TimePicker from '~/components/ui/TimePicker.vue'
+import { computed, reactive, watch } from "vue";
+import AppSelect from "~/components/ui/AppSelect.vue";
+import DatePicker from "~/components/ui/DatePicker.vue";
+import TimePicker from "~/components/ui/TimePicker.vue";
 
 const emit = defineEmits<{
-  back: []
-  next: [data: typeof formData]
-}>()
+  back: [];
+  next: [data: typeof formData];
+}>();
+
+const props = defineProps<{
+  initialData?: Partial<typeof formData>;
+}>();
 
 const stateOptions = [
-  { value: 'Lagos', label: 'Lagos' },
-  { value: 'Abuja', label: 'Abuja' },
-  { value: 'Rivers', label: 'Rivers' },
-  { value: 'Ogun', label: 'Ogun' },
-  { value: 'Oyo', label: 'Oyo' },
-  { value: 'Kano', label: 'Kano' },
-  { value: 'Anambra', label: 'Anambra' },
-  { value: 'Enugu', label: 'Enugu' },
-]
+  { value: "Lagos", label: "Lagos" },
+  { value: "Abuja", label: "Abuja" },
+  { value: "Rivers", label: "Rivers" },
+  { value: "Ogun", label: "Ogun" },
+  { value: "Oyo", label: "Oyo" },
+  { value: "Kano", label: "Kano" },
+  { value: "Anambra", label: "Anambra" },
+  { value: "Enugu", label: "Enugu" },
+];
 
-const countryOptions = [
-  { value: 'Nigeria', label: '🇳🇬  Nigeria' },
-  { value: 'Ghana', label: '🇬🇭  Ghana' },
-  { value: 'Kenya', label: '🇰🇪  Kenya' },
-  { value: 'South Africa', label: '🇿🇦  South Africa' },
-  { value: 'United Kingdom', label: '🇬🇧  United Kingdom' },
-  { value: 'United States', label: '🇺🇸  United States' },
-]
+const countryCodes =
+  "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW"
+    .split(" ")
+    .map((code) => code.toUpperCase());
+
+const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+function countryFlag(code: string) {
+  return [...code]
+    .map((character) => String.fromCodePoint(character.charCodeAt(0) + 127397))
+    .join("");
+}
+
+const countryOptions = computed(() =>
+  countryCodes
+    .map((code) => {
+      const name = regionNames.of(code);
+      return name
+        ? { value: name, label: `${countryFlag(code)}  ${name}` }
+        : null;
+    })
+    .filter(
+      (option): option is { value: string; label: string } => option !== null,
+    ),
+);
 
 const formData = reactive({
-  venueName: '',
-  address: '',
-  city: '',
-  state: 'Lagos',
-  country: 'Nigeria',
+  venueName: "",
+  address: "",
+  city: "",
+  state: "Lagos",
+  country: "Nigeria",
   startDate: null as Date | null,
-  startTime: '',
+  startTime: "",
   endDate: null as Date | null,
-  endTime: '',
-})
+  endTime: "",
+});
+
+watch(
+  () => props.initialData,
+  (data) => {
+    if (data) Object.assign(formData, data);
+  },
+  { immediate: true, deep: true },
+);
 
 function handleSubmit() {
-  emit('next', { ...formData })
+  emit("next", { ...formData });
 }
 </script>
 
@@ -201,7 +256,7 @@ function handleSubmit() {
 .form-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.25rem;
 }
 
@@ -246,7 +301,7 @@ function handleSubmit() {
 .field-label {
   font-size: 0.825rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .required-star {
@@ -266,7 +321,7 @@ function handleSubmit() {
 }
 
 .form-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
 
@@ -315,7 +370,8 @@ function handleSubmit() {
   overflow: hidden;
 }
 
-.date-part, .time-part {
+.date-part,
+.time-part {
   display: flex;
   align-items: center;
   padding: 0 0.65rem;
@@ -359,9 +415,13 @@ function handleSubmit() {
   width: 100%;
   height: 100%;
   background: #fde68a; /* soft warm map styling */
-  background-image: radial-gradient(#fcd34d 1.5px, transparent 1.5px), radial-gradient(#fcd34d 1.5px, #fef3c7 1.5px);
+  background-image:
+    radial-gradient(#fcd34d 1.5px, transparent 1.5px),
+    radial-gradient(#fcd34d 1.5px, #fef3c7 1.5px);
   background-size: 30px 30px;
-  background-position: 0 0, 15px 15px;
+  background-position:
+    0 0,
+    15px 15px;
   position: relative;
   display: flex;
   align-items: center;
@@ -426,7 +486,7 @@ function handleSubmit() {
   padding: 0.65rem 1.75rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  color: #0E2615;
+  color: #0e2615;
   font-weight: 700;
   font-size: 0.85rem;
   border-radius: 0.65rem;
@@ -434,14 +494,16 @@ function handleSubmit() {
   transition: all 0.15s ease;
 }
 
-.btn-back:hover { background: #f9fafb; }
+.btn-back:hover {
+  background: #f9fafb;
+}
 
 .btn-save-continue {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.75rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -457,10 +519,17 @@ function handleSubmit() {
   transform: translateY(-1px);
 }
 
-.btn-arrow { width: 1rem; height: 1rem; }
+.btn-arrow {
+  width: 1rem;
+  height: 1rem;
+}
 
 @media (max-width: 900px) {
-  .form-body-grid { grid-template-columns: 1fr; }
-  .two-col-grid { grid-template-columns: 1fr; }
+  .form-body-grid {
+    grid-template-columns: 1fr;
+  }
+  .two-col-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

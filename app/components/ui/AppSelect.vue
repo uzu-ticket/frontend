@@ -8,7 +8,7 @@
         'select-trigger--error': error,
         'select-trigger--disabled': disabled,
       }"
-      @click="!disabled && (isOpen = !isOpen)"
+      @click="toggleOpen"
     >
       <!-- Leading Icon (optional) -->
       <slot name="leading-icon" />
@@ -45,7 +45,12 @@
 
     <!-- Dropdown Options -->
     <Transition name="picker-drop">
-      <div v-if="isOpen" class="select-dropdown">
+      <div
+        v-if="isOpen"
+        ref="dropdownRef"
+        class="select-dropdown"
+        :class="{ 'select-dropdown--up': placement === 'up' }"
+      >
         <!-- Search (searchable mode) -->
         <div v-if="searchable" class="search-row">
           <svg
@@ -76,6 +81,7 @@
           <button
             v-for="option in filteredOptions"
             :key="option.value"
+            type="button"
             class="option-item"
             :class="{
               'option-item--selected': modelValue === option.value,
@@ -128,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
 
 export interface SelectOption {
   value: string | number;
@@ -162,6 +168,8 @@ const emit = defineEmits<{
 const isOpen = ref(false);
 const query = ref("");
 const wrapperRef = ref<HTMLElement | null>(null);
+const dropdownRef = ref<HTMLElement | null>(null);
+const placement = ref<"down" | "up">("down");
 
 const selectedOption = computed(
   () => props.options.find((o) => o.value === props.modelValue) ?? null,
@@ -173,6 +181,25 @@ const filteredOptions = computed(() => {
     o.label.toLowerCase().includes(query.value.toLowerCase()),
   );
 });
+
+async function updatePlacement() {
+  await nextTick();
+  if (!wrapperRef.value || !dropdownRef.value) return;
+
+  const triggerRect = wrapperRef.value.getBoundingClientRect();
+  const dropdownHeight = dropdownRef.value.getBoundingClientRect().height;
+  const spaceBelow = window.innerHeight - triggerRect.bottom;
+  const spaceAbove = triggerRect.top;
+
+  placement.value =
+    spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow ? "up" : "down";
+}
+
+function toggleOpen() {
+  if (props.disabled) return;
+  isOpen.value = !isOpen.value;
+  if (isOpen.value) updatePlacement();
+}
 
 function selectOption(option: SelectOption) {
   if (option.disabled) return;
@@ -188,8 +215,18 @@ function handleClickOutside(e: MouseEvent) {
   }
 }
 
-onMounted(() => document.addEventListener("click", handleClickOutside));
-onUnmounted(() => document.removeEventListener("click", handleClickOutside));
+function handleViewportChange() {
+  if (isOpen.value) updatePlacement();
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+  window.addEventListener("resize", handleViewportChange);
+});
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+  window.removeEventListener("resize", handleViewportChange);
+});
 </script>
 
 <style scoped>
@@ -264,6 +301,11 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
   border-radius: 0.875rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+}
+
+.select-dropdown--up {
+  top: auto;
+  bottom: calc(100% + 6px);
 }
 
 /* Search */
