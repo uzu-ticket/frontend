@@ -1,6 +1,7 @@
 import { Type } from "class-transformer";
 import {
   IsDateString,
+  IsArray,
   IsEnum,
   IsLatitude,
   IsLongitude,
@@ -39,6 +40,22 @@ export class CreateEventDto {
   @IsOptional()
   @IsString()
   venueAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @IsOptional()
+  @IsString()
+  eventSlot?: string;
+
+  @IsOptional()
+  @IsArray()
+  slots?: unknown[];
 
   @IsOptional()
   @Type(() => Number)

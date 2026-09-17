@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException } from "@nestjs/common";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import "multer";
 import { extname } from "node:path";
 import { randomUUID } from "node:crypto";
 import { AppConfigService } from "../../config/app-config.service";
@@ -28,12 +29,25 @@ export class StorageService {
     type: "logo" | "cover",
     file: Express.Multer.File,
   ): Promise<string> {
+    return this.uploadAssetToBucket(`organisations/${organisationId}/${type}`, file);
+  }
+
+  async uploadEventAsset(
+    organisationId: string,
+    eventId: string,
+    type: "cover",
+    file: Express.Multer.File,
+  ): Promise<string> {
+    return this.uploadAssetToBucket(`events/${organisationId}/${eventId}/${type}`, file);
+  }
+
+  private async uploadAssetToBucket(prefix: string, file: Express.Multer.File): Promise<string> {
     if (!this.config.awsS3Bucket) {
       throw new ServiceUnavailableException("File storage is not configured");
     }
 
     const extension = extname(file.originalname).toLowerCase() || ".bin";
-    const key = `organisations/${organisationId}/${type}/${randomUUID()}${extension}`;
+    const key = `${prefix}/${randomUUID()}${extension}`;
 
     await this.client.send(
       new PutObjectCommand({

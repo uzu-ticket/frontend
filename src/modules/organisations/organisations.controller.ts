@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileFieldsInterceptor } from "@nestjs/platform-express";
+import "multer";
 import { ApiTags } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { CurrentUser, AuthenticatedUser } from "../../common/decorators/current-user.decorator";

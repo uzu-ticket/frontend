@@ -1,4 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import "multer";
 import { ApiTags } from "@nestjs/swagger";
 import { CurrentUser, AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { EventsService } from "./events.service";
@@ -102,6 +104,24 @@ export class EventsController {
     @Body() dto: AddEventImageDto,
   ) {
     return this.eventsService.addImage(organisationId, eventId, user.id, dto);
+  }
+
+  @Post(":eventId/uploads")
+  @UseInterceptors(
+    FileInterceptor("image", {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_request, file, callback) => {
+        callback(null, file.mimetype.startsWith("image/"));
+      },
+    }),
+  )
+  uploadImage(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("eventId") eventId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.eventsService.uploadImage(organisationId, eventId, user.id, file);
   }
 
   @Delete(":eventId/images/:imageId")

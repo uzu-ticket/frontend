@@ -372,9 +372,14 @@ model Event {
 
   venueName    String?  @map("venue_name")
   venueAddress String?  @map("venue_address")
+  country      String?
+  state        String?
   latitude     Decimal? @db.Decimal(9, 6)
   longitude    Decimal? @db.Decimal(9, 6)
   city         String?
+
+  eventSlot String? @map("event_slot")
+  slots     Json?
 
   startsAt DateTime  @map("starts_at")
   endsAt   DateTime? @map("ends_at")

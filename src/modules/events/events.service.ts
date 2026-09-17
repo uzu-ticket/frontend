@@ -1,4 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import "multer";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AuditService } from "../../common/audit/audit.service";
 import { PermissionsService } from "../../common/auth/permissions.service";
@@ -8,6 +10,7 @@ import { CreateEventDto } from "./dto/create-event.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { CreateTicketTypeDto, UpdateTicketTypeDto } from "./dto/ticket-type.dto";
 import { AddEventImageDto } from "./dto/add-image.dto";
+import { StorageService } from "../../common/storage/storage.service";
 
 @Injectable()
 export class EventsService {
@@ -15,6 +18,7 @@ export class EventsService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly permissions: PermissionsService,
+    private readonly storage: StorageService,
   ) {}
 
   async create(organisationId: string, userId: string, dto: CreateEventDto) {
@@ -35,6 +39,10 @@ export class EventsService {
         scannerMeshMode: dto.scannerMeshMode,
         venueName: dto.venueName,
         venueAddress: dto.venueAddress,
+        country: dto.country,
+        state: dto.state,
+        eventSlot: dto.eventSlot,
+        slots: dto.slots as Prisma.InputJsonValue,
         latitude: dto.latitude,
         longitude: dto.longitude,
         city: dto.city,
@@ -95,6 +103,10 @@ export class EventsService {
         scannerMeshMode: dto.scannerMeshMode,
         venueName: dto.venueName,
         venueAddress: dto.venueAddress,
+        country: dto.country,
+        state: dto.state,
+        eventSlot: dto.eventSlot,
+        slots: dto.slots as Prisma.InputJsonValue,
         latitude: dto.latitude,
         longitude: dto.longitude,
         city: dto.city,
@@ -274,6 +286,23 @@ export class EventsService {
     await this.loadEventOrThrow(eventId, organisationId);
     return this.prisma.eventImage.create({
       data: { id: newId(), eventId, url: dto.url, position: dto.position ?? 0, isCover: dto.isCover ?? false },
+    });
+  }
+
+  async uploadImage(organisationId: string, eventId: string, userId: string, file: Express.Multer.File) {
+    await this.permissions.assertPermission(userId, organisationId, Permission.EventEdit);
+    await this.loadEventOrThrow(eventId, organisationId);
+
+    const url = await this.storage.uploadEventAsset(organisationId, eventId, "cover", file);
+
+    return this.prisma.eventImage.create({
+      data: {
+        id: newId(),
+        eventId,
+        url,
+        position: 0,
+        isCover: true,
+      },
     });
   }
 
