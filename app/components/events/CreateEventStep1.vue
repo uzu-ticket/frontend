@@ -401,12 +401,16 @@ watch(
     if (!data) return;
     Object.assign(formData, data);
     if (data.slots) {
-      slots.splice(0, slots.length, ...data.slots.map((slot) => ({
-        name: slot.name,
-        dateObj: slot.dateObj ? new Date(slot.dateObj) : null,
-        startTime: slot.startTime || "09:00 AM",
-        endTime: slot.endTime || "11:00 AM",
-      })));
+      slots.splice(
+        0,
+        slots.length,
+        ...data.slots.map((slot) => ({
+          name: slot.name,
+          dateObj: slot.dateObj ? new Date(slot.dateObj) : null,
+          startTime: slot.startTime || "09:00 AM",
+          endTime: slot.endTime || "11:00 AM",
+        })),
+      );
     }
   },
   { immediate: true, deep: true },

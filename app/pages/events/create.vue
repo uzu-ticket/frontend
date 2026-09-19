@@ -22,7 +22,15 @@
               :is="activeStepComponent"
               :key="currentStep"
               :event-data="eventData"
-              :initial-data="currentStep === 1 ? eventData.step1 : currentStep === 2 ? eventData.step2 : currentStep === 4 ? eventData.step4 : undefined"
+              :initial-data="
+                currentStep === 1
+                  ? eventData.step1
+                  : currentStep === 2
+                    ? eventData.step2
+                    : currentStep === 4
+                      ? eventData.step4
+                      : undefined
+              "
               @cancel="handleCancel"
               @back="currentStep--"
               @next="handleStepNext"

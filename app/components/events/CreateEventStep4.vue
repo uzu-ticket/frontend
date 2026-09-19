@@ -26,8 +26,14 @@
           <div class="field-group">
             <label class="field-label">Custom Close Date & Time</label>
             <div class="datetime-row">
-              <DatePicker v-model="customCloseDate" placeholder="Select close date" />
-              <TimePicker v-model="customCloseTime" placeholder="Select close time" />
+              <DatePicker
+                v-model="customCloseDate"
+                placeholder="Select close date"
+              />
+              <TimePicker
+                v-model="customCloseTime"
+                placeholder="Select close time"
+              />
             </div>
           </div>
         </div>
@@ -49,9 +55,24 @@
           class="checkbox-option-item"
           @click="toggleReminder(opt.value)"
         >
-          <div class="custom-checkbox" :class="{ 'custom-checkbox--checked': reminders.includes(opt.value) }">
-            <svg v-if="reminders.includes(opt.value)" xmlns="http://www.w3.org/2000/svg" class="check-icon" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          <div
+            class="custom-checkbox"
+            :class="{
+              'custom-checkbox--checked': reminders.includes(opt.value),
+            }"
+          >
+            <svg
+              v-if="reminders.includes(opt.value)"
+              xmlns="http://www.w3.org/2000/svg"
+              class="check-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clip-rule="evenodd"
+              />
             </svg>
           </div>
           <span class="checkbox-label">{{ opt.label }}</span>
@@ -62,16 +83,34 @@
     <!-- Footer Actions -->
     <div class="form-footer">
       <button type="button" class="btn-back" @click="$emit('back')">
-        <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="btn-arrow"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
         <span>Back</span>
       </button>
 
       <button class="btn-next" @click="handleNext">
         <span>Next</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="btn-arrow"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
       </button>
     </div>
@@ -79,67 +118,69 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import DatePicker from '~/components/ui/DatePicker.vue'
-import TimePicker from '~/components/ui/TimePicker.vue'
+import { ref, watch } from "vue";
+import DatePicker from "~/components/ui/DatePicker.vue";
+import TimePicker from "~/components/ui/TimePicker.vue";
 
 const emit = defineEmits<{
-  back: []
-  next: [data: any]
-}>()
+  back: [];
+  next: [data: any];
+}>();
 
 const props = defineProps<{
   initialData?: {
-    salesClose?: string
-    customCloseDate?: Date | null
-    customCloseTime?: string
-    reminders?: string[]
-  }
-}>()
+    salesClose?: string;
+    customCloseDate?: Date | null;
+    customCloseTime?: string;
+    reminders?: string[];
+  };
+}>();
 
 const salesCloseOptions = [
-  { value: '1h', label: '1 hour before event' },
-  { value: '3h', label: '3 hours before event' },
-  { value: '6h', label: '6 hours before event' },
-  { value: 'custom', label: 'Custom date & time' },
-]
+  { value: "1h", label: "1 hour before event" },
+  { value: "3h", label: "3 hours before event" },
+  { value: "6h", label: "6 hours before event" },
+  { value: "custom", label: "Custom date & time" },
+];
 
 const reminderOptions = [
-  { value: '24h', label: '24 hours before event' },
-  { value: '1h', label: '1 hour before event' },
-]
+  { value: "24h", label: "24 hours before event" },
+  { value: "1h", label: "1 hour before event" },
+];
 
-const salesClose = ref('1h')
-const customCloseDate = ref<Date | null>(null)
-const customCloseTime = ref('')
+const salesClose = ref("1h");
+const customCloseDate = ref<Date | null>(null);
+const customCloseTime = ref("");
 
-const reminders = ref<string[]>(['24h', '1h'])
+const reminders = ref<string[]>(["24h", "1h"]);
 
 watch(
   () => props.initialData,
   (data) => {
-    if (!data) return
-    if (data.salesClose) salesClose.value = data.salesClose
-    if (data.customCloseDate !== undefined) customCloseDate.value = data.customCloseDate
-    if (data.customCloseTime !== undefined) customCloseTime.value = data.customCloseTime
-    if (data.reminders) reminders.value = [...data.reminders]
+    if (!data) return;
+    if (data.salesClose) salesClose.value = data.salesClose;
+    if (data.customCloseDate !== undefined)
+      customCloseDate.value = data.customCloseDate;
+    if (data.customCloseTime !== undefined)
+      customCloseTime.value = data.customCloseTime;
+    if (data.reminders) reminders.value = [...data.reminders];
   },
   { immediate: true, deep: true },
-)
+);
 
 function toggleReminder(val: string) {
-  const idx = reminders.value.indexOf(val)
-  if (idx >= 0) reminders.value.splice(idx, 1)
-  else reminders.value.push(val)
+  const idx = reminders.value.indexOf(val);
+  if (idx >= 0) reminders.value.splice(idx, 1);
+  else reminders.value.push(val);
 }
 
 function handleNext() {
-  emit('next', {
+  emit("next", {
     salesClose: salesClose.value,
     customCloseDate: customCloseDate.value,
     customCloseTime: customCloseTime.value,
     reminders: reminders.value,
-  })
+  });
 }
 </script>
 
@@ -159,7 +200,7 @@ function handleNext() {
 .section-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.25rem;
 }
 
@@ -197,20 +238,20 @@ function handleNext() {
 }
 
 .radio-option-item--selected .radio-circle {
-  border-color: #3FD246;
+  border-color: #3fd246;
 }
 
 .radio-inner-dot {
   width: 0.6rem;
   height: 0.6rem;
   border-radius: 50%;
-  background: #3FD246;
+  background: #3fd246;
 }
 
 .radio-label {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 /* Custom Datetime Box */
@@ -265,8 +306,8 @@ function handleNext() {
 }
 
 .custom-checkbox--checked {
-  background: #3FD246;
-  border-color: #3FD246;
+  background: #3fd246;
+  border-color: #3fd246;
 }
 
 .check-icon {
@@ -278,7 +319,7 @@ function handleNext() {
 .checkbox-label {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 /* Footer */
@@ -298,7 +339,7 @@ function handleNext() {
   padding: 0.65rem 1.75rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  color: #0E2615;
+  color: #0e2615;
   font-weight: 700;
   font-size: 0.85rem;
   border-radius: 0.65rem;
@@ -306,14 +347,16 @@ function handleNext() {
   transition: all 0.15s ease;
 }
 
-.btn-back:hover { background: #f9fafb; }
+.btn-back:hover {
+  background: #f9fafb;
+}
 
 .btn-next {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 2rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -324,10 +367,23 @@ function handleNext() {
   transition: all 0.15s ease;
 }
 
-.btn-next:hover { background: #34c03b; transform: translateY(-1px); }
-.btn-arrow { width: 1rem; height: 1rem; }
+.btn-next:hover {
+  background: #34c03b;
+  transform: translateY(-1px);
+}
+.btn-arrow {
+  width: 1rem;
+  height: 1rem;
+}
 
 /* Transition */
-.fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.2s ease; }
-.fade-slide-enter-from, .fade-slide-leave-to { opacity: 0; transform: translateY(-8px); }
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.2s ease;
+}
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
 </style>

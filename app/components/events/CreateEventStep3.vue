@@ -530,20 +530,39 @@ function hydrateTickets(value: unknown) {
 
   tickets.value = value.map((ticket, index) => {
     const item = ticket as Record<string, unknown>;
-    const startDate = item.saleStartsAt ? new Date(String(item.saleStartsAt)) : null;
+    const startDate = item.saleStartsAt
+      ? new Date(String(item.saleStartsAt))
+      : null;
     const endDate = item.saleEndsAt ? new Date(String(item.saleEndsAt)) : null;
     return {
       type: String(item.name || "GENERAL").toUpperCase(),
       price: formatTicketPrice(String(item.priceMinor || "0")),
       quantity: Number(item.quantityTotal || 0).toLocaleString("en-US"),
-      maxPerOrder: item.perOrderLimit == null ? "1" : Number(item.perOrderLimit).toLocaleString("en-US"),
+      maxPerOrder:
+        item.perOrderLimit == null
+          ? "1"
+          : Number(item.perOrderLimit).toLocaleString("en-US"),
       color: getEventTicketColor(index),
-      salesStart: startDate ? `${formatDateStr(startDate)} • ${startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "",
-      salesEnd: endDate ? `${formatDateStr(endDate)} • ${endDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "",
+      salesStart: startDate
+        ? `${formatDateStr(startDate)} • ${startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+        : "",
+      salesEnd: endDate
+        ? `${formatDateStr(endDate)} • ${endDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+        : "",
       startDateObj: startDate,
-      startTimeStr: startDate?.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }) || "",
+      startTimeStr:
+        startDate?.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }) || "",
       endDateObj: endDate,
-      endTimeStr: endDate?.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }) || "",
+      endTimeStr:
+        endDate?.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }) || "",
       description: "",
     };
   });

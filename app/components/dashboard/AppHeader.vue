@@ -166,19 +166,25 @@ const headerConfig = computed(() => {
   if (path.startsWith('/reports')) {
     return {
       title: 'Sales & Reports',
-      subtitle: 'Track sales analytics, revenue and performance metrics.',
+      subtitle: 'Track ticket sales, revenue, orders, refunds, and performance across your events.',
     }
   }
   if (path.startsWith('/finance')) {
     return {
-      title: 'Finance / Wallet',
-      subtitle: 'Manage payouts, bank details and transaction logs.',
+      title: 'Finance/ Wallet',
+      subtitle: 'Manage your event revenue, wallet balance, withdrawals, and settlement activity.',
     }
   }
   if (path.startsWith('/integrations')) {
     return {
       title: 'Integrations',
-      subtitle: 'Connect third-party services and webhooks.',
+      subtitle: 'Connect your platform with third-party services, APIs, and developer tools.',
+    }
+  }
+  if (path.startsWith('/apikeys')) {
+    return {
+      title: 'API Keys',
+      subtitle: 'Manage your API keys to access the Uzuticket API.',
     }
   }
   if (path.startsWith('/settings')) {

@@ -200,7 +200,10 @@
                 }}</span>
               </button>
 
-              <button class="btn-edit" @click="router.push(`/events/create?eventId=${event.id}`)">
+              <button
+                class="btn-edit"
+                @click="router.push(`/events/create?eventId=${event.id}`)"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="btn-action-icon"
