@@ -171,7 +171,7 @@ export class WalletsService {
     return this.prisma.transaction.findMany({
       where: { organisationId },
       orderBy: { createdAt: "desc" },
-      include: { ledgerEntries: true },
+      include: { ledgerEntries: true, order: { include: { event: { select: { title: true } } } } },
     });
   }
 

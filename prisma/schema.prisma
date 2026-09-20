@@ -724,6 +724,7 @@ model PromoterLink {
   eventPromoterId String   @map("event_promoter_id") @db.Uuid
   code            String   @unique
   clicks          Int      @default(0)
+  expiresAt       DateTime? @map("expires_at")
   createdAt       DateTime @default(now()) @map("created_at")
 
   eventPromoter EventPromoter @relation(fields: [eventPromoterId], references: [id])

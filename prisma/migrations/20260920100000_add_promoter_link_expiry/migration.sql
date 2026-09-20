@@ -1,0 +1,1 @@
+ALTER TABLE "promoter_links" ADD COLUMN "expires_at" TIMESTAMP(3);

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { stringify } from "csv-stringify/sync";
 import { PrismaService } from "../../prisma/prisma.service";
 import { PermissionsService } from "../../common/auth/permissions.service";
@@ -55,6 +56,13 @@ export class DashboardService {
     return {
       eventId,
       eventTitle: event.title,
+      eventStartsAt: event.startsAt,
+      eventEndsAt: event.endsAt,
+      eventVenueName: event.venueName,
+      eventVenueAddress: event.venueAddress,
+      eventCity: event.city,
+      eventState: event.state,
+      eventCountry: event.country,
       ticketsSoldByType: ticketTypes,
       grossRevenueMinor: revenue._sum.subtotalMinor ?? 0n,
       paidOrderCount: revenue._count,
@@ -120,6 +128,91 @@ export class DashboardService {
         actorName: a.actor?.fullName ?? null,
       })),
     };
+  }
+
+  async getSalesReport(
+    organisationId: string,
+    userId: string,
+    filters: { from?: string; to?: string; channel?: string } = {},
+  ) {
+    await this.permissions.assertPermission(userId, organisationId, Permission.EventViewDashboard);
+    const orderFilter = {
+      status: "paid" as const,
+      ...(filters.from || filters.to
+        ? {
+            createdAt: {
+              ...(filters.from ? { gte: new Date(filters.from) } : {}),
+              ...(filters.to ? { lte: new Date(filters.to) } : {}),
+            },
+          }
+        : {}),
+      ...(filters.channel && filters.channel !== "all" ? { channel: filters.channel as "direct" } : {}),
+    };
+    const [events, salesOverTime, refunds] = await Promise.all([
+      this.prisma.event.findMany({
+        where: { organisationId },
+        orderBy: { startsAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          startsAt: true,
+          ticketTypes: { select: { quantitySold: true, priceMinor: true } },
+          orders: { where: orderFilter, select: { id: true, subtotalMinor: true } },
+        },
+      }),
+      this.prisma.$queryRaw<{ day: Date; orders: bigint; revenue_minor: bigint }[]>`
+        SELECT date_trunc('day', o.created_at) AS day, count(*)::bigint AS orders, sum(o.subtotal_minor)::bigint AS revenue_minor
+        FROM orders o JOIN events e ON o.event_id = e.id
+        WHERE e.organisation_id = ${organisationId}::uuid AND o.status = 'paid'
+          ${filters.from ? Prisma.sql`AND o.created_at >= ${new Date(filters.from)}` : Prisma.empty}
+          ${filters.to ? Prisma.sql`AND o.created_at <= ${new Date(filters.to)}` : Prisma.empty}
+          ${filters.channel && filters.channel !== "all" ? Prisma.sql`AND o.channel = ${filters.channel}` : Prisma.empty}
+        GROUP BY 1 ORDER BY 1`,
+      this.prisma.order.aggregate({
+        where: { event: { organisationId }, ...orderFilter, status: "refunded" },
+        _sum: { subtotalMinor: true },
+      }),
+    ]);
+    const eventPerformance = events.map((event) => ({
+      id: event.id,
+      name: event.title,
+      date: event.startsAt,
+      ticketsSold: event.ticketTypes.reduce((sum, type) => sum + type.quantitySold, 0),
+      orders: event.orders.length,
+      grossRevenueMinor: event.orders.reduce((sum, order) => sum + order.subtotalMinor, 0n),
+    }));
+    const grossRevenueMinor = eventPerformance.reduce((sum, event) => sum + event.grossRevenueMinor, 0n);
+    return {
+      grossRevenueMinor,
+      ticketsSold: eventPerformance.reduce((sum, event) => sum + event.ticketsSold, 0),
+      orders: eventPerformance.reduce((sum, event) => sum + event.orders, 0),
+      refundsMinor: refunds._sum.subtotalMinor ?? 0n,
+      eventPerformance,
+      salesOverTime: salesOverTime.map((row) => ({
+        day: row.day,
+        orders: Number(row.orders),
+        revenueMinor: row.revenue_minor,
+      })),
+    };
+  }
+
+  async exportSalesReportCsv(
+    organisationId: string,
+    userId: string,
+    filters: { from?: string; to?: string; channel?: string } = {},
+  ): Promise<string> {
+    await this.permissions.assertPermission(userId, organisationId, Permission.EventViewDashboard);
+    const report = await this.getSalesReport(organisationId, userId, filters);
+    return stringify(
+      report.eventPerformance.map((event) => ({
+        event: event.name,
+        date: event.date.toISOString(),
+        tickets_sold: event.ticketsSold,
+        orders: event.orders,
+        gross_revenue_minor: event.grossRevenueMinor.toString(),
+      })),
+      { header: true },
+    );
   }
 
   /** PRD §3.5 event-day mode: live scan count vs sold, gate throughput, duplicate-attempt alerts. */

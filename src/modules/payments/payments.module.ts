@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { PaymentsController } from "./payments.controller";
 import { PaystackWebhookController } from "./webhook/paystack-webhook.controller";
 import { PaymentsService } from "./payments.service";
@@ -14,7 +14,7 @@ import { PaystackController } from "./paystack.controller";
 import { PaystackService } from "./paystack.service";
 
 @Module({
-  imports: [TicketsModule, WalletsModule, DeliveryModule, WithdrawalsModule, RealtimeModule],
+  imports: [TicketsModule, WalletsModule, DeliveryModule, forwardRef(() => WithdrawalsModule), RealtimeModule],
   controllers: [PaymentsController, PaystackController, PaystackWebhookController],
   providers: [
     PaymentsService,

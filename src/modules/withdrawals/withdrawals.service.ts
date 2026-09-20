@@ -10,6 +10,7 @@ import { TwoFactorService } from "../auth/two-factor.service";
 import { WalletsService } from "../wallets/wallets.service";
 import { PAYOUT_PROVIDER, PayoutProvider } from "./providers/payout-provider";
 import { RequestWithdrawalDto } from "./dto/request-withdrawal.dto";
+import { PaystackService } from "../payments/paystack.service";
 
 @Injectable()
 export class WithdrawalsService {
@@ -19,6 +20,7 @@ export class WithdrawalsService {
     private readonly permissions: PermissionsService,
     private readonly twoFactor: TwoFactorService,
     private readonly wallets: WalletsService,
+    private readonly paystack: PaystackService,
     @Inject(PAYOUT_PROVIDER) private readonly payoutProvider: PayoutProvider,
   ) {}
 
@@ -36,8 +38,9 @@ export class WithdrawalsService {
     if (org.kybStatus !== "verified") {
       throw new BadRequestException("Organisation KYB must be verified before withdrawing funds");
     }
-    if (!org.settlementBankCode || !org.settlementAccountNumber || !org.settlementAccountName) {
-      throw new BadRequestException("No verified settlement account on file");
+    const verifiedAccount = await this.paystack.resolveAccount(dto.accountNumber, dto.bankCode);
+    if (verifiedAccount.accountName.trim().toLowerCase() !== dto.accountName.trim().toLowerCase()) {
+      throw new BadRequestException("The bank account name could not be verified");
     }
     if (!(await this.twoFactor.verifyForUser(userId, dto.twoFactorCode))) {
       throw new UnauthorizedException("Invalid or missing 2FA code");
@@ -58,9 +61,9 @@ export class WithdrawalsService {
           organisationId,
           amountMinor,
           currency: wallet.currency,
-          bankCode: org.settlementBankCode!,
-          accountNumber: org.settlementAccountNumber!,
-          accountName: org.settlementAccountName!,
+          bankCode: dto.bankCode,
+          accountNumber: verifiedAccount.accountNumber,
+          accountName: verifiedAccount.accountName,
           requestedBy: userId,
           status: "processing",
         },

@@ -31,6 +31,7 @@ import { DashboardModule } from "./modules/dashboard/dashboard.module";
 import { PromotersModule } from "./modules/promoters/promoters.module";
 import { MarketingModule } from "./modules/marketing/marketing.module";
 import { IntegrationsModule } from "./modules/integrations/integrations.module";
+import { CustomersModule } from "./modules/customers/customers.module";
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { IntegrationsModule } from "./modules/integrations/integrations.module";
     OrganisationsModule,
     EventsModule,
     OrdersModule,
+    CustomersModule,
     PaymentsModule,
     TicketsModule,
     DeliveryModule,

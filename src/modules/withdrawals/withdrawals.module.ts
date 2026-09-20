@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { WithdrawalsController } from "./withdrawals.controller";
 import { WithdrawalsService } from "./withdrawals.service";
 import { PayoutHoldReleaseCron } from "./payout-hold-release.cron";
@@ -6,9 +6,10 @@ import { PAYOUT_PROVIDER } from "./providers/payout-provider";
 import { PaystackPayoutProvider } from "./providers/paystack-payout.provider";
 import { AuthModule } from "../auth/auth.module";
 import { WalletsModule } from "../wallets/wallets.module";
+import { PaymentsModule } from "../payments/payments.module";
 
 @Module({
-  imports: [AuthModule, WalletsModule],
+  imports: [AuthModule, WalletsModule, forwardRef(() => PaymentsModule)],
   controllers: [WithdrawalsController],
   providers: [
     WithdrawalsService,
