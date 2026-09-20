@@ -3,9 +3,24 @@
     <!-- Main Full-Width White Card Container -->
     <div class="withdrawal-card">
       <!-- Back Arrow Top Left inside Card -->
-      <button class="back-btn" title="Go back to overview" @click="$emit('back')">
-        <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      <button
+        class="back-btn"
+        title="Go back to overview"
+        @click="$emit('back')"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="back-icon"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2.2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+          />
         </svg>
       </button>
 
@@ -13,8 +28,19 @@
         <!-- Top Available Balance Card -->
         <div class="balance-card">
           <div class="balance-icon-bg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="store-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-9 0v-7.5A.75.75 0 019 12.75h3a.75.75 0 01.75.75V21M3 9.75L4.5 4.5h15l1.5 5.25M3 9.75h18M3 9.75v10.125c0 .621.504 1.125 1.125 1.125h15.75c.621 0 1.125-.504 1.125-1.125V9.75" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="store-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-9 0v-7.5A.75.75 0 019 12.75h3a.75.75 0 01.75.75V21M3 9.75L4.5 4.5h15l1.5 5.25M3 9.75h18M3 9.75v10.125c0 .621.504 1.125 1.125 1.125h15.75c.621 0 1.125-.504 1.125-1.125V9.75"
+              />
             </svg>
           </div>
           <div class="balance-info">
@@ -49,9 +75,16 @@
           <div class="form-group">
             <div class="label-row">
               <label class="form-label">Bank Name</label>
-              <button type="button" class="change-link" @click="toggleBankChange">Change</button>
             </div>
-            <div class="select-wrapper">
+            <AppSelect
+              class="bank-select"
+              v-model="selectedBankCode"
+              :options="bankOptions"
+              placeholder="Select a bank"
+              searchable
+              :disabled="isLoadingBanks"
+            />
+            <!--
               <select v-model="selectedBank" class="form-select">
                 <option value="Zenith Bank">Zenith Bank..</option>
                 <option value="GTBank">Guaranty Trust Bank (GTBank)</option>
@@ -61,10 +94,19 @@
                 <option value="Kuda Bank">Kuda Microfinance Bank</option>
                 <option value="OPay">OPay Digital Bank</option>
               </select>
-              <svg xmlns="http://www.w3.org/2000/svg" class="select-chevron" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="select-chevron"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
               </svg>
-            </div>
+            </div> -->
             <span class="helper-text">Minimum withdrawal ₦5,000</span>
           </div>
 
@@ -79,6 +121,9 @@
               maxlength="10"
               required
             />
+            <span v-if="isResolvingAccount" class="helper-text"
+              >Verifying account...</span
+            >
 
             <!-- Account Name Verified Callout Box -->
             <div v-if="accountName" class="account-name-pill">
@@ -86,23 +131,67 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label class="form-label">2FA Code</label>
+            <input
+              v-model="twoFactorCode"
+              type="text"
+              inputmode="numeric"
+              class="form-input"
+              placeholder="Enter your 6-digit code"
+              minlength="6"
+              maxlength="6"
+              required
+            />
+          </div>
+
           <!-- Deduction Notice Banner -->
           <div class="deduction-notice-card">
             <div class="calc-icon-wrapper">
-              <svg xmlns="http://www.w3.org/2000/svg" class="calc-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="calc-icon"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
             </div>
             <div class="notice-text">
-              A withdrawal of <strong>₦{{ feeAmount.toLocaleString() }}</strong> will be deducted. You will receive <strong>₦{{ netAmount.toLocaleString() }}</strong>
+              A withdrawal of
+              <strong>₦{{ feeAmount.toLocaleString() }}</strong> will be
+              deducted. You will receive
+              <strong>₦{{ netAmount.toLocaleString() }}</strong>
             </div>
           </div>
 
           <!-- Submit Button -->
-          <button id="btn-withdraw-continue" type="submit" class="btn-continue">
-            <span>Continue</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="arrow-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          <button
+            id="btn-withdraw-continue"
+            type="submit"
+            class="btn-continue"
+            :disabled="isSubmitting"
+          >
+            <span>{{ isSubmitting ? "Submitting..." : "Continue" }}</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="arrow-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M14 5l7 7m0 0l-7 7m7-7H3"
+              />
             </svg>
           </button>
         </form>
@@ -112,61 +201,125 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from "vue";
+import AppSelect, { type SelectOption } from "~/components/ui/AppSelect.vue";
+import { useApi } from "~/composables/useApi";
 
 const props = defineProps<{
-  formattedBalance: string
-  rawBalance: number
-}>()
+  formattedBalance: string;
+  rawBalance: number;
+  isSubmitting?: boolean;
+}>();
 
 const emit = defineEmits<{
-  back: []
-  continue: [data: { amount: number; bankName: string; accountNumber: string; accountName: string }]
-}>()
+  back: [];
+  continue: [
+    data: {
+      amount: number;
+      bankName: string;
+      bankCode: string;
+      accountNumber: string;
+      accountName: string;
+      twoFactorCode: string;
+    },
+  ];
+  "validation-error": [message: string];
+}>();
 
-const numericAmount = ref(500000)
-const formattedAmountInput = ref('500,000')
+const numericAmount = ref(0);
+const formattedAmountInput = ref("");
 
-const selectedBank = ref('Zenith Bank')
-const accountNumber = ref('0145661098')
-const accountName = ref('Divine Emmanuel NyenneAbasi')
+const { instance } = useApi();
+const selectedBankCode = ref<string | null>(null);
+const banks = ref<Array<{ name: string; code: string }>>([]);
+const isLoadingBanks = ref(false);
+const isResolvingAccount = ref(false);
+const accountNumber = ref("");
+const accountName = ref("");
+const twoFactorCode = ref("");
 
-const feeAmount = ref(500)
+const feeAmount = ref(500);
 
 const netAmount = computed(() => {
-  return Math.max(0, numericAmount.value - feeAmount.value)
-})
+  return Math.max(0, numericAmount.value - feeAmount.value);
+});
+
+const bankOptions = computed<SelectOption[]>(() =>
+  banks.value.map((bank) => ({ value: bank.code, label: bank.name })),
+);
+
+const selectedBank = computed(
+  () =>
+    banks.value.find((bank) => bank.code === selectedBankCode.value)?.name ??
+    "",
+);
+
+onMounted(async () => {
+  isLoadingBanks.value = true;
+  try {
+    const response = await instance.get("/payments/paystack/banks");
+    banks.value = response.data?.data ?? response.data ?? [];
+  } finally {
+    isLoadingBanks.value = false;
+  }
+});
+
+watch([accountNumber, selectedBankCode], async ([number, bankCode]) => {
+  accountName.value = "";
+  if (!/^\d{10}$/.test(number) || !bankCode) return;
+  isResolvingAccount.value = true;
+  try {
+    const response = await instance.get("/payments/paystack/resolve-account", {
+      params: { accountNumber: number, bankCode },
+    });
+    accountName.value =
+      response.data?.data?.accountName ?? response.data?.accountName ?? "";
+  } finally {
+    isResolvingAccount.value = false;
+  }
+});
 
 function handleAmountInput(e: Event) {
-  const input = e.target as HTMLInputElement
-  const rawDigits = input.value.replace(/\D/g, '')
+  const input = e.target as HTMLInputElement;
+  const rawDigits = input.value.replace(/\D/g, "");
   if (!rawDigits) {
-    numericAmount.value = 0
-    formattedAmountInput.value = ''
-    return
+    numericAmount.value = 0;
+    formattedAmountInput.value = "";
+    return;
   }
-  const val = parseInt(rawDigits, 10)
-  numericAmount.value = val
-  formattedAmountInput.value = val.toLocaleString('en-US')
-}
-
-function toggleBankChange() {
-  const banks = ['Zenith Bank', 'GTBank', 'Access Bank', 'First Bank', 'UBA']
-  const nextIdx = (banks.indexOf(selectedBank.value) + 1) % banks.length
-  selectedBank.value = banks[nextIdx]
+  const val = parseInt(rawDigits, 10);
+  numericAmount.value = val;
+  formattedAmountInput.value = val.toLocaleString("en-US");
 }
 
 function handleSubmit() {
   if (numericAmount.value < 5000) {
-    alert('Minimum withdrawal amount is ₦5,000')
-    return
+    emit("validation-error", "Minimum withdrawal amount is ₦5,000");
+    return;
   }
-  emit('continue', {
+  if (numericAmount.value > props.rawBalance) {
+    emit(
+      "validation-error",
+      "Withdrawal amount exceeds your available balance",
+    );
+    return;
+  }
+  if (!selectedBankCode.value || !accountName.value) {
+    emit("validation-error", "Select a bank and verify the account number");
+    return;
+  }
+  if (!/^\d{6}$/.test(twoFactorCode.value)) {
+    emit("validation-error", "Enter your 6-digit 2FA code");
+    return;
+  }
+  emit("continue", {
     amount: numericAmount.value,
     bankName: selectedBank.value,
+    bankCode: selectedBankCode.value,
     accountNumber: accountNumber.value,
     accountName: accountName.value,
-  })
+    twoFactorCode: twoFactorCode.value,
+  });
 }
 </script>
 
@@ -180,7 +333,7 @@ function handleSubmit() {
   background: #ffffff;
   border-radius: 1.25rem;
   padding: 2.25rem 2.5rem 3rem;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
   width: 100%;
 }
@@ -217,15 +370,15 @@ function handleSubmit() {
   gap: 1.25rem;
   padding: 1.25rem 1.5rem;
   border-radius: 1.25rem;
-  border: 1px solid #E8F5EB;
-  background: #F8FCF9;
+  border: 1px solid #e8f5eb;
+  background: #f8fcf9;
 }
 
 .balance-icon-bg {
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 9999px;
-  background: #E8F8EA;
+  background: #e8f8ea;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -235,7 +388,7 @@ function handleSubmit() {
 .store-icon {
   width: 1.8rem;
   height: 1.8rem;
-  color: #15803D;
+  color: #15803d;
 }
 
 .balance-info {
@@ -259,13 +412,13 @@ function handleSubmit() {
 .currency-symbol {
   font-size: 1.8rem;
   font-weight: 800;
-  color: #3FD246;
+  color: #3fd246;
 }
 
 .amount-val {
   font-size: 2.1rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   letter-spacing: -0.5px;
 }
 
@@ -297,7 +450,7 @@ function handleSubmit() {
 .change-link {
   background: none;
   border: none;
-  color: #3FD246;
+  color: #3fd246;
   font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
@@ -331,13 +484,24 @@ function handleSubmit() {
   font-weight: 600;
   color: #111827;
   background: #ffffff;
-  border: 1px solid #D1D5DB;
+  border: 1px solid #d1d5db;
   border-radius: 0.75rem;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
+
+.bank-select :deep(.select-trigger) {
+  box-sizing: border-box;
+  min-height: 0;
+  height: 3.125rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 0.75rem;
+}
+
 .form-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.15);
 }
 
@@ -352,7 +516,7 @@ function handleSubmit() {
   font-weight: 600;
   color: #111827;
   background: #ffffff;
-  border: 1px solid #D1D5DB;
+  border: 1px solid #d1d5db;
   border-radius: 0.75rem;
   outline: none;
   appearance: none;
@@ -360,7 +524,7 @@ function handleSubmit() {
   transition: border-color 0.15s ease;
 }
 .form-select:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.15);
 }
 
@@ -371,19 +535,19 @@ function handleSubmit() {
   transform: translateY(-50%);
   width: 1.25rem;
   height: 1.25rem;
-  color: #6B7280;
+  color: #6b7280;
   pointer-events: none;
 }
 
 .helper-text {
   font-size: 0.8rem;
-  color: #6B7280;
+  color: #6b7280;
   margin-top: 0.4rem;
 }
 
 .account-name-pill {
   margin-top: 0.6rem;
-  background: #C8F5D2;
+  background: #c8f5d2;
   padding: 0.75rem 1.1rem;
   border-radius: 0.5rem;
   display: flex;
@@ -393,7 +557,7 @@ function handleSubmit() {
 .account-name-text {
   font-size: 0.925rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 /* Deduction Notice Card */
@@ -401,7 +565,7 @@ function handleSubmit() {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  background: #EAF8ED;
+  background: #eaf8ed;
   padding: 1rem 1.25rem;
   border-radius: 0.85rem;
 }
@@ -420,12 +584,12 @@ function handleSubmit() {
 .calc-icon {
   width: 1.25rem;
   height: 1.25rem;
-  color: #3FD246;
+  color: #3fd246;
 }
 
 .notice-text {
   font-size: 0.875rem;
-  color: #0E2615;
+  color: #0e2615;
   line-height: 1.4;
 }
 
@@ -435,7 +599,7 @@ function handleSubmit() {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-size: 1rem;
   font-weight: 700;
@@ -445,7 +609,9 @@ function handleSubmit() {
   cursor: pointer;
   width: fit-content;
   box-shadow: 0 4px 14px rgba(63, 210, 70, 0.25);
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
   margin-top: 0.5rem;
 }
 .btn-continue:hover {

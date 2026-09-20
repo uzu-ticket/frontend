@@ -2,13 +2,23 @@
   <div class="create-campaign-page">
     <!-- Main Unified Card -->
     <div class="main-card">
-
       <!-- Step 1: Campaign Basics -->
       <template v-if="currentStep === 1">
         <div class="step-back">
           <NuxtLink to="/marketing" class="back-link">
-            <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="back-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Back
           </NuxtLink>
@@ -21,12 +31,21 @@
 
         <div class="form-body">
           <div class="form-group">
-            <label class="form-label">Campaign Name <span class="required">*</span></label>
-            <input v-model="form.name" class="form-input" type="text" placeholder="Summer Fest Reminder" />
+            <label class="form-label"
+              >Campaign Name <span class="required">*</span></label
+            >
+            <input
+              v-model="form.name"
+              class="form-input"
+              type="text"
+              placeholder="Summer Fest Reminder"
+            />
           </div>
 
           <div class="form-group">
-            <label class="form-label">Campaign Type <span class="required">*</span></label>
+            <label class="form-label"
+              >Campaign Type <span class="required">*</span></label
+            >
             <div class="type-cards">
               <div
                 v-for="ct in campaignTypes"
@@ -42,23 +61,20 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Campaign Goal <span class="required">*</span></label>
-            <div class="select-wrapper">
-              <select v-model="form.goal" class="form-select">
-                <option value="" disabled>Select goal</option>
-                <option value="boost-sales">Boost ticket sales</option>
-                <option value="event-reminder">Event reminder</option>
-                <option value="re-engage">Re-engage past customers</option>
-                <option value="announce">Announce new event</option>
-              </select>
-              <svg class="select-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+            <label class="form-label"
+              >Campaign Goal <span class="required">*</span></label
+            >
+            <AppSelect
+              v-model="form.goal"
+              :options="campaignGoalOptions"
+              placeholder="Select goal"
+            />
           </div>
 
           <div class="form-group">
-            <label class="form-label">Event Description <span class="optional">(Optional)</span></label>
+            <label class="form-label"
+              >Event Description <span class="optional">(Optional)</span></label
+            >
             <div class="textarea-wrapper">
               <textarea
                 v-model="form.description"
@@ -82,13 +98,17 @@
 
         <div class="form-body">
           <div class="form-group">
-            <label class="form-label">Audience Source <span class="required">*</span></label>
+            <label class="form-label"
+              >Audience Source <span class="required">*</span></label
+            >
             <div class="tab-group">
               <button
                 v-for="src in audienceSources"
                 :key="src.value"
                 class="tab-btn"
-                :class="{ 'tab-btn--active': form.audienceSource === src.value }"
+                :class="{
+                  'tab-btn--active': form.audienceSource === src.value,
+                }"
                 @click="form.audienceSource = src.value"
               >
                 {{ src.label }}
@@ -97,18 +117,32 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Select Audience <span class="required">*</span></label>
+            <label class="form-label"
+              >Select Audience <span class="required">*</span></label
+            >
             <div class="select-wrapper">
               <select v-model="form.audience" class="form-select">
                 <option value="all">All Customers (5,245)</option>
                 <option value="vip">VIP Customers (1,120)</option>
                 <option value="regular">Regular (4,125)</option>
               </select>
-              <svg class="select-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              <svg
+                class="select-chevron"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </div>
-            <p class="form-hint">This audience includes all your registered customers</p>
+            <p class="form-hint">
+              This audience includes all your registered customers
+            </p>
           </div>
 
           <div class="summary-card">
@@ -120,7 +154,9 @@
               </div>
               <div class="summary-stat">
                 <span class="summary-stat-label">Estimated Reach</span>
-                <span class="summary-stat-value"><strong>98%</strong> of your customers</span>
+                <span class="summary-stat-value"
+                  ><strong>98%</strong> of your customers</span
+                >
               </div>
             </div>
           </div>
@@ -137,13 +173,27 @@
         <div class="compose-layout">
           <div class="compose-left">
             <div class="form-group">
-              <label class="form-label">Email Subject <span class="required">*</span></label>
-              <input v-model="form.subject" class="form-input" type="text" placeholder="Don't miss out! Summer Festival is almost here!" />
+              <label class="form-label"
+                >Email Subject <span class="required">*</span></label
+              >
+              <input
+                v-model="form.subject"
+                class="form-input"
+                type="text"
+                placeholder="Don't miss out! Summer Festival is almost here!"
+              />
             </div>
 
             <div class="form-group">
-              <label class="form-label">Preheader Text <span class="required">*</span></label>
-              <input v-model="form.preheader" class="form-input" type="text" placeholder="Get ready for an unforgettable experience." />
+              <label class="form-label"
+                >Preheader Text <span class="required">*</span></label
+              >
+              <input
+                v-model="form.preheader"
+                class="form-input"
+                type="text"
+                placeholder="Get ready for an unforgettable experience."
+              />
             </div>
 
             <div class="form-group">
@@ -153,7 +203,9 @@
                   v-for="block in contentBlocks"
                   :key="block.value"
                   class="block-btn"
-                  :class="{ 'block-btn--active': selectedBlock === block.value }"
+                  :class="{
+                    'block-btn--active': selectedBlock === block.value,
+                  }"
                   @click="selectedBlock = block.value"
                 >
                   <span class="block-icon" v-html="block.icon" />
@@ -166,7 +218,7 @@
           <div class="compose-right">
             <div class="email-preview">
               <div class="preview-header">
-                <span class="preview-logo">UZU<br>ticket.</span>
+                <span class="preview-logo">UZU<br />ticket.</span>
                 <div class="preview-nav">
                   <span>Events</span>
                   <span>Tickets</span>
@@ -175,8 +227,13 @@
               </div>
               <div class="preview-hero-img" />
               <div class="preview-body">
-                <h3 class="preview-body-title">The Summer Festival is almost here!</h3>
-                <p class="preview-body-text">We can't wait to see you! Grab your tickets now and get ready for an unforgettable experience.</p>
+                <h3 class="preview-body-title">
+                  The Summer Festival is almost here!
+                </h3>
+                <p class="preview-body-text">
+                  We can't wait to see you! Grab your tickets now and get ready
+                  for an unforgettable experience.
+                </p>
                 <button class="preview-cta">Grab My Tickets</button>
               </div>
             </div>
@@ -194,7 +251,11 @@
         <div class="review-layout">
           <div class="review-left">
             <div class="review-details-card">
-              <div v-for="detail in reviewDetails" :key="detail.key" class="review-row">
+              <div
+                v-for="detail in reviewDetails"
+                :key="detail.key"
+                class="review-row"
+              >
                 <span class="review-key">{{ detail.key }}</span>
                 <span class="review-val">{{ detail.value }}</span>
               </div>
@@ -202,7 +263,7 @@
 
             <div class="email-preview email-preview--sm">
               <div class="preview-header">
-                <span class="preview-logo">UZU<br>ticket.</span>
+                <span class="preview-logo">UZU<br />ticket.</span>
                 <div class="preview-nav">
                   <span>Events</span>
                   <span>Tickets</span>
@@ -211,8 +272,13 @@
               </div>
               <div class="preview-hero-img" />
               <div class="preview-body">
-                <h3 class="preview-body-title">The Summer Festival is almost here!</h3>
-                <p class="preview-body-text">We can't wait to see you! Grab your tickets now and get ready for an unforgettable experience.</p>
+                <h3 class="preview-body-title">
+                  The Summer Festival is almost here!
+                </h3>
+                <p class="preview-body-text">
+                  We can't wait to see you! Grab your tickets now and get ready
+                  for an unforgettable experience.
+                </p>
                 <button class="preview-cta">Grab My Tickets</button>
               </div>
             </div>
@@ -239,18 +305,44 @@
       </template>
 
       <!-- Footer Actions -->
-      <div class="card-footer" :class="{ 'card-footer--split': currentStep > 1 }">
+      <div
+        class="card-footer"
+        :class="{ 'card-footer--split': currentStep > 1 }"
+      >
         <button v-if="currentStep > 1" class="btn-back" @click="prevStep">
-          <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="back-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Back
         </button>
 
         <button class="btn-continue" @click="nextStep">
-          {{ currentStep === 4 ? 'Send Campaign' : 'Continue' }}
-          <svg v-if="currentStep < 4" xmlns="http://www.w3.org/2000/svg" class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          {{ currentStep === 4 ? "Send Campaign" : "Continue" }}
+          <svg
+            v-if="currentStep < 4"
+            xmlns="http://www.w3.org/2000/svg"
+            class="btn-arrow"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </button>
       </div>
@@ -259,93 +351,127 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed } from "vue";
+import AppSelect from "~/components/ui/AppSelect.vue";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Create Campaign — Uzu Ticket',
+  title: "Create Campaign — Uzu Ticket",
   meta: [
-    { name: 'description', content: 'Create and send a new targeted email marketing campaign.' },
+    {
+      name: "description",
+      content: "Create and send a new targeted email marketing campaign.",
+    },
   ],
-})
+});
 
-const currentStep = ref(1)
-const selectedBlock = ref('')
+const currentStep = ref(1);
+const selectedBlock = ref("");
 
 const form = ref({
-  name: '',
-  type: 'regular',
-  goal: '',
-  description: '',
-  audienceSource: 'saved',
-  audience: 'all',
-  subject: '',
-  preheader: '',
-})
+  name: "",
+  type: "regular",
+  goal: "",
+  description: "",
+  audienceSource: "saved",
+  audience: "all",
+  subject: "",
+  preheader: "",
+});
 
 const campaignTypes = [
-  { value: 'regular', label: 'Regular', desc: 'Send one-on-one email' },
-  { value: 'automated', label: 'Automated', desc: 'Triggered by actions' },
-  { value: 'event-based', label: 'Event Based', desc: 'Send for a specific event' },
-]
+  { value: "regular", label: "Regular", desc: "Send one-on-one email" },
+  { value: "automated", label: "Automated", desc: "Triggered by actions" },
+  {
+    value: "event-based",
+    label: "Event Based",
+    desc: "Send for a specific event",
+  },
+];
+
+const campaignGoalOptions = [
+  { value: "boost-sales", label: "Boost ticket sales" },
+  { value: "event-reminder", label: "Event reminder" },
+  { value: "re-engage", label: "Re-engage past customers" },
+  { value: "announce", label: "Announce new event" },
+];
 
 const audienceSources = [
-  { value: 'saved', label: 'Saved Audiences' },
-  { value: 'attendees', label: 'Event Attendees' },
-  { value: 'segments', label: 'Segments' },
-]
+  { value: "saved", label: "Saved Audiences" },
+  { value: "attendees", label: "Event Attendees" },
+  { value: "segments", label: "Segments" },
+];
 
 const contentBlocks = [
   {
-    value: 'text',
-    label: 'Text',
+    value: "text",
+    label: "Text",
     icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>',
   },
   {
-    value: 'image',
-    label: 'Image',
+    value: "image",
+    label: "Image",
     icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 15l-5-5L5 21"/></svg>',
   },
   {
-    value: 'button',
-    label: 'Button',
+    value: "button",
+    label: "Button",
     icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="10" rx="3"/></svg>',
   },
   {
-    value: 'divider',
-    label: 'Divider',
+    value: "divider",
+    label: "Divider",
     icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="17" x2="21" y2="17"/></svg>',
   },
   {
-    value: 'template',
-    label: 'Template',
+    value: "template",
+    label: "Template",
     icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
   },
-]
+];
 
 const reviewDetails = computed(() => [
-  { key: 'Summer Festival', value: form.value.name || 'Summer Fest Reminder' },
-  { key: 'Campaign Type', value: campaignTypes.find(t => t.value === form.value.type)?.label ?? 'Regular' },
-  { key: 'Audience', value: 'All Customers (5,245 recipients)' },
-  { key: 'Subject', value: form.value.subject || "Don't miss out! Summer Festival is almost here!" },
-  { key: 'Preheader', value: form.value.preheader || 'Get ready for an unforgettable experience.' },
-])
+  { key: "Summer Festival", value: form.value.name || "Summer Fest Reminder" },
+  {
+    key: "Campaign Type",
+    value:
+      campaignTypes.find((t) => t.value === form.value.type)?.label ??
+      "Regular",
+  },
+  { key: "Audience", value: "All Customers (5,245 recipients)" },
+  {
+    key: "Subject",
+    value:
+      form.value.subject || "Don't miss out! Summer Festival is almost here!",
+  },
+  {
+    key: "Preheader",
+    value: form.value.preheader || "Get ready for an unforgettable experience.",
+  },
+]);
 
 function nextStep() {
   if (currentStep.value < 4) {
-    currentStep.value++
-  }
-  else {
-    navigateTo('/marketing/schedule')
+    currentStep.value++;
+  } else {
+    const campaignDraft = useState("marketing:draft", () => ({
+      subject: "",
+      bodyHtml: "",
+    }));
+    campaignDraft.value = {
+      subject: form.value.subject || form.value.name || "UzuTicket campaign",
+      bodyHtml: `<h1>${form.value.subject || form.value.name}</h1><p>${form.value.description || form.value.preheader}</p>`,
+    };
+    navigateTo("/marketing/schedule");
   }
 }
 
 function prevStep() {
   if (currentStep.value > 1) {
-    currentStep.value--
+    currentStep.value--;
   }
 }
 </script>
@@ -354,7 +480,7 @@ function prevStep() {
 .create-campaign-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -383,7 +509,7 @@ function prevStep() {
   gap: 0.3rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #3FD246;
+  color: #3fd246;
   text-decoration: none;
   transition: opacity 0.15s;
 }
@@ -407,7 +533,7 @@ function prevStep() {
 .card-title {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -453,15 +579,17 @@ function prevStep() {
   border-radius: 0.65rem;
   padding: 0.7rem 1rem;
   font-size: 0.9rem;
-  color: #0E2615;
+  color: #0e2615;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   box-sizing: border-box;
   font-family: inherit;
 }
 
 .form-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
   background: #fff;
 }
@@ -486,22 +614,24 @@ function prevStep() {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .type-card:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
 }
 
 .type-card--active {
-  border-color: #3FD246;
+  border-color: #3fd246;
   background: #f0fdf4;
 }
 
 .type-card-title {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .type-card-desc {
@@ -522,7 +652,7 @@ function prevStep() {
   border-radius: 0.65rem;
   padding: 0.7rem 2.5rem 0.7rem 1rem;
   font-size: 0.9rem;
-  color: #0E2615;
+  color: #0e2615;
   outline: none;
   cursor: pointer;
   font-family: inherit;
@@ -530,7 +660,7 @@ function prevStep() {
 }
 
 .form-select:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
 
@@ -557,7 +687,7 @@ function prevStep() {
   border-radius: 0.65rem;
   padding: 0.7rem 1rem;
   font-size: 0.9rem;
-  color: #0E2615;
+  color: #0e2615;
   outline: none;
   resize: vertical;
   transition: border-color 0.2s;
@@ -566,7 +696,7 @@ function prevStep() {
 }
 
 .form-textarea:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
   background: #fff;
 }
@@ -604,13 +734,15 @@ function prevStep() {
   background: transparent;
   color: #6b7280;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
   font-family: inherit;
 }
 
 .tab-btn--active {
   background: #fff;
-  color: #3FD246;
+  color: #3fd246;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
@@ -625,7 +757,7 @@ function prevStep() {
 .summary-title {
   font-size: 0.9rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 1rem;
 }
 
@@ -649,7 +781,7 @@ function prevStep() {
 .summary-stat-value {
   font-size: 1.4rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   letter-spacing: -0.02em;
 }
 
@@ -688,18 +820,20 @@ function prevStep() {
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .block-btn:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   background: #f0fdf4;
 }
 
 .block-btn--active {
-  border-color: #3FD246;
+  border-color: #3fd246;
   background: #f0fdf4;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .block-icon {
@@ -733,7 +867,7 @@ function prevStep() {
 .preview-logo {
   font-size: 0.6rem;
   font-weight: 900;
-  color: #0E2615;
+  color: #0e2615;
   line-height: 1.2;
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -761,7 +895,7 @@ function prevStep() {
 .preview-body-title {
   font-size: 0.9rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.4rem;
 }
 
@@ -773,7 +907,7 @@ function prevStep() {
 }
 
 .preview-cta {
-  background: #3FD246;
+  background: #3fd246;
   color: #fff;
   border: none;
   border-radius: 0.5rem;
@@ -839,7 +973,7 @@ function prevStep() {
 .perf-title {
   font-size: 0.9rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 1.1rem;
 }
 
@@ -863,7 +997,7 @@ function prevStep() {
 .perf-value {
   font-size: 1.4rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   letter-spacing: -0.02em;
 }
 
@@ -892,7 +1026,9 @@ function prevStep() {
   color: #374151;
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .btn-back:hover {
@@ -904,7 +1040,7 @@ function prevStep() {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: #3FD246;
+  background: #3fd246;
   border: none;
   border-radius: 0.65rem;
   padding: 0.6rem 1.4rem;
@@ -913,7 +1049,9 @@ function prevStep() {
   color: #fff;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
   box-shadow: 0 4px 12px rgba(63, 210, 70, 0.25);
 }
 

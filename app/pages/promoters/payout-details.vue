@@ -1,24 +1,27 @@
 <template>
   <div class="payout-details-page">
-    <!-- Demo Nav -->
-    <div class="demo-nav-row">
-      <NuxtLink to="/promoters" class="demo-nav-link">Dashboard</NuxtLink>
-      <NuxtLink to="/promoters/withdrawal" class="demo-nav-link">Withdrawal</NuxtLink>
-      <NuxtLink to="/promoters/payout-details" class="demo-nav-link demo-nav-link--active">Payout Details</NuxtLink>
-      <NuxtLink to="/promoters/payout-history" class="demo-nav-link">Payout History</NuxtLink>
-      <NuxtLink to="/promoters/create" class="demo-nav-link">+ Create Link</NuxtLink>
-      <NuxtLink to="/promoters/link-ready" class="demo-nav-link">Link Ready</NuxtLink>
-      <NuxtLink to="/promoters/invite" class="demo-nav-link">Invite Flow</NuxtLink>
-    </div>
-
     <!-- Main Unified Card -->
     <div class="main-card">
       <!-- Back Button & Header -->
       <div class="card-header">
         <div class="back-row">
-          <button type="button" class="back-link" @click="$router.push('/promoters')">
-            <svg class="back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          <button
+            type="button"
+            class="back-link"
+            @click="$router.push('/promoters')"
+          >
+            <svg
+              class="back-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Back
           </button>
@@ -76,9 +79,7 @@
           <!-- Card 1: Verification Status -->
           <div class="side-card">
             <h2 class="card-title-sm">Verification Status</h2>
-            <div class="verification-pill">
-              Verified
-            </div>
+            <div class="verification-pill">Verified</div>
             <p class="verification-note">Your bank account is verified</p>
           </div>
 
@@ -96,7 +97,9 @@
               </div>
 
               <div class="pref-item">
-                <span class="pref-label">Email me when commission is available</span>
+                <span class="pref-label"
+                  >Email me when commission is available</span
+                >
                 <label class="toggle-switch">
                   <input type="checkbox" v-model="notifyAvailable" />
                   <span class="toggle-slider" />
@@ -104,7 +107,9 @@
               </div>
 
               <div class="pref-item">
-                <span class="pref-label">Email me when payout is processed</span>
+                <span class="pref-label"
+                  >Email me when payout is processed</span
+                >
                 <label class="toggle-switch">
                   <input type="checkbox" v-model="notifyProcessed" />
                   <span class="toggle-slider" />
@@ -119,35 +124,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Payout Details — Promoters — Uzu Ticket',
-  meta: [
-    { name: 'description', content: 'Promoter bank payout details' },
-  ],
-})
+  title: "Payout Details — Promoters — Uzu Ticket",
+  meta: [{ name: "description", content: "Promoter bank payout details" }],
+});
 
-const bankName = ref('GTB Bank')
-const accountNumber = ref('0112233455')
-const accountName = ref('Jane May')
+const bankName = ref("GTB Bank");
+const accountNumber = ref("0112233455");
+const accountName = ref("Jane May");
 
-const notifySale = ref(true)
-const notifyAvailable = ref(true)
-const notifyProcessed = ref(true)
+const notifySale = ref(true);
+const notifyAvailable = ref(true);
+const notifyProcessed = ref(true);
 
-const toast = useToast()
+const toast = useToast();
 
 function handleUpdate() {
   toast.show({
-    title: 'Bank Details Updated',
-    message: 'Your bank details have been saved successfully.',
-    type: 'success',
-  })
+    title: "Bank Details Updated",
+    message: "Your bank details have been saved successfully.",
+    type: "success",
+  });
 }
 </script>
 
@@ -155,7 +158,7 @@ function handleUpdate() {
 .payout-details-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -183,13 +186,13 @@ function handleUpdate() {
 }
 
 .demo-nav-link:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   color: #16a34a;
 }
 
 .demo-nav-link--active {
-  background: #3FD246;
-  border-color: #3FD246;
+  background: #3fd246;
+  border-color: #3fd246;
   color: #ffffff;
 }
 
@@ -221,14 +224,14 @@ function handleUpdate() {
   align-items: center;
   background: transparent;
   border: none;
-  color: #3FD246;
+  color: #3fd246;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
   padding: 0;
   gap: 0.35rem;
   transition: color 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .back-link:hover {
@@ -244,7 +247,7 @@ function handleUpdate() {
 .card-title {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -271,7 +274,7 @@ function handleUpdate() {
 .section-title {
   font-size: 1rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.5rem;
 }
 
@@ -292,7 +295,7 @@ function handleUpdate() {
 .form-label {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .form-input {
@@ -301,8 +304,8 @@ function handleUpdate() {
   border-radius: 0.65rem;
   border: 1.5px solid #e5e7eb;
   font-size: 0.875rem;
-  font-family: 'Outfit', sans-serif;
-  color: #0E2615;
+  font-family: "Outfit", sans-serif;
+  color: #0e2615;
   font-weight: 600;
   outline: none;
   transition: border-color 0.15s ease;
@@ -310,7 +313,7 @@ function handleUpdate() {
 }
 
 .form-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
 }
 
 .btn-update-details {
@@ -319,17 +322,17 @@ function handleUpdate() {
   border-radius: 0.65rem;
   border: 1.5px solid #e5e7eb;
   background: #ffffff;
-  color: #3FD246;
+  color: #3fd246;
   font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   margin-top: 1rem;
 }
 
 .btn-update-details:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   background: #f0fdf4;
 }
 
@@ -353,7 +356,7 @@ function handleUpdate() {
 .card-title-sm {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -433,7 +436,7 @@ function handleUpdate() {
 }
 
 input:checked + .toggle-slider {
-  background-color: #3FD246;
+  background-color: #3fd246;
 }
 
 input:checked + .toggle-slider:before {

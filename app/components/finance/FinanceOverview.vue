@@ -8,7 +8,9 @@
         <!-- Amount Display with Eye Toggle -->
         <div class="balance-display-row">
           <span class="currency-symbol">₦</span>
-          <span v-if="!isBalanceHidden" class="balance-integer">{{ formattedBalance }}</span>
+          <span v-if="!isBalanceHidden" class="balance-integer">{{
+            formattedBalance
+          }}</span>
           <span v-else class="balance-hidden">••••••••</span>
 
           <button
@@ -17,13 +19,45 @@
             @click="toggleBalanceVisibility"
           >
             <!-- Slashed Eye SVG when hidden, Normal Eye when visible -->
-            <svg v-if="!isBalanceHidden" xmlns="http://www.w3.org/2000/svg" class="eye-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <svg
+              v-if="!isBalanceHidden"
+              xmlns="http://www.w3.org/2000/svg"
+              class="eye-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
             </svg>
-            <svg v-else xmlns="http://www.w3.org/2000/svg" class="eye-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.858A9.954 9.954 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m-4.092-4.092a3 3 0 11-4.243-4.243" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
+            <svg
+              v-else
+              xmlns="http://www.w3.org/2000/svg"
+              class="eye-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.858A9.954 9.954 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m-4.092-4.092a3 3 0 11-4.243-4.243"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M3 3l18 18"
+              />
             </svg>
           </button>
         </div>
@@ -34,20 +68,32 @@
         <div class="banner-stats-row">
           <div class="stat-item">
             <span class="stat-item-label">Total Earned</span>
-            <span class="stat-item-val">+2,843,000.00</span>
+            <span class="stat-item-val"
+              >+{{ formattedTotalEarned ?? "0.00" }}</span
+            >
           </div>
           <div class="stat-item">
             <span class="stat-item-label">Pending Settlement</span>
-            <span class="stat-item-val">+340,000.00</span>
+            <span class="stat-item-val"
+              >+{{ formattedPendingSettlement ?? "0.00" }}</span
+            >
           </div>
         </div>
 
         <!-- Action Buttons inside Banner -->
         <div class="banner-actions">
-          <button id="btn-withdraw-now" class="btn-withdraw" @click="$emit('withdraw')">
+          <button
+            id="btn-withdraw-now"
+            class="btn-withdraw"
+            @click="$emit('withdraw')"
+          >
             Withdraw
           </button>
-          <button id="btn-export-statement" class="btn-export" @click="$emit('export')">
+          <button
+            id="btn-export-statement"
+            class="btn-export"
+            @click="$emit('export')"
+          >
             Export statement
           </button>
         </div>
@@ -89,14 +135,51 @@
               <td class="tx-date">{{ tx.date }}</td>
               <td class="tx-desc">{{ tx.description }}</td>
               <td class="tx-type">{{ tx.type }}</td>
-              <td class="tx-amount" :class="{ 'amount-credit': tx.type === 'Credit', 'amount-debit': tx.type === 'Debit' }">
-                <span v-if="tx.type === 'Credit'">{{ tx.amountFormatted }}</span>
+              <td
+                class="tx-amount"
+                :class="{
+                  'amount-credit': tx.type === 'Credit',
+                  'amount-debit': tx.type === 'Debit',
+                }"
+              >
+                <span v-if="tx.type === 'Credit'">{{
+                  tx.amountFormatted
+                }}</span>
                 <span v-else>-{{ tx.amountFormatted }}</span>
               </td>
               <td class="tx-status">
-                <span class="status-badge status-badge--completed">
+                <span
+                  class="status-badge"
+                  :class="`status-badge--${tx.status.toLowerCase()}`"
+                >
                   {{ tx.status }}
                 </span>
+              </td>
+            </tr>
+            <tr v-if="displayedTransactions.length === 0">
+              <td colspan="5" class="empty-transactions-cell">
+                <div class="empty-transactions-state">
+                  <svg
+                    class="empty-transactions-icon"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M9 14.25l2.25 2.25L15 12.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span class="empty-transactions-title"
+                    >No transactions yet</span
+                  >
+                  <span class="empty-transactions-copy">
+                    Completed ticket sales and withdrawals will appear here.
+                  </span>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -105,7 +188,11 @@
     </div>
 
     <!-- View All Transactions Modal -->
-    <div v-if="showAllModal" class="modal-overlay" @click.self="showAllModal = false">
+    <div
+      v-if="showAllModal"
+      class="modal-overlay"
+      @click.self="showAllModal = false"
+    >
       <div class="modal-card">
         <div class="modal-header">
           <h3>All Transactions</h3>
@@ -127,16 +214,44 @@
                 v-for="tx in transactions"
                 :key="tx.id"
                 class="clickable-row"
-                @click="showAllModal = false; $emit('select-transaction', tx)"
+                @click="
+                  showAllModal = false;
+                  $emit('select-transaction', tx);
+                "
               >
                 <td class="tx-date">{{ tx.date }}</td>
                 <td class="tx-desc">{{ tx.description }}</td>
                 <td class="tx-type">{{ tx.type }}</td>
-                <td class="tx-amount" :class="{ 'amount-credit': tx.type === 'Credit', 'amount-debit': tx.type === 'Debit' }">
-                  <span>{{ tx.type === 'Debit' ? '-' : '' }}{{ tx.amountFormatted }}</span>
+                <td
+                  class="tx-amount"
+                  :class="{
+                    'amount-credit': tx.type === 'Credit',
+                    'amount-debit': tx.type === 'Debit',
+                  }"
+                >
+                  <span
+                    >{{ tx.type === "Debit" ? "-" : ""
+                    }}{{ tx.amountFormatted }}</span
+                  >
                 </td>
                 <td class="tx-status">
-                  <span class="status-badge status-badge--completed">{{ tx.status }}</span>
+                  <span
+                    class="status-badge"
+                    :class="`status-badge--${tx.status.toLowerCase()}`"
+                    >{{ tx.status }}</span
+                  >
+                </td>
+              </tr>
+              <tr v-if="transactions.length === 0">
+                <td colspan="5" class="empty-transactions-cell">
+                  <div class="empty-transactions-state">
+                    <span class="empty-transactions-title"
+                      >No transactions yet</span
+                    >
+                    <span class="empty-transactions-copy">
+                      Completed ticket sales and withdrawals will appear here.
+                    </span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -148,31 +263,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import FinanceWalletCardGraphic from './FinanceWalletCardGraphic.vue'
-import type { FinanceTransaction } from '~/composables/useFinance'
+import { ref, computed } from "vue";
+import FinanceWalletCardGraphic from "./FinanceWalletCardGraphic.vue";
+import type { FinanceTransaction } from "~/composables/useFinance";
 
 const props = defineProps<{
-  formattedBalance: string
-  formattedTotalEarned?: string
-  formattedPendingSettlement?: string
-  isBalanceHidden: boolean
-  transactions: FinanceTransaction[]
-}>()
+  formattedBalance: string;
+  formattedTotalEarned?: string;
+  formattedPendingSettlement?: string;
+  isBalanceHidden: boolean;
+  transactions: FinanceTransaction[];
+}>();
 
 const emit = defineEmits<{
-  withdraw: []
-  export: []
-  'toggle-balance': []
-  'select-transaction': [tx: FinanceTransaction]
-}>()
+  withdraw: [];
+  export: [];
+  "toggle-balance": [];
+  "select-transaction": [tx: FinanceTransaction];
+}>();
 
-const showAllModal = ref(false)
+const showAllModal = ref(false);
 
-const displayedTransactions = computed(() => props.transactions.slice(0, 7))
+const displayedTransactions = computed(() => props.transactions.slice(0, 7));
 
 function toggleBalanceVisibility() {
-  emit('toggle-balance')
+  emit("toggle-balance");
 }
 </script>
 
@@ -186,7 +301,7 @@ function toggleBalanceVisibility() {
 /* Banner Card */
 .wallet-banner-card {
   position: relative;
-  background: linear-gradient(135deg, #071D0E 0%, #0B2813 100%);
+  background: linear-gradient(135deg, #071d0e 0%, #0b2813 100%);
   border-radius: 1.25rem;
   padding: 2.25rem 2rem;
   color: #ffffff;
@@ -204,7 +319,7 @@ function toggleBalanceVisibility() {
 
 .banner-label {
   font-size: 0.95rem;
-  color: #A3C7AA;
+  color: #a3c7aa;
   font-weight: 500;
   margin-bottom: 0.75rem;
 }
@@ -219,7 +334,7 @@ function toggleBalanceVisibility() {
 .currency-symbol {
   font-size: 2rem;
   font-weight: 800;
-  color: #3FD246;
+  color: #3fd246;
 }
 
 .balance-integer {
@@ -239,7 +354,7 @@ function toggleBalanceVisibility() {
 .eye-toggle-btn {
   background: none;
   border: none;
-  color: #3FD246;
+  color: #3fd246;
   cursor: pointer;
   padding: 0.35rem;
   display: inline-flex;
@@ -259,7 +374,7 @@ function toggleBalanceVisibility() {
 
 .balance-subtitle {
   font-size: 0.85rem;
-  color: #8DA893;
+  color: #8da893;
   margin-bottom: 1.5rem;
 }
 
@@ -279,14 +394,14 @@ function toggleBalanceVisibility() {
 
 .stat-item-label {
   font-size: 0.85rem;
-  color: #A3C7AA;
+  color: #a3c7aa;
   font-weight: 600;
 }
 
 .stat-item-val {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #3FD246;
+  color: #3fd246;
 }
 
 .banner-actions {
@@ -296,7 +411,7 @@ function toggleBalanceVisibility() {
 }
 
 .btn-withdraw {
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-size: 0.95rem;
   font-weight: 700;
@@ -305,7 +420,9 @@ function toggleBalanceVisibility() {
   border: none;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(63, 210, 70, 0.3);
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
 }
 .btn-withdraw:hover {
   background: #36bd3d;
@@ -321,7 +438,9 @@ function toggleBalanceVisibility() {
   border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 .btn-export:hover {
   background: rgba(255, 255, 255, 0.08);
@@ -333,7 +452,7 @@ function toggleBalanceVisibility() {
   background: #ffffff;
   border-radius: 1.25rem;
   padding: 1.5rem 1.75rem;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
 }
 
@@ -347,14 +466,14 @@ function toggleBalanceVisibility() {
 .card-title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
 .view-all-link {
   background: none;
   border: none;
-  color: #3FD246;
+  color: #3fd246;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
@@ -377,17 +496,47 @@ function toggleBalanceVisibility() {
 .tx-table th {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #4B5563;
+  color: #4b5563;
   letter-spacing: 0.05em;
   padding: 0.85rem 0.75rem;
-  border-bottom: 1px solid #F3F4F6;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .tx-table td {
   padding: 1.1rem 0.75rem;
   font-size: 0.875rem;
-  border-bottom: 1px solid #F9FAFB;
+  border-bottom: 1px solid #f9fafb;
   vertical-align: middle;
+}
+
+.empty-transactions-cell {
+  padding: 3rem 1rem !important;
+  text-align: center;
+}
+
+.empty-transactions-state {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #6b7280;
+}
+
+.empty-transactions-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.35rem;
+  color: #9ca3af;
+}
+
+.empty-transactions-title {
+  color: #374151;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.empty-transactions-copy {
+  font-size: 0.85rem;
 }
 
 .clickable-row {
@@ -395,7 +544,7 @@ function toggleBalanceVisibility() {
   transition: background 0.15s ease;
 }
 .clickable-row:hover {
-  background: #F9FAFB;
+  background: #f9fafb;
 }
 
 .tx-date {
@@ -410,7 +559,7 @@ function toggleBalanceVisibility() {
 }
 
 .tx-type {
-  color: #4B5563;
+  color: #4b5563;
   font-weight: 500;
 }
 
@@ -420,11 +569,11 @@ function toggleBalanceVisibility() {
 }
 
 .amount-credit {
-  color: #3FD246;
+  color: #3fd246;
 }
 
 .amount-debit {
-  color: #EF4444;
+  color: #ef4444;
 }
 
 .status-badge {
@@ -437,8 +586,8 @@ function toggleBalanceVisibility() {
 }
 
 .status-badge--completed {
-  background: #DCFCE7;
-  color: #16A34A;
+  background: #dcfce7;
+  color: #16a34a;
 }
 
 /* Modal styling */
@@ -471,21 +620,21 @@ function toggleBalanceVisibility() {
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .close-btn {
   background: none;
   border: none;
   font-size: 1.2rem;
-  color: #6B7280;
+  color: #6b7280;
   cursor: pointer;
 }
 

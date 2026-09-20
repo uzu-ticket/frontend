@@ -4,9 +4,23 @@
     <div class="main-card">
       <!-- Back row inside card -->
       <div class="back-row">
-        <button type="button" class="back-link" @click="$router.push('/customers')">
-          <svg class="back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        <button
+          type="button"
+          class="back-link"
+          @click="$router.push('/customers')"
+        >
+          <svg
+            class="back-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Back
         </button>
@@ -14,26 +28,52 @@
 
       <!-- Profile Header -->
       <div class="profile-header">
-        <div class="profile-avatar" :style="{ background: customer.avatarColor }">
+        <div
+          class="profile-avatar"
+          :style="{ background: customer.avatarColor }"
+        >
           {{ customer.initials }}
         </div>
         <div class="profile-info">
           <div class="profile-name-row">
             <h1 class="profile-name">{{ customer.name }}</h1>
-            <span class="status-pill" :class="`status--${customer.status.toLowerCase()}`">
+            <span
+              class="status-pill"
+              :class="`status--${customer.status.toLowerCase()}`"
+            >
               {{ customer.status }}
             </span>
           </div>
           <div class="profile-contacts">
             <span class="contact-item">
-              <svg class="contact-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <svg
+                class="contact-icon"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
               </svg>
               {{ customer.email }}
             </span>
             <span class="contact-item">
-              <svg class="contact-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              <svg
+                class="contact-icon"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                />
               </svg>
               {{ customer.phone }}
             </span>
@@ -44,6 +84,9 @@
             Customer ID - {{ customer.customerId }}
           </div>
         </div>
+        <button type="button" class="btn-edit" @click="toggleCustomerStatus">
+          {{ customer.status === "Active" ? "Deactivate" : "Activate" }}
+        </button>
       </div>
 
       <!-- Tabs row — border-separated from header -->
@@ -61,15 +104,28 @@
 
       <!-- Tab content — same card, no extra border -->
       <div class="tab-content">
-
         <!-- Overview Tab -->
         <div v-if="activeTab === 'overview'" class="overview-section">
           <div class="overview-header">
             <div />
-            <button type="button" class="btn-edit" @click="isEditing = !isEditing">
+            <button
+              type="button"
+              class="btn-edit"
+              @click="isEditing = !isEditing"
+            >
               <span>Edit</span>
-              <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <svg
+                class="w-4 h-4 ml-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
               </svg>
             </button>
           </div>
@@ -135,9 +191,14 @@
                   <td class="order-id-cell">{{ purchase.orderId }}</td>
                   <td>{{ purchase.date }}</td>
                   <td>{{ purchase.tickets }}</td>
-                  <td class="amount-cell">₦{{ purchase.amount.toLocaleString() }}</td>
+                  <td class="amount-cell">
+                    ₦{{ purchase.amount.toLocaleString() }}
+                  </td>
                   <td>
-                    <span class="purchase-status" :class="`pstatus--${purchase.status.toLowerCase()}`">
+                    <span
+                      class="purchase-status"
+                      :class="`pstatus--${purchase.status.toLowerCase()}`"
+                    >
                       {{ purchase.status }}
                     </span>
                   </td>
@@ -164,8 +225,19 @@
               class="activity-row"
             >
               <div class="activity-icon-wrap">
-                <svg class="activity-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 12C20 10.343 21.343 9 23 9V7C23 5.895 22.105 5 21 5H3C1.895 5 1 5.895 1 7V9C2.657 9 4 10.343 4 12C4 13.657 2.657 15 1 15V17C1 18.105 1.895 19 3 19H21C22.105 19 23 18.105 23 17V15C21.343 15 20 13.657 20 12Z" stroke="#3FD246" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <svg
+                  class="activity-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 12C20 10.343 21.343 9 23 9V7C23 5.895 22.105 5 21 5H3C1.895 5 1 5.895 1 7V9C2.657 9 4 10.343 4 12C4 13.657 2.657 15 1 15V17C1 18.105 1.895 19 3 19H21C22.105 19 23 18.105 23 17V15C21.343 15 20 13.657 20 12Z"
+                    stroke="#3FD246"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </div>
               <div class="activity-text">
@@ -175,86 +247,99 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import AppPagination from '~/components/ui/AppPagination.vue'
-import type { Customer, CustomerPurchase, CustomerActivity } from '~/types/customers'
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import AppPagination from "~/components/ui/AppPagination.vue";
+import type {
+  Customer,
+  CustomerPurchase,
+  CustomerActivity,
+} from "~/types/customers";
+import { useCustomers } from "~/composables/useCustomers";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 
 const tabs = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'purchases', label: 'Purchase History' },
-  { key: 'activity', label: 'Activity' },
-]
+  { key: "overview", label: "Overview" },
+  { key: "purchases", label: "Purchase History" },
+  { key: "activity", label: "Activity" },
+];
 
-const activeTab = ref('overview')
-const isEditing = ref(false)
-const currentPage = ref(1)
-const pageSize = 5
+const activeTab = ref("overview");
+const isEditing = ref(false);
+const currentPage = ref(1);
+const pageSize = 5;
+const { fetchCustomer, setStatus } = useCustomers();
 
 const customer = ref<Customer>({
-  id: 'cust-1',
-  customerId: 'CUST 0032026',
-  initials: 'DE',
-  avatarColor: '#3FD246',
-  name: 'Divine Emmanuel',
-  email: 'divineemma@gmail.com',
-  phone: '+2348023334566',
-  orders: 8,
-  status: 'Active',
-  location: 'Lagos, Nigeria',
-  dateOfBirth: 'Feb 14, 1999',
-  preferredCurrency: 'NGN',
-  marketingContent: 'Subscribed',
-  lastActive: '2 minutes ago',
-  customerSince: 'Aug 20, 2026',
-})
+  id: "",
+  customerId: "",
+  initials: "",
+  avatarColor: "#3FD246",
+  name: "Loading customer...",
+  email: "",
+  phone: "",
+  orders: 0,
+  status: "Inactive",
+});
 
 useHead({
   title: computed(() => `${customer.value.name} — Customers — Uzu Ticket`),
   meta: [
-    { name: 'description', content: 'View customer profile and ticket purchase history.' },
+    {
+      name: "description",
+      content: "View customer profile and ticket purchase history.",
+    },
   ],
-})
+});
 
-const purchases = ref<CustomerPurchase[]>([
-  { id: 'p1', event: 'Summer Tech Camp', orderId: '#ORD-1264', date: 'Aug 10, 2026', tickets: 8, amount: 10000, status: 'Completed' },
-  { id: 'p2', event: 'Music Fest 2026', orderId: '#ORD-1264', date: 'Sept 12, 2026', tickets: 10, amount: 14000, status: 'Completed' },
-  { id: 'p3', event: 'Business Catchup', orderId: '#ORD-1264', date: 'Aug 10, 2026', tickets: 5, amount: 20000, status: 'Cancelled' },
-  { id: 'p4', event: 'Tech Connect Lagos', orderId: '#ORD-1264', date: 'Oct 10, 2026', tickets: 8, amount: 10000, status: 'Completed' },
-  { id: 'p5', event: 'Food & Night Expo', orderId: '#ORD-1264', date: 'Sept 12, 2026', tickets: 6, amount: 20000, status: 'Refunded' },
-])
+const purchases = ref<CustomerPurchase[]>([]);
 
-const activities = ref<CustomerActivity[]>([
-  { id: 'a1', date: 'Sept 23, 2026', description: 'Purchased 2 tickets for Summer Tech Event' },
-  { id: 'a2', date: 'Sept 23, 2026', description: 'Purchased 2 tickets for Summer Tech Event' },
-  { id: 'a3', date: 'Sept 23, 2026', description: 'Purchased 2 tickets for Summer Tech Event' },
-  { id: 'a4', date: 'Sept 23, 2026', description: 'Purchased 2 tickets for Summer Tech Event' },
-  { id: 'a5', date: 'Sept 23, 2026', description: 'Purchased 2 tickets for Summer Tech Event' },
-])
+const activities = ref<CustomerActivity[]>([]);
 
-const totalPages = computed(() => Math.ceil(purchases.value.length / pageSize) || 1)
+onMounted(async () => {
+  try {
+    const result = await fetchCustomer(String(route.params.id));
+    customer.value = result.customer;
+    purchases.value = result.purchases;
+  } catch {
+    // Keep the existing empty-safe view when the API is unavailable.
+  }
+});
+
+async function toggleCustomerStatus() {
+  try {
+    customer.value = await setStatus(
+      customer.value.id,
+      customer.value.status !== "Active",
+    );
+  } catch {
+    // Keep the current status when the request fails.
+  }
+}
+
+const totalPages = computed(
+  () => Math.ceil(purchases.value.length / pageSize) || 1,
+);
 
 const paginatedPurchases = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return purchases.value.slice(start, start + pageSize)
-})
+  const start = (currentPage.value - 1) * pageSize;
+  return purchases.value.slice(start, start + pageSize);
+});
 
 function goToTicket(purchase: CustomerPurchase) {
-  router.push(`/customers/${route.params.id}/ticket/tkt-1`)
+  router.push(`/customers/${route.params.id}/ticket/tkt-1`);
 }
 </script>
 
@@ -262,7 +347,7 @@ function goToTicket(purchase: CustomerPurchase) {
 .customer-detail-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -278,14 +363,14 @@ function goToTicket(purchase: CustomerPurchase) {
   align-items: center;
   background: transparent;
   border: none;
-  color: #3FD246;
+  color: #3fd246;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
   padding: 0;
   gap: 0.35rem;
   transition: color 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .back-link:hover {
@@ -344,7 +429,7 @@ function goToTicket(purchase: CustomerPurchase) {
 .profile-name {
   font-size: 1.35rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -357,9 +442,18 @@ function goToTicket(purchase: CustomerPurchase) {
   font-weight: 700;
 }
 
-.status--active   { background: #f0fdf4; color: #16a34a; }
-.status--inactive { background: #f9fafb; color: #6b7280; }
-.status--invalid  { background: #fef2f2; color: #dc2626; }
+.status--active {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+.status--inactive {
+  background: #f9fafb;
+  color: #6b7280;
+}
+.status--invalid {
+  background: #fef2f2;
+  color: #dc2626;
+}
 
 .profile-contacts {
   display: flex;
@@ -412,16 +506,16 @@ function goToTicket(purchase: CustomerPurchase) {
   border-bottom: 2.5px solid transparent;
   margin-bottom: -1px;
   transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .tab-btn:hover {
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .tab-btn--active {
-  color: #3FD246;
-  border-bottom-color: #3FD246;
+  color: #3fd246;
+  border-bottom-color: #3fd246;
   font-weight: 700;
 }
 
@@ -456,11 +550,11 @@ function goToTicket(purchase: CustomerPurchase) {
   cursor: pointer;
   transition: all 0.15s ease;
   gap: 0.35rem;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .btn-edit:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   color: #16a34a;
 }
 
@@ -490,7 +584,7 @@ function goToTicket(purchase: CustomerPurchase) {
 
 .field-value {
   font-size: 0.9rem;
-  color: #0E2615;
+  color: #0e2615;
   font-weight: 600;
 }
 
@@ -509,7 +603,7 @@ function goToTicket(purchase: CustomerPurchase) {
   text-align: left;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #3FD246;
+  color: #3fd246;
   letter-spacing: 0.06em;
   border-bottom: 1px solid #f3f4f6;
   white-space: nowrap;
@@ -532,9 +626,18 @@ function goToTicket(purchase: CustomerPurchase) {
   vertical-align: middle;
 }
 
-.event-name    { font-weight: 600; color: #111827; }
-.order-id-cell { font-weight: 700; color: #0E2615; }
-.amount-cell   { font-weight: 700; color: #0E2615; }
+.event-name {
+  font-weight: 600;
+  color: #111827;
+}
+.order-id-cell {
+  font-weight: 700;
+  color: #0e2615;
+}
+.amount-cell {
+  font-weight: 700;
+  color: #0e2615;
+}
 
 .purchase-status {
   display: inline-flex;
@@ -545,16 +648,28 @@ function goToTicket(purchase: CustomerPurchase) {
   font-weight: 700;
 }
 
-.pstatus--completed { background: #f0fdf4; color: #16a34a; }
-.pstatus--cancelled { background: #fef2f2; color: #dc2626; }
-.pstatus--refunded  { background: #fff7ed; color: #ea580c; }
-.pstatus--pending   { background: #fefce8; color: #ca8a04; }
+.pstatus--completed {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+.pstatus--cancelled {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.pstatus--refunded {
+  background: #fff7ed;
+  color: #ea580c;
+}
+.pstatus--pending {
+  background: #fefce8;
+  color: #ca8a04;
+}
 
 /* Activity */
 .activity-title {
   font-size: 1rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 1.5rem;
 }
 
@@ -600,7 +715,7 @@ function goToTicket(purchase: CustomerPurchase) {
 .activity-desc {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #0E2615;
+  color: #0e2615;
   line-height: 1.4;
 }
 

@@ -14,12 +14,17 @@
           :class="{ 'option-card--active': sendOption === 'now' }"
           @click="sendOption = 'now'"
         >
-          <div class="option-radio" :class="{ 'option-radio--active': sendOption === 'now' }">
+          <div
+            class="option-radio"
+            :class="{ 'option-radio--active': sendOption === 'now' }"
+          >
             <div v-if="sendOption === 'now'" class="radio-dot" />
           </div>
           <div class="option-text">
             <span class="option-title">Send Now</span>
-            <span class="option-desc">One ticket gives access to the event.</span>
+            <span class="option-desc"
+              >One ticket gives access to the event.</span
+            >
           </div>
         </div>
 
@@ -28,12 +33,17 @@
           :class="{ 'option-card--active': sendOption === 'later' }"
           @click="sendOption = 'later'"
         >
-          <div class="option-radio" :class="{ 'option-radio--active': sendOption === 'later' }">
+          <div
+            class="option-radio"
+            :class="{ 'option-radio--active': sendOption === 'later' }"
+          >
             <div v-if="sendOption === 'later'" class="radio-dot" />
           </div>
           <div class="option-text">
             <span class="option-title">Schedule For Later</span>
-            <span class="option-desc">Divide your event into multiple sessions or time slots.</span>
+            <span class="option-desc"
+              >Divide your event into multiple sessions or time slots.</span
+            >
           </div>
         </div>
       </div>
@@ -41,10 +51,24 @@
       <!-- Schedule Date & Time (shown when Schedule For Later is selected) -->
       <Transition name="expand">
         <div v-if="sendOption === 'later'" class="schedule-section">
-          <div class="schedule-section-header" @click="scheduleOpen = !scheduleOpen">
+          <div
+            class="schedule-section-header"
+            @click="scheduleOpen = !scheduleOpen"
+          >
             <span class="schedule-section-title">Schedule Date & Time</span>
-            <svg class="chevron-icon" :class="{ 'chevron-icon--open': scheduleOpen }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+            <svg
+              class="chevron-icon"
+              :class="{ 'chevron-icon--open': scheduleOpen }"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M5 15l7-7 7 7"
+              />
             </svg>
           </div>
 
@@ -57,8 +81,18 @@
                     type="date"
                     class="date-input"
                   />
-                  <svg class="date-cal-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <svg
+                    class="date-cal-icon"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
                 </div>
 
@@ -76,8 +110,18 @@
                     <option value="05:00 PM">05:00 PM</option>
                     <option value="06:00 PM">06:00 PM</option>
                   </select>
-                  <svg class="select-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  <svg
+                    class="select-chevron"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
               </div>
@@ -91,14 +135,35 @@
       <!-- Footer -->
       <div class="card-footer card-footer--split">
         <button class="btn-back" @click="$router.back()">
-          <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="back-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Back
         </button>
 
-        <button class="btn-continue" @click="handleSend">
-          {{ sendOption === 'now' ? 'Send Campaign' : 'Schedule Campaign' }}
+        <button
+          class="btn-continue"
+          :disabled="isSubmitting"
+          @click="handleSend"
+        >
+          {{
+            isSubmitting
+              ? "Saving..."
+              : sendOption === "now"
+                ? "Send Campaign"
+                : "Schedule Campaign"
+          }}
         </button>
       </div>
     </div>
@@ -106,26 +171,72 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
+import { useMarketing } from "~/composables/useMarketing";
+import { useToast } from "~/composables/useToast";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Schedule Campaign — Uzu Ticket',
+  title: "Schedule Campaign — Uzu Ticket",
   meta: [
-    { name: 'description', content: 'Choose when to send your email marketing campaign.' },
+    {
+      name: "description",
+      content: "Choose when to send your email marketing campaign.",
+    },
   ],
-})
+});
 
-const sendOption = ref<'now' | 'later'>('now')
-const scheduleOpen = ref(true)
-const scheduleDate = ref('2026-09-27')
-const scheduleTime = ref('10:00 AM')
+const sendOption = ref<"now" | "later">("now");
+const scheduleOpen = ref(true);
+const scheduleDate = ref("2026-09-27");
+const scheduleTime = ref("10:00 AM");
+const isSubmitting = ref(false);
+const campaignDraft = useState<{ subject: string; bodyHtml: string } | null>(
+  "marketing:draft",
+  () => null,
+);
+const { createCampaign, sendCampaign } = useMarketing();
+const { error: showError } = useToast();
 
-function handleSend() {
-  navigateTo('/marketing/campaign-sent')
+async function handleSend() {
+  if (!campaignDraft.value) {
+    showError(
+      "Campaign draft missing",
+      "Return to the create screen and complete the campaign first.",
+    );
+    return;
+  }
+  if (sendOption.value === "later" && !scheduleDate.value) {
+    showError(
+      "Choose a schedule date",
+      "Select when this campaign should be sent.",
+    );
+    return;
+  }
+  isSubmitting.value = true;
+  try {
+    const scheduledAt =
+      sendOption.value === "later"
+        ? new Date(`${scheduleDate.value} ${scheduleTime.value}`).toISOString()
+        : undefined;
+    const campaign = await createCampaign({
+      ...campaignDraft.value,
+      scheduledAt,
+    });
+    if (sendOption.value === "now") await sendCampaign(campaign.id);
+    campaignDraft.value = null;
+    await navigateTo("/marketing/campaign-sent");
+  } catch (error) {
+    showError(
+      "Campaign failed",
+      error instanceof Error ? error.message : "Unable to create campaign",
+    );
+  } finally {
+    isSubmitting.value = false;
+  }
 }
 </script>
 
@@ -133,7 +244,7 @@ function handleSend() {
 .schedule-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -160,7 +271,7 @@ function handleSend() {
 .card-title {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -186,15 +297,17 @@ function handleSend() {
   border-radius: 0.85rem;
   cursor: pointer;
   background: #fff;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .option-card:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
 }
 
 .option-card--active {
-  border-color: #3FD246;
+  border-color: #3fd246;
   background: #f0fdf4;
 }
 
@@ -211,14 +324,14 @@ function handleSend() {
 }
 
 .option-radio--active {
-  border-color: #3FD246;
+  border-color: #3fd246;
 }
 
 .radio-dot {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: #3FD246;
+  background: #3fd246;
 }
 
 .option-text {
@@ -230,7 +343,7 @@ function handleSend() {
 .option-title {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .option-desc {
@@ -257,7 +370,7 @@ function handleSend() {
 .schedule-section-title {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .chevron-icon {
@@ -296,7 +409,7 @@ function handleSend() {
   border-radius: 0.65rem;
   padding: 0.7rem 2.5rem 0.7rem 1rem;
   font-size: 0.9rem;
-  color: #0E2615;
+  color: #0e2615;
   outline: none;
   font-family: inherit;
   box-sizing: border-box;
@@ -304,7 +417,7 @@ function handleSend() {
 }
 
 .date-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
 
@@ -332,7 +445,7 @@ function handleSend() {
   border-radius: 0.65rem;
   padding: 0.7rem 2.5rem 0.7rem 1rem;
   font-size: 0.9rem;
-  color: #0E2615;
+  color: #0e2615;
   outline: none;
   cursor: pointer;
   font-family: inherit;
@@ -340,7 +453,7 @@ function handleSend() {
 }
 
 .time-select:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
 
@@ -386,7 +499,9 @@ function handleSend() {
   color: #374151;
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .btn-back:hover {
@@ -403,7 +518,7 @@ function handleSend() {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: #3FD246;
+  background: #3fd246;
   border: none;
   border-radius: 0.65rem;
   padding: 0.6rem 1.4rem;
@@ -412,7 +527,9 @@ function handleSend() {
   color: #fff;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
   box-shadow: 0 4px 12px rgba(63, 210, 70, 0.25);
 }
 

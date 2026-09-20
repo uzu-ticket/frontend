@@ -1,34 +1,75 @@
 <template>
   <div class="invite-page">
-    <!-- Demo Nav -->
-    <div class="demo-nav-row">
-      <NuxtLink to="/promoters" class="demo-nav-link">Dashboard</NuxtLink>
-      <NuxtLink to="/promoters/create" class="demo-nav-link">+ Create Link</NuxtLink>
-      <NuxtLink to="/promoters/link-ready" class="demo-nav-link">Link Ready</NuxtLink>
-      <NuxtLink to="/promoters/invite" class="demo-nav-link demo-nav-link--active">Invite Flow</NuxtLink>
-    </div>
-
     <!-- Main Card -->
     <div class="main-card">
-
       <!-- ── 1. INVITATION STATE (Image 1) ── -->
       <template v-if="state === 'invite'">
         <div class="invite-content">
           <!-- Envelope Illustration -->
           <div class="envelope-graphic">
-            <svg viewBox="0 0 160 120" class="envelope-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg
+              viewBox="0 0 160 120"
+              class="envelope-svg"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <!-- Back flap -->
-              <path d="M20 30L80 70L140 30V100H20V30Z" fill="#2bb832"/>
+              <path d="M20 30L80 70L140 30V100H20V30Z" fill="#2bb832" />
               <!-- Letter inside -->
-              <rect x="35" y="15" width="90" height="65" rx="4" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
-              <rect x="45" y="25" width="50" height="4" rx="2" fill="#d1d5db"/>
-              <rect x="45" y="34" width="70" height="3" rx="1.5" fill="#e5e7eb"/>
-              <rect x="45" y="41" width="60" height="3" rx="1.5" fill="#e5e7eb"/>
-              <rect x="45" y="48" width="65" height="3" rx="1.5" fill="#e5e7eb"/>
-              <rect x="45" y="55" width="40" height="3" rx="1.5" fill="#e5e7eb"/>
+              <rect
+                x="35"
+                y="15"
+                width="90"
+                height="65"
+                rx="4"
+                fill="#ffffff"
+                stroke="#e5e7eb"
+                stroke-width="1.5"
+              />
+              <rect x="45" y="25" width="50" height="4" rx="2" fill="#d1d5db" />
+              <rect
+                x="45"
+                y="34"
+                width="70"
+                height="3"
+                rx="1.5"
+                fill="#e5e7eb"
+              />
+              <rect
+                x="45"
+                y="41"
+                width="60"
+                height="3"
+                rx="1.5"
+                fill="#e5e7eb"
+              />
+              <rect
+                x="45"
+                y="48"
+                width="65"
+                height="3"
+                rx="1.5"
+                fill="#e5e7eb"
+              />
+              <rect
+                x="45"
+                y="55"
+                width="40"
+                height="3"
+                rx="1.5"
+                fill="#e5e7eb"
+              />
               <!-- Envelope Front Pocket -->
-              <path d="M20 40L80 75L140 40V105C140 107.761 137.761 110 135 110H25C22.2386 110 20 107.761 20 105V40Z" fill="#3FD246"/>
-              <path d="M20 40L75 75C78.0933 76.856 81.9067 76.856 85 75L140 40" stroke="#25a02b" stroke-width="2" stroke-linejoin="round"/>
+              <path
+                d="M20 40L80 75L140 40V105C140 107.761 137.761 110 135 110H25C22.2386 110 20 107.761 20 105V40Z"
+                fill="#3FD246"
+              />
+              <path
+                d="M20 40L75 75C78.0933 76.856 81.9067 76.856 85 75L140 40"
+                stroke="#25a02b"
+                stroke-width="2"
+                stroke-linejoin="round"
+              />
             </svg>
           </div>
 
@@ -42,15 +83,36 @@
           <div class="event-card-box">
             <div class="event-thumbnail">
               <svg viewBox="0 0 100 100" class="thumb-svg">
-                <rect width="100" height="100" fill="#1e1b4b" rx="8"/>
-                <circle cx="50" cy="40" r="25" fill="#ec4899" fill-opacity="0.6"/>
-                <circle cx="30" cy="60" r="20" fill="#8b5cf6" fill-opacity="0.5"/>
-                <circle cx="70" cy="55" r="22" fill="#3b82f6" fill-opacity="0.5"/>
+                <rect width="100" height="100" fill="#1e1b4b" rx="8" />
+                <circle
+                  cx="50"
+                  cy="40"
+                  r="25"
+                  fill="#ec4899"
+                  fill-opacity="0.6"
+                />
+                <circle
+                  cx="30"
+                  cy="60"
+                  r="20"
+                  fill="#8b5cf6"
+                  fill-opacity="0.5"
+                />
+                <circle
+                  cx="70"
+                  cy="55"
+                  r="22"
+                  fill="#3b82f6"
+                  fill-opacity="0.5"
+                />
                 <!-- Silhouette audience -->
-                <path d="M10 90 Q 25 70, 40 90 T 70 90 T 100 90 V 100 H 10 Z" fill="#09090b"/>
-                <circle cx="30" cy="72" r="6" fill="#09090b"/>
-                <circle cx="55" cy="68" r="7" fill="#09090b"/>
-                <circle cx="80" cy="74" r="6" fill="#09090b"/>
+                <path
+                  d="M10 90 Q 25 70, 40 90 T 70 90 T 100 90 V 100 H 10 Z"
+                  fill="#09090b"
+                />
+                <circle cx="30" cy="72" r="6" fill="#09090b" />
+                <circle cx="55" cy="68" r="7" fill="#09090b" />
+                <circle cx="80" cy="74" r="6" fill="#09090b" />
               </svg>
             </div>
             <div class="event-details">
@@ -86,23 +148,64 @@
         <div class="welcome-content">
           <!-- Happy Jumping People Illustration -->
           <div class="people-graphic">
-            <svg viewBox="0 0 240 180" class="people-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg
+              viewBox="0 0 240 180"
+              class="people-svg"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <!-- Shadow ovals -->
-              <ellipse cx="65" cy="160" rx="20" ry="4" fill="#e5e7eb"/>
-              <ellipse cx="120" cy="160" rx="18" ry="4" fill="#e5e7eb"/>
-              <ellipse cx="170" cy="160" rx="20" ry="4" fill="#e5e7eb"/>
+              <ellipse cx="65" cy="160" rx="20" ry="4" fill="#e5e7eb" />
+              <ellipse cx="120" cy="160" rx="18" ry="4" fill="#e5e7eb" />
+              <ellipse cx="170" cy="160" rx="20" ry="4" fill="#e5e7eb" />
 
               <!-- Person 1 (Man Jumping) -->
-              <path d="M60 25 C60 15, 72 15, 72 25 C72 35, 60 35, 60 25 Z" fill="#7c2d12"/>
-              <path d="M55 40 L40 15 M77 40 L90 18" stroke="#3FD246" stroke-width="6" stroke-linecap="round"/>
-              <rect x="56" y="36" width="20" height="45" rx="8" fill="#3FD246"/>
-              <path d="M60 80 L55 130 L45 155 M72 80 L80 120 L95 145" stroke="#166534" stroke-width="7" stroke-linecap="round"/>
+              <path
+                d="M60 25 C60 15, 72 15, 72 25 C72 35, 60 35, 60 25 Z"
+                fill="#7c2d12"
+              />
+              <path
+                d="M55 40 L40 15 M77 40 L90 18"
+                stroke="#3FD246"
+                stroke-width="6"
+                stroke-linecap="round"
+              />
+              <rect
+                x="56"
+                y="36"
+                width="20"
+                height="45"
+                rx="8"
+                fill="#3FD246"
+              />
+              <path
+                d="M60 80 L55 130 L45 155 M72 80 L80 120 L95 145"
+                stroke="#166534"
+                stroke-width="7"
+                stroke-linecap="round"
+              />
 
               <!-- Person 2 (Woman Jumping) -->
-              <path d="M165 30 C165 20, 177 20, 177 30 C177 40, 165 40, 165 30 Z" fill="#7c2d12"/>
-              <path d="M152 48 L135 25 M180 48 L195 30" stroke="#3FD246" stroke-width="5" stroke-linecap="round"/>
-              <path d="M155 45 C155 45, 175 45, 175 65 C175 75, 150 90, 150 90 Z" fill="#3FD246"/>
-              <path d="M160 85 L145 125 L130 148 M172 85 L185 120 L200 142" stroke="#166534" stroke-width="6" stroke-linecap="round"/>
+              <path
+                d="M165 30 C165 20, 177 20, 177 30 C177 40, 165 40, 165 30 Z"
+                fill="#7c2d12"
+              />
+              <path
+                d="M152 48 L135 25 M180 48 L195 30"
+                stroke="#3FD246"
+                stroke-width="5"
+                stroke-linecap="round"
+              />
+              <path
+                d="M155 45 C155 45, 175 45, 175 65 C175 75, 150 90, 150 90 Z"
+                fill="#3FD246"
+              />
+              <path
+                d="M160 85 L145 125 L130 148 M172 85 L185 120 L200 142"
+                stroke="#166534"
+                stroke-width="6"
+                stroke-linecap="round"
+              />
             </svg>
           </div>
 
@@ -111,7 +214,9 @@
           <p class="welcome-subtitle">You are now a promoter for</p>
           <div class="welcome-event-name">Music Fest 2026</div>
 
-          <p class="welcome-instruction">Start sharing you link and earn commissions.</p>
+          <p class="welcome-instruction">
+            Start sharing you link and earn commissions.
+          </p>
 
           <!-- Action -->
           <button type="button" class="btn-dashboard" @click="goToDashboard">
@@ -119,39 +224,36 @@
           </button>
         </div>
       </template>
-
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Promoter Invitation — Uzu Ticket',
-  meta: [
-    { name: 'description', content: 'Event promotion invitation' },
-  ],
-})
+  title: "Promoter Invitation — Uzu Ticket",
+  meta: [{ name: "description", content: "Event promotion invitation" }],
+});
 
-const router = useRouter()
-const state = ref<'invite' | 'welcome'>('invite')
+const router = useRouter();
+const state = ref<"invite" | "welcome">("invite");
 
 function acceptInvite() {
-  state.value = 'welcome'
+  state.value = "welcome";
 }
 
 function declineInvite() {
-  router.push('/promoters')
+  router.push("/promoters");
 }
 
 function goToDashboard() {
-  router.push('/promoters')
+  router.push("/promoters");
 }
 </script>
 
@@ -159,7 +261,7 @@ function goToDashboard() {
 .invite-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -186,13 +288,13 @@ function goToDashboard() {
 }
 
 .demo-nav-link:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   color: #16a34a;
 }
 
 .demo-nav-link--active {
-  background: #3FD246;
-  border-color: #3FD246;
+  background: #3fd246;
+  border-color: #3fd246;
   color: #ffffff;
 }
 
@@ -234,7 +336,7 @@ function goToDashboard() {
 .invite-title {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.5rem;
 }
 
@@ -245,7 +347,7 @@ function goToDashboard() {
 }
 
 .invite-subtitle strong {
-  color: #0E2615;
+  color: #0e2615;
 }
 
 /* Event Card Box */
@@ -291,7 +393,7 @@ function goToDashboard() {
 .event-name {
   font-size: 1.1rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -326,13 +428,13 @@ function goToDashboard() {
   padding: 0.85rem 1.5rem;
   border-radius: 0.75rem;
   border: none;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .btn-accept:hover {
@@ -346,23 +448,23 @@ function goToDashboard() {
   border-radius: 0.75rem;
   border: 1.5px solid #e5e7eb;
   background: #ffffff;
-  color: #3FD246;
+  color: #3fd246;
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .btn-decline:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   background: #f0fdf4;
 }
 
 .expire-note {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 /* ── Welcome Content (Image 2) ── */
@@ -389,7 +491,7 @@ function goToDashboard() {
 .welcome-title {
   font-size: 1.6rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.5rem;
 }
 
@@ -402,7 +504,7 @@ function goToDashboard() {
 .welcome-event-name {
   font-size: 1.1rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin-bottom: 1.5rem;
 }
 
@@ -417,13 +519,13 @@ function goToDashboard() {
   padding: 0.85rem 1.5rem;
   border-radius: 0.75rem;
   border: none;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .btn-dashboard:hover {

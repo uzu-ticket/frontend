@@ -6,23 +6,29 @@
       <div class="metrics-grid">
         <div class="metric-card">
           <span class="metric-label">Total Customers</span>
-          <div class="metric-value">12,842</div>
-          <div class="metric-trend">+12.4% from last 30 days</div>
+          <div class="metric-value">{{ stats.total.toLocaleString() }}</div>
+          <div class="metric-trend">All customers in this organisation</div>
         </div>
         <div class="metric-card">
           <span class="metric-label">Active (Last 30 days)</span>
-          <div class="metric-value">2,1358</div>
-          <div class="metric-trend">+8.6% from last 30 days</div>
+          <div class="metric-value">
+            {{ stats.activeLast30Days.toLocaleString() }}
+          </div>
+          <div class="metric-trend">Active in the last 30 days</div>
         </div>
         <div class="metric-card">
           <span class="metric-label">New</span>
-          <div class="metric-value">342</div>
-          <div class="metric-trend">+5.2% from last 30 days</div>
+          <div class="metric-value">
+            {{ stats.newLast30Days.toLocaleString() }}
+          </div>
+          <div class="metric-trend">New in the last 30 days</div>
         </div>
         <div class="metric-card">
           <span class="metric-label">Duplicate/Used</span>
-          <div class="metric-value">214</div>
-          <div class="metric-trend">+3.1% from last 30 days</div>
+          <div class="metric-value">
+            {{ stats.duplicateUsed.toLocaleString() }}
+          </div>
+          <div class="metric-trend">Tickets already used</div>
         </div>
       </div>
 
@@ -30,8 +36,18 @@
       <div class="controls-top-row">
         <!-- Search -->
         <div class="search-input-wrapper">
-          <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg
+            class="search-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
           <input
             v-model="searchQuery"
@@ -39,7 +55,11 @@
             placeholder="Search by name, email or phone..."
             class="search-input"
           />
-          <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''">
+          <button
+            v-if="searchQuery"
+            class="clear-search-btn"
+            @click="searchQuery = ''"
+          >
             &times;
           </button>
         </div>
@@ -51,8 +71,18 @@
           :class="{ 'btn-control--active': filterStatus !== 'All' }"
           @click.stop="showFilterDropdown = !showFilterDropdown"
         >
-          <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          <svg
+            class="w-4 h-4 mr-1.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+            />
           </svg>
           Filter
           <span v-if="filterStatus !== 'All'" class="filter-active-dot" />
@@ -67,7 +97,10 @@
               :key="opt"
               class="filter-option"
               :class="{ 'filter-option--active': filterStatus === opt }"
-              @click="filterStatus = opt; showFilterDropdown = false"
+              @click="
+                filterStatus = opt;
+                showFilterDropdown = false;
+              "
             >
               {{ opt }}
             </button>
@@ -98,11 +131,25 @@
                     <AppSkeleton variant="text" width="110px" />
                   </div>
                 </td>
-                <td class="col-email"><AppSkeleton variant="text" width="140px" /></td>
-                <td class="col-phone"><AppSkeleton variant="text" width="100px" /></td>
-                <td class="col-orders"><AppSkeleton variant="text" width="30px" /></td>
-                <td class="col-status"><AppSkeleton variant="text" width="60px" border-radius="999px" /></td>
-                <td class="col-actions"><AppSkeleton variant="circle" width="24px" height="24px" /></td>
+                <td class="col-email">
+                  <AppSkeleton variant="text" width="140px" />
+                </td>
+                <td class="col-phone">
+                  <AppSkeleton variant="text" width="100px" />
+                </td>
+                <td class="col-orders">
+                  <AppSkeleton variant="text" width="30px" />
+                </td>
+                <td class="col-status">
+                  <AppSkeleton
+                    variant="text"
+                    width="60px"
+                    border-radius="999px"
+                  />
+                </td>
+                <td class="col-actions">
+                  <AppSkeleton variant="circle" width="24px" height="24px" />
+                </td>
               </tr>
             </template>
 
@@ -112,76 +159,145 @@
                 :key="customer.id"
                 class="table-row"
               >
-              <!-- Customer -->
-              <td class="col-customer">
-                <div class="customer-cell">
-                  <div class="avatar" :style="{ background: customer.avatarColor }">
-                    {{ customer.initials }}
-                  </div>
-                  <span class="customer-name">{{ customer.name }}</span>
-                </div>
-              </td>
-
-              <!-- Email -->
-              <td class="col-email">{{ customer.email }}</td>
-
-              <!-- Phone -->
-              <td class="col-phone">{{ customer.phone }}</td>
-
-              <!-- Orders -->
-              <td class="col-orders">{{ customer.orders }}</td>
-
-              <!-- Status -->
-              <td class="col-status">
-                <span class="status-pill" :class="`status--${customer.status.toLowerCase()}`">
-                  {{ customer.status }}
-                </span>
-              </td>
-
-              <!-- Actions -->
-              <td class="col-actions">
-                <div class="kebab-menu-container" @click.stop>
-                  <button
-                    type="button"
-                    class="kebab-trigger-btn"
-                    @click="toggleKebab(customer.id)"
-                  >
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                    </svg>
-                  </button>
-
-                  <Transition name="fade-drop">
-                    <div v-if="activeKebabId === customer.id" class="kebab-dropdown-menu">
-                      <button type="button" class="menu-item" @click="viewCustomer(customer)">
-                        <svg class="w-4 h-4 menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <span>View Customer</span>
-                      </button>
-                      <button type="button" class="menu-item menu-item--danger" @click="activeKebabId = null">
-                        <svg class="w-4 h-4 menu-icon text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                        </svg>
-                        <span>Block Customer</span>
-                      </button>
+                <!-- Customer -->
+                <td class="col-customer">
+                  <div class="customer-cell">
+                    <div
+                      class="avatar"
+                      :style="{ background: customer.avatarColor }"
+                    >
+                      {{ customer.initials }}
                     </div>
-                  </Transition>
-                </div>
-              </td>
-            </tr>
+                    <span class="customer-name">{{ customer.name }}</span>
+                  </div>
+                </td>
+
+                <!-- Email -->
+                <td class="col-email">{{ customer.email }}</td>
+
+                <!-- Phone -->
+                <td class="col-phone">{{ customer.phone }}</td>
+
+                <!-- Orders -->
+                <td class="col-orders">{{ customer.orders }}</td>
+
+                <!-- Status -->
+                <td class="col-status">
+                  <span
+                    class="status-pill"
+                    :class="`status--${customer.status.toLowerCase()}`"
+                  >
+                    {{ customer.status }}
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td class="col-actions">
+                  <div class="kebab-menu-container" @click.stop>
+                    <button
+                      type="button"
+                      class="kebab-trigger-btn"
+                      @click="toggleKebab(customer.id)"
+                    >
+                      <svg
+                        class="w-5 h-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                        />
+                      </svg>
+                    </button>
+
+                    <Transition name="fade-drop">
+                      <div
+                        v-if="activeKebabId === customer.id"
+                        class="kebab-dropdown-menu"
+                      >
+                        <button
+                          type="button"
+                          class="menu-item"
+                          @click="viewCustomer(customer)"
+                        >
+                          <svg
+                            class="w-4 h-4 menu-icon"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                          <span>View Customer</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="menu-item menu-item--danger"
+                          @click="toggleCustomerStatus(customer)"
+                        >
+                          <svg
+                            class="w-4 h-4 menu-icon text-red-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                            />
+                          </svg>
+                          <span>{{
+                            customer.status === "Active"
+                              ? "Deactivate Customer"
+                              : "Activate Customer"
+                          }}</span>
+                        </button>
+                      </div>
+                    </Transition>
+                  </div>
+                </td>
+              </tr>
             </template>
 
             <!-- Empty state -->
             <tr v-if="filteredCustomers.length === 0">
               <td colspan="6" class="empty-table-cell">
                 <div class="empty-state-box">
-                  <svg class="w-12 h-12 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <svg
+                    class="w-12 h-12 text-gray-300 mb-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
                   </svg>
-                  <p class="empty-text">No customers found matching your criteria.</p>
-                  <button class="reset-empty-btn" @click="resetFilters">Reset Search &amp; Filters</button>
+                  <p class="empty-text">
+                    No customers found matching your criteria.
+                  </p>
+                  <button class="reset-empty-btn" @click="resetFilters">
+                    Reset Search &amp; Filters
+                  </button>
                 </div>
               </td>
             </tr>
@@ -200,207 +316,250 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import AppSkeleton from '~/components/ui/AppSkeleton.vue'
-import AppPagination from '~/components/ui/AppPagination.vue'
-import type { Customer } from '~/types/customers'
+import { ref, computed, onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
+import AppSkeleton from "~/components/ui/AppSkeleton.vue";
+import AppPagination from "~/components/ui/AppPagination.vue";
+import type { Customer } from "~/types/customers";
+import { useCustomers } from "~/composables/useCustomers";
 
-const isLoading = ref(false)
+const isLoading = ref(false);
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Customers — Uzu Ticket',
+  title: "Customers — Uzu Ticket",
   meta: [
-    { name: 'description', content: 'Manage buyers and their ticket activity across your events.' },
+    {
+      name: "description",
+      content: "Manage buyers and their ticket activity across your events.",
+    },
   ],
-})
+});
 
-const router = useRouter()
+const router = useRouter();
+const {
+  customers: apiCustomers,
+  stats,
+  fetchCustomers,
+  setStatus,
+} = useCustomers();
 
 // Mock data
 const customersList = ref<Customer[]>([
   {
-    id: 'cust-1',
-    customerId: 'CUST 0032026',
-    initials: 'DE',
-    avatarColor: '#3FD246',
-    name: 'Divine Emmanuel',
-    email: 'divine@gmail.com',
-    phone: '08022334566',
+    id: "cust-1",
+    customerId: "CUST 0032026",
+    initials: "DE",
+    avatarColor: "#3FD246",
+    name: "Divine Emmanuel",
+    email: "divine@gmail.com",
+    phone: "08022334566",
     orders: 8,
-    status: 'Active',
-    location: 'Lagos, Nigeria',
-    dateOfBirth: 'Feb 14, 1999',
-    preferredCurrency: 'NGN',
-    marketingContent: 'Subscribed',
-    lastActive: '2 minutes ago',
-    customerSince: 'Aug 20, 2026',
+    status: "Active",
+    location: "Lagos, Nigeria",
+    dateOfBirth: "Feb 14, 1999",
+    preferredCurrency: "NGN",
+    marketingContent: "Subscribed",
+    lastActive: "2 minutes ago",
+    customerSince: "Aug 20, 2026",
   },
   {
-    id: 'cust-2',
-    customerId: 'CUST 0032027',
-    initials: 'MM',
-    avatarColor: '#374151',
-    name: 'Mike Mills',
-    email: 'mikemills@gmail.com',
-    phone: '08025334566',
+    id: "cust-2",
+    customerId: "CUST 0032027",
+    initials: "MM",
+    avatarColor: "#374151",
+    name: "Mike Mills",
+    email: "mikemills@gmail.com",
+    phone: "08025334566",
     orders: 10,
-    status: 'Inactive',
-    location: 'Abuja, Nigeria',
-    dateOfBirth: 'Mar 5, 1990',
-    preferredCurrency: 'NGN',
-    marketingContent: 'Unsubscribed',
-    lastActive: '5 days ago',
-    customerSince: 'Jun 10, 2026',
+    status: "Inactive",
+    location: "Abuja, Nigeria",
+    dateOfBirth: "Mar 5, 1990",
+    preferredCurrency: "NGN",
+    marketingContent: "Unsubscribed",
+    lastActive: "5 days ago",
+    customerSince: "Jun 10, 2026",
   },
   {
-    id: 'cust-3',
-    customerId: 'CUST 0032028',
-    initials: 'JC',
-    avatarColor: '#3B82F6',
-    name: 'Jane Cooper',
-    email: 'janecooper@gmail.com',
-    phone: '08032334566',
+    id: "cust-3",
+    customerId: "CUST 0032028",
+    initials: "JC",
+    avatarColor: "#3B82F6",
+    name: "Jane Cooper",
+    email: "janecooper@gmail.com",
+    phone: "08032334566",
     orders: 5,
-    status: 'Active',
-    location: 'Port Harcourt, Nigeria',
-    dateOfBirth: 'Jul 22, 1995',
-    preferredCurrency: 'NGN',
-    marketingContent: 'Subscribed',
-    lastActive: '1 hour ago',
-    customerSince: 'Jul 1, 2026',
+    status: "Active",
+    location: "Port Harcourt, Nigeria",
+    dateOfBirth: "Jul 22, 1995",
+    preferredCurrency: "NGN",
+    marketingContent: "Subscribed",
+    lastActive: "1 hour ago",
+    customerSince: "Jul 1, 2026",
   },
   {
-    id: 'cust-4',
-    customerId: 'CUST 0032029',
-    initials: 'BF',
-    avatarColor: '#EF4444',
-    name: 'Ben Francis',
-    email: 'benfrancis@gmail.com',
-    phone: '08032534766',
+    id: "cust-4",
+    customerId: "CUST 0032029",
+    initials: "BF",
+    avatarColor: "#EF4444",
+    name: "Ben Francis",
+    email: "benfrancis@gmail.com",
+    phone: "08032534766",
     orders: 8,
-    status: 'Active',
-    location: 'Lagos, Nigeria',
-    dateOfBirth: 'Dec 10, 1992',
-    preferredCurrency: 'NGN',
-    marketingContent: 'Subscribed',
-    lastActive: '30 minutes ago',
-    customerSince: 'May 15, 2026',
+    status: "Active",
+    location: "Lagos, Nigeria",
+    dateOfBirth: "Dec 10, 1992",
+    preferredCurrency: "NGN",
+    marketingContent: "Subscribed",
+    lastActive: "30 minutes ago",
+    customerSince: "May 15, 2026",
   },
   {
-    id: 'cust-5',
-    customerId: 'CUST 0032030',
-    initials: 'LP',
-    avatarColor: '#7C3AED',
-    name: 'Lizzy Poole',
-    email: 'lizzypoole@gmail.com',
-    phone: '08035534516',
+    id: "cust-5",
+    customerId: "CUST 0032030",
+    initials: "LP",
+    avatarColor: "#7C3AED",
+    name: "Lizzy Poole",
+    email: "lizzypoole@gmail.com",
+    phone: "08035534516",
     orders: 6,
-    status: 'Invalid',
-    location: 'Ibadan, Nigeria',
-    dateOfBirth: 'Sep 3, 1988',
-    preferredCurrency: 'NGN',
-    marketingContent: 'Unsubscribed',
-    lastActive: '2 weeks ago',
-    customerSince: 'Apr 20, 2026',
+    status: "Invalid",
+    location: "Ibadan, Nigeria",
+    dateOfBirth: "Sep 3, 1988",
+    preferredCurrency: "NGN",
+    marketingContent: "Unsubscribed",
+    lastActive: "2 weeks ago",
+    customerSince: "Apr 20, 2026",
   },
   {
-    id: 'cust-6',
-    customerId: 'CUST 0032031',
-    initials: 'JH',
-    avatarColor: '#84CC16',
-    name: 'James Hal',
-    email: 'jameshal@gmail.com',
-    phone: '08030034516',
+    id: "cust-6",
+    customerId: "CUST 0032031",
+    initials: "JH",
+    avatarColor: "#84CC16",
+    name: "James Hal",
+    email: "jameshal@gmail.com",
+    phone: "08030034516",
     orders: 3,
-    status: 'Active',
-    location: 'Enugu, Nigeria',
-    dateOfBirth: 'Jan 18, 1997',
-    preferredCurrency: 'NGN',
-    marketingContent: 'Subscribed',
-    lastActive: '3 hours ago',
-    customerSince: 'Aug 1, 2026',
+    status: "Active",
+    location: "Enugu, Nigeria",
+    dateOfBirth: "Jan 18, 1997",
+    preferredCurrency: "NGN",
+    marketingContent: "Subscribed",
+    lastActive: "3 hours ago",
+    customerSince: "Aug 1, 2026",
   },
   {
-    id: 'cust-7',
-    customerId: 'CUST 0032032',
-    initials: 'JD',
-    avatarColor: '#0E2615',
-    name: 'John Doe',
-    email: 'johndoe@gmail.com',
-    phone: '08085534514',
+    id: "cust-7",
+    customerId: "CUST 0032032",
+    initials: "JD",
+    avatarColor: "#0E2615",
+    name: "John Doe",
+    email: "johndoe@gmail.com",
+    phone: "08085534514",
     orders: 7,
-    status: 'Active',
-    location: 'Lagos, Nigeria',
-    dateOfBirth: 'Nov 25, 1993',
-    preferredCurrency: 'NGN',
-    marketingContent: 'Subscribed',
-    lastActive: '15 minutes ago',
-    customerSince: 'Mar 5, 2026',
+    status: "Active",
+    location: "Lagos, Nigeria",
+    dateOfBirth: "Nov 25, 1993",
+    preferredCurrency: "NGN",
+    marketingContent: "Subscribed",
+    lastActive: "15 minutes ago",
+    customerSince: "Mar 5, 2026",
   },
-])
+]);
+
+customersList.value = apiCustomers.value;
 
 // State
-const searchQuery = ref('')
-const filterStatus = ref('All')
-const showFilterDropdown = ref(false)
-const activeKebabId = ref<string | null>(null)
-const currentPage = ref(1)
-const pageSize = 10
+const searchQuery = ref("");
+const filterStatus = ref("All");
+const showFilterDropdown = ref(false);
+const activeKebabId = ref<string | null>(null);
+const currentPage = ref(1);
+const pageSize = 10;
 
-const statusOptions = ['All', 'Active', 'Inactive', 'Invalid']
+const statusOptions = ["All", "Active", "Inactive", "Invalid"];
 
 // Computed
 const filteredCustomers = computed(() => {
   return customersList.value.filter((c) => {
-    const query = searchQuery.value.toLowerCase().trim()
-    const matchesSearch = !query || (
+    const query = searchQuery.value.toLowerCase().trim();
+    const matchesSearch =
+      !query ||
       c.name.toLowerCase().includes(query) ||
       c.email.toLowerCase().includes(query) ||
-      c.phone.includes(query)
-    )
-    const matchesStatus = filterStatus.value === 'All' || c.status === filterStatus.value
-    return matchesSearch && matchesStatus
-  })
-})
+      c.phone.includes(query);
+    const matchesStatus =
+      filterStatus.value === "All" || c.status === filterStatus.value;
+    return matchesSearch && matchesStatus;
+  });
+});
 
-const totalPages = computed(() => Math.ceil(filteredCustomers.value.length / pageSize) || 1)
+const totalPages = computed(
+  () => Math.ceil(filteredCustomers.value.length / pageSize) || 1,
+);
 
 const paginatedCustomers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return filteredCustomers.value.slice(start, start + pageSize)
-})
+  const start = (currentPage.value - 1) * pageSize;
+  return filteredCustomers.value.slice(start, start + pageSize);
+});
 
 // Methods
 function handleGlobalClick() {
-  activeKebabId.value = null
-  showFilterDropdown.value = false
+  activeKebabId.value = null;
+  showFilterDropdown.value = false;
 }
 
 function toggleKebab(id: string) {
-  activeKebabId.value = activeKebabId.value === id ? null : id
+  activeKebabId.value = activeKebabId.value === id ? null : id;
 }
 
 function viewCustomer(customer: Customer) {
-  activeKebabId.value = null
-  router.push(`/customers/${customer.id}`)
+  activeKebabId.value = null;
+  router.push(`/customers/${customer.id}`);
 }
 
 function resetFilters() {
-  searchQuery.value = ''
-  filterStatus.value = 'All'
+  searchQuery.value = "";
+  filterStatus.value = "All";
 }
+
+async function toggleCustomerStatus(customer: Customer) {
+  activeKebabId.value = null;
+  try {
+    const updated = await setStatus(customer.id, customer.status !== "Active");
+    const index = customersList.value.findIndex(
+      (item) => item.id === updated.id,
+    );
+    if (index >= 0) customersList.value[index] = updated;
+  } catch {
+    // Keep the current row state when the request fails.
+  }
+}
+
+onMounted(fetchCustomers);
+watch(
+  apiCustomers,
+  (value) => {
+    customersList.value = value;
+  },
+  { deep: true },
+);
+watch(
+  () => [searchQuery.value, filterStatus.value],
+  () => {
+    currentPage.value = 1;
+  },
+);
 </script>
 
 <style scoped>
 .customers-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 /* Main Unified Card */
@@ -432,7 +591,7 @@ function resetFilters() {
 .card-title {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -450,14 +609,16 @@ function resetFilters() {
 }
 
 .metric-card {
-  background: #FAFDFA;
+  background: #fafdfa;
   border: 1px solid rgba(63, 210, 70, 0.45);
   border-radius: 0.9rem;
   padding: 1.25rem 1.35rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .metric-card:hover {
@@ -474,7 +635,7 @@ function resetFilters() {
 .metric-value {
   font-size: 1.85rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
@@ -482,7 +643,7 @@ function resetFilters() {
 .metric-trend {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #3FD246;
+  color: #3fd246;
 }
 
 .controls-top-row {
@@ -521,11 +682,11 @@ function resetFilters() {
   color: #111827;
   outline: none;
   transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .search-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
@@ -553,7 +714,7 @@ function resetFilters() {
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   position: relative;
 }
 
@@ -563,7 +724,7 @@ function resetFilters() {
 }
 
 .btn-control--active {
-  border-color: #3FD246;
+  border-color: #3fd246;
   color: #16a34a;
 }
 
@@ -572,7 +733,7 @@ function resetFilters() {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #3FD246;
+  background: #3fd246;
   margin-left: 0.5rem;
 }
 
@@ -614,7 +775,7 @@ function resetFilters() {
   color: #374151;
   cursor: pointer;
   transition: background 0.12s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .filter-option:hover {
@@ -642,7 +803,7 @@ function resetFilters() {
   text-align: left;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #3FD246;
+  color: #3fd246;
   letter-spacing: 0.06em;
   border-bottom: 1px solid #f3f4f6;
   white-space: nowrap;
@@ -764,7 +925,7 @@ function resetFilters() {
   color: #374151;
   cursor: pointer;
   transition: background 0.12s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   text-align: left;
 }
 
@@ -813,19 +974,21 @@ function resetFilters() {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   transition: all 0.15s ease;
 }
 
 .reset-empty-btn:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   color: #16a34a;
 }
 
 /* Transitions */
 .fade-drop-enter-active,
 .fade-drop-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 .fade-drop-enter-from,
 .fade-drop-leave-to {
@@ -834,10 +997,24 @@ function resetFilters() {
 }
 
 /* Col widths */
-.col-customer { min-width: 180px; }
-.col-email { min-width: 180px; }
-.col-phone { min-width: 130px; }
-.col-orders { min-width: 80px; text-align: center; }
-.col-status { min-width: 100px; }
-.col-actions { min-width: 80px; text-align: right; }
+.col-customer {
+  min-width: 180px;
+}
+.col-email {
+  min-width: 180px;
+}
+.col-phone {
+  min-width: 130px;
+}
+.col-orders {
+  min-width: 80px;
+  text-align: center;
+}
+.col-status {
+  min-width: 100px;
+}
+.col-actions {
+  min-width: 80px;
+  text-align: right;
+}
 </style>

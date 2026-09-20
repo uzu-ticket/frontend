@@ -1,186 +1,322 @@
 <template>
   <div class="promoters-page">
-    <!-- Quick Nav Bar for demo / testing -->
-    <div class="demo-nav-row">
-      <NuxtLink to="/promoters" class="demo-nav-link demo-nav-link--active">Dashboard</NuxtLink>
-      <NuxtLink to="/promoters/create" class="demo-nav-link">+ Create Link</NuxtLink>
-      <NuxtLink to="/promoters/link-ready" class="demo-nav-link">Link Ready</NuxtLink>
-      <NuxtLink to="/promoters/invite" class="demo-nav-link">Invite Flow</NuxtLink>
-    </div>
+    <AppPageSkeleton
+      v-if="isLoading"
+      layout="stats"
+      :stat-cards="4"
+      :show-header="false"
+    />
 
-    <!-- Main Unified Card -->
-    <div class="main-card">
-      <!-- Title & Subtitle -->
-      <div class="card-header">
-        <div class="header-text">
-          <h1 class="card-title">Commission</h1>
-          <p class="card-subtitle">Share your promoter link and start earning commission</p>
-        </div>
-        <NuxtLink to="/promoters/create" class="btn-create-link">
-          + Create Link
-        </NuxtLink>
-      </div>
-
-      <!-- Stat Cards (4 Cards Grid) -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-label">Total Commission Earned</span>
-          <div class="stat-value">93,000</div>
-          <div class="stat-trend">+12.4% from last 30 days</div>
+    <template v-else>
+      <!-- Main Unified Card -->
+      <div class="main-card">
+        <!-- Title & Subtitle -->
+        <div class="card-header">
+          <div class="header-text">
+            <h1 class="card-title">Commission</h1>
+            <p class="card-subtitle">
+              Share your promoter link and start earning commission
+            </p>
+          </div>
+          <NuxtLink to="/promoters/create" class="btn-create-link">
+            + Create Link
+          </NuxtLink>
         </div>
 
-        <div class="stat-card">
-          <span class="stat-label">Pending (After Event)</span>
-          <div class="stat-value">12,842</div>
-          <div class="stat-trend">+8.6% from last 30 days</div>
-        </div>
-
-        <div class="stat-card">
-          <span class="stat-label">Available to Withdraw</span>
-          <div class="stat-value">18,000</div>
-          <div class="stat-trend">+5.2% from last 30 days</div>
-        </div>
-
-        <div class="stat-card">
-          <span class="stat-label">Paid Out</span>
-          <div class="stat-value">N75,000</div>
-          <div class="stat-trend">+3.1% from last 30 days</div>
-        </div>
-      </div>
-
-      <!-- Search & Filter Controls -->
-      <div class="controls-top-row">
-        <!-- Search -->
-        <div class="search-input-wrapper">
-          <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search event..."
-            class="search-input"
-          />
-          <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''">
-            &times;
-          </button>
-        </div>
-
-        <!-- Filter -->
-        <div class="filter-wrapper">
-          <button
-            type="button"
-            class="btn-control btn-filter"
-            :class="{ 'btn-control--active': filterStatus !== 'All' }"
-            @click.stop="showFilterDropdown = !showFilterDropdown"
-          >
-            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            Filter
-            <span v-if="filterStatus !== 'All'" class="filter-active-dot" />
-          </button>
-
-          <!-- Filter Dropdown -->
-          <Transition name="fade-drop">
-            <div v-if="showFilterDropdown" class="filter-dropdown" @click.stop>
-              <div class="filter-dropdown-title">Filter by Status</div>
-              <button
-                v-for="opt in statusOptions"
-                :key="opt"
-                class="filter-option"
-                :class="{ 'filter-option--active': filterStatus === opt }"
-                @click="filterStatus = opt; showFilterDropdown = false"
-              >
-                {{ opt }}
-              </button>
+        <!-- Stat Cards (4 Cards Grid) -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Total Commission Earned</span>
+            <div class="stat-value">
+              N{{ formatCurrency(summary.totalCommissionEarnedMinor / 100) }}
             </div>
-          </Transition>
+            <div class="stat-trend">Live earnings</div>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Pending (After Event)</span>
+            <div class="stat-value">
+              N{{ formatCurrency(summary.pendingMinor / 100) }}
+            </div>
+            <div class="stat-trend">Awaiting payout</div>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Available to Withdraw</span>
+            <div class="stat-value">
+              N{{ formatCurrency(summary.availableMinor / 100) }}
+            </div>
+            <div class="stat-trend">Ready for payout</div>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Paid Out</span>
+            <div class="stat-value">
+              N{{ formatCurrency(summary.paidOutMinor / 100) }}
+            </div>
+            <div class="stat-trend">Processed</div>
+          </div>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="controls-top-row">
+          <!-- Search -->
+          <div class="search-input-wrapper">
+            <svg
+              class="search-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search event..."
+              class="search-input"
+            />
+            <button
+              v-if="searchQuery"
+              class="clear-search-btn"
+              @click="searchQuery = ''"
+            >
+              &times;
+            </button>
+          </div>
+
+          <!-- Filter -->
+          <div class="filter-wrapper">
+            <button
+              type="button"
+              class="btn-control btn-filter"
+              :class="{ 'btn-control--active': filterStatus !== 'All' }"
+              @click.stop="showFilterDropdown = !showFilterDropdown"
+            >
+              <svg
+                class="w-4 h-4 mr-1.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                />
+              </svg>
+              Filter
+              <span v-if="filterStatus !== 'All'" class="filter-active-dot" />
+            </button>
+
+            <!-- Filter Dropdown -->
+            <Transition name="fade-drop">
+              <div
+                v-if="showFilterDropdown"
+                class="filter-dropdown"
+                @click.stop
+              >
+                <div class="filter-dropdown-title">Filter by Status</div>
+                <button
+                  v-for="opt in statusOptions"
+                  :key="opt"
+                  class="filter-option"
+                  :class="{ 'filter-option--active': filterStatus === opt }"
+                  @click="
+                    filterStatus = opt;
+                    showFilterDropdown = false;
+                  "
+                >
+                  {{ opt }}
+                </button>
+              </div>
+            </Transition>
+          </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-wrapper">
+          <table class="promoters-table">
+            <thead>
+              <tr>
+                <th>EVENT</th>
+                <th>TICKETS SOLD</th>
+                <th>COMMISSION RATE</th>
+                <th>COMMISSION EARNED</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="item in filteredCommissions"
+                :key="item.id"
+                class="table-row"
+              >
+                <td class="event-name">{{ item.event }}</td>
+                <td>{{ item.ticketsSold }}</td>
+                <td>{{ item.commissionRate }}</td>
+                <td class="earned-cell">
+                  N{{ item.commissionEarned.toLocaleString() }}
+                </td>
+                <td>
+                  <span
+                    class="status-pill"
+                    :class="`status--${item.status.toLowerCase()}`"
+                  >
+                    {{ item.status }}
+                  </span>
+                </td>
+              </tr>
+              <tr v-if="filteredCommissions.length === 0">
+                <td colspan="5" class="empty-cell">
+                  No matching commission logs found.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer Bar -->
+        <div class="card-footer">
+          <span class="footer-note"
+            >Commission becomes payable after the event end date</span
+          >
+          <button type="button" class="btn-withdraw" @click="handleWithdraw">
+            + Withdraw
+          </button>
         </div>
       </div>
-
-      <!-- Table Section -->
-      <div class="table-wrapper">
-        <table class="promoters-table">
-          <thead>
-            <tr>
-              <th>EVENT</th>
-              <th>TICKETS SOLD</th>
-              <th>COMMISSION RATE</th>
-              <th>COMMISSION EARNED</th>
-              <th>STATUS</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in filteredCommissions" :key="item.id" class="table-row">
-              <td class="event-name">{{ item.event }}</td>
-              <td>{{ item.ticketsSold }}</td>
-              <td>{{ item.commissionRate }}</td>
-              <td class="earned-cell">N{{ item.commissionEarned.toLocaleString() }}</td>
-              <td>
-                <span class="status-pill" :class="`status--${item.status.toLowerCase()}`">
-                  {{ item.status }}
-                </span>
-              </td>
-            </tr>
-            <tr v-if="filteredCommissions.length === 0">
-              <td colspan="5" class="empty-cell">No matching commission logs found.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Footer Bar -->
-      <div class="card-footer">
-        <span class="footer-note">Commission becomes payable after the event end date</span>
-        <button type="button" class="btn-withdraw" @click="handleWithdraw">
-          + Withdraw
-        </button>
-      </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { PromoterEventCommission } from '~/types/promoter'
+import { ref, computed, onMounted, watch } from "vue";
+import { useApi } from "~/composables/useApi";
+import { useOrgState } from "~/composables/useOrgState";
+import AppPageSkeleton from "~/components/ui/AppPageSkeleton.vue";
+import type { PromoterEventCommission } from "~/types/promoter";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Promoters — Uzu Ticket',
+  title: "Promoters — Uzu Ticket",
   meta: [
-    { name: 'description', content: 'Manage your promotions, and keep up with your commission earnings.' },
+    {
+      name: "description",
+      content:
+        "Manage your promotions, and keep up with your commission earnings.",
+    },
   ],
-})
+});
 
-const searchQuery = ref('')
-const filterStatus = ref('All')
-const showFilterDropdown = ref(false)
-const statusOptions = ['All', 'Completed', 'Pending', 'Cancelled']
+const searchQuery = ref("");
+const filterStatus = ref("All");
+const showFilterDropdown = ref(false);
+const statusOptions = ["All", "Completed", "Pending", "Cancelled"];
 
-const commissions = ref<PromoterEventCommission[]>([
-  { id: '1', event: 'Summer Tech Camp', ticketsSold: 100, commissionRate: '10%', commissionEarned: 30000, status: 'Completed' },
-  { id: '2', event: 'Music Fest 2026', ticketsSold: 105, commissionRate: '10%', commissionEarned: 14000, status: 'Completed' },
-  { id: '3', event: 'Business Catchup', ticketsSold: 56, commissionRate: '10%', commissionEarned: 20000, status: 'Cancelled' },
-  { id: '4', event: 'Tech Connect Lagos', ticketsSold: 68, commissionRate: '10%', commissionEarned: 10000, status: 'Completed' },
-  { id: '5', event: 'Food & Night Expo', ticketsSold: 35, commissionRate: '10%', commissionEarned: 20000, status: 'Pending' },
-])
+const { instance } = useApi();
+const { activeOrgId } = useOrgState();
+const isLoading = ref(true);
+const summary = ref({
+  totalCommissionEarnedMinor: 0,
+  pendingMinor: 0,
+  availableMinor: 0,
+  paidOutMinor: 0,
+});
+
+const commissions = ref<PromoterEventCommission[]>([]);
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+async function fetchPromoterData() {
+  if (!activeOrgId.value) {
+    commissions.value = [];
+    isLoading.value = false;
+    return;
+  }
+
+  isLoading.value = true;
+
+  try {
+    const [summaryResponse, listResponse] = await Promise.all([
+      instance.get(`/organisations/${activeOrgId.value}/promoters/summary`),
+      instance.get(`/organisations/${activeOrgId.value}/promoters`),
+    ]);
+
+    const summaryData =
+      summaryResponse.data?.data ?? summaryResponse.data ?? summary.value;
+    const listData = listResponse.data?.data ?? listResponse.data ?? [];
+
+    summary.value = {
+      totalCommissionEarnedMinor: Number(
+        summaryData?.totalCommissionEarnedMinor ?? 0,
+      ),
+      pendingMinor: Number(summaryData?.pendingMinor ?? 0),
+      availableMinor: Number(summaryData?.availableMinor ?? 0),
+      paidOutMinor: Number(summaryData?.paidOutMinor ?? 0),
+    };
+
+    commissions.value = Array.isArray(listData)
+      ? listData.map((item: any) => ({
+          id: item.id,
+          event: item.event,
+          ticketsSold: Number(item.ticketsSold ?? 0),
+          commissionRate: item.commissionRate,
+          commissionEarned: Number(item.commissionEarned ?? 0),
+          status: item.status,
+        }))
+      : [];
+  } catch (error) {
+    console.error("Failed to load promoter data", error);
+    commissions.value = [];
+    summary.value = {
+      totalCommissionEarnedMinor: 0,
+      pendingMinor: 0,
+      availableMinor: 0,
+      paidOutMinor: 0,
+    };
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(() => {
+  fetchPromoterData();
+});
+
+watch(activeOrgId, () => {
+  fetchPromoterData();
+});
 
 const filteredCommissions = computed(() => {
   return commissions.value.filter((item) => {
-    const matchesSearch = !searchQuery.value || item.event.toLowerCase().includes(searchQuery.value.toLowerCase().trim())
-    const matchesStatus = filterStatus.value === 'All' || item.status === filterStatus.value
-    return matchesSearch && matchesStatus
-  })
-})
+    const matchesSearch =
+      !searchQuery.value ||
+      item.event.toLowerCase().includes(searchQuery.value.toLowerCase().trim());
+    const matchesStatus =
+      filterStatus.value === "All" || item.status === filterStatus.value;
+    return matchesSearch && matchesStatus;
+  });
+});
 
-const router = useRouter()
+const router = useRouter();
 
 function handleWithdraw() {
-  router.push('/promoters/withdrawal')
+  router.push("/promoters/withdrawal");
 }
 </script>
 
@@ -188,7 +324,7 @@ function handleWithdraw() {
 .promoters-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -215,13 +351,13 @@ function handleWithdraw() {
 }
 
 .demo-nav-link:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   color: #16a34a;
 }
 
 .demo-nav-link--active {
-  background: #3FD246;
-  border-color: #3FD246;
+  background: #3fd246;
+  border-color: #3fd246;
   color: #ffffff;
 }
 
@@ -254,7 +390,7 @@ function handleWithdraw() {
 .card-title {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -269,7 +405,7 @@ function handleWithdraw() {
   align-items: center;
   padding: 0.6rem 1.25rem;
   border-radius: 0.65rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-size: 0.875rem;
   font-weight: 700;
@@ -290,14 +426,16 @@ function handleWithdraw() {
 }
 
 .stat-card {
-  background: #FAFDFA;
+  background: #fafdfa;
   border: 1px solid rgba(63, 210, 70, 0.45);
   border-radius: 0.9rem;
   padding: 1.25rem 1.35rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .stat-card:hover {
@@ -314,7 +452,7 @@ function handleWithdraw() {
 .stat-value {
   font-size: 1.85rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
@@ -322,7 +460,7 @@ function handleWithdraw() {
 .stat-trend {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #3FD246;
+  color: #3fd246;
 }
 
 /* Controls (Search & Filter) */
@@ -361,11 +499,11 @@ function handleWithdraw() {
   color: #111827;
   outline: none;
   transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .search-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
 }
@@ -397,7 +535,7 @@ function handleWithdraw() {
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .btn-control:hover {
@@ -406,7 +544,7 @@ function handleWithdraw() {
 }
 
 .btn-control--active {
-  border-color: #3FD246;
+  border-color: #3fd246;
   color: #16a34a;
 }
 
@@ -415,7 +553,7 @@ function handleWithdraw() {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #3FD246;
+  background: #3fd246;
   margin-left: 0.5rem;
 }
 
@@ -456,7 +594,7 @@ function handleWithdraw() {
   color: #374151;
   cursor: pointer;
   transition: background 0.12s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .filter-option:hover {
@@ -492,7 +630,7 @@ function handleWithdraw() {
   text-align: left;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #3FD246;
+  color: #3fd246;
   letter-spacing: 0.06em;
   border-bottom: 1px solid #f3f4f6;
   white-space: nowrap;
@@ -521,7 +659,7 @@ function handleWithdraw() {
 
 .earned-cell {
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .status-pill {
@@ -566,13 +704,13 @@ function handleWithdraw() {
   padding: 0.65rem 1.5rem;
   border-radius: 0.65rem;
   border: none;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .btn-withdraw:hover {

@@ -6,11 +6,24 @@
       <div class="card-header">
         <div class="header-text">
           <h1 class="card-title">Marketing Overview</h1>
-          <p class="card-subtitle">Manage your email campaigns and track performance.</p>
+          <p class="card-subtitle">
+            Manage your email campaigns and track performance.
+          </p>
         </div>
         <NuxtLink to="/marketing/create" class="btn-create">
-          <svg xmlns="http://www.w3.org/2000/svg" class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="btn-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 4v16m8-8H4"
+            />
           </svg>
           Create Campaign
         </NuxtLink>
@@ -20,23 +33,25 @@
       <div class="stats-grid">
         <div class="stat-card">
           <span class="stat-label">Total Campaigns</span>
-          <div class="stat-value">24</div>
-          <div class="stat-trend">+12.4% from last 30 days</div>
+          <div class="stat-value">
+            {{ stats.totalCampaigns.toLocaleString() }}
+          </div>
+          <div class="stat-trend">Campaigns created</div>
         </div>
         <div class="stat-card">
           <span class="stat-label">Emails Sent</span>
-          <div class="stat-value">12,543</div>
-          <div class="stat-trend">+16% from last 30 days</div>
+          <div class="stat-value">{{ stats.emailsSent.toLocaleString() }}</div>
+          <div class="stat-trend">Recipients processed</div>
         </div>
         <div class="stat-card">
           <span class="stat-label">Open Rate</span>
-          <div class="stat-value">34.6%</div>
-          <div class="stat-trend">+5.2% from last 30 days</div>
+          <div class="stat-value">{{ stats.openRate.toFixed(1) }}%</div>
+          <div class="stat-trend">Across delivered campaigns</div>
         </div>
         <div class="stat-card">
           <span class="stat-label">Click Rate</span>
-          <div class="stat-value">7.2%</div>
-          <div class="stat-trend">+2% from last 30 days</div>
+          <div class="stat-value">{{ stats.clickRate.toFixed(1) }}%</div>
+          <div class="stat-trend">Across delivered campaigns</div>
         </div>
       </div>
 
@@ -55,16 +70,55 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="campaign in campaigns" :key="campaign.id" class="table-row">
-                <td class="campaign-name">{{ campaign.name }}</td>
-                <td class="audience-col">{{ campaign.audience }}</td>
-                <td class="sent-col">{{ campaign.sent.toLocaleString() }}</td>
-                <td class="rate-col">{{ campaign.openRate }}</td>
-                <td class="rate-col">{{ campaign.clickRate }}</td>
+              <tr
+                v-for="campaign in campaigns"
+                :key="campaign.id"
+                class="table-row"
+              >
+                <td class="campaign-name">{{ campaign.subject }}</td>
+                <td class="audience-col">
+                  {{ campaign.totalRecipients.toLocaleString() }} recipients
+                </td>
+                <td class="sent-col">
+                  {{
+                    campaign.status === "sent"
+                      ? campaign.totalRecipients.toLocaleString()
+                      : "—"
+                  }}
+                </td>
+                <td class="rate-col">—</td>
+                <td class="rate-col">—</td>
                 <td>
-                  <span class="status-badge" :class="statusClass(campaign.status)">
-                    {{ campaign.status }}
+                  <span
+                    class="status-badge"
+                    :class="statusClass(campaign.status)"
+                  >
+                    {{ formatStatus(campaign.status) }}
                   </span>
+                </td>
+              </tr>
+              <tr v-if="campaigns.length === 0">
+                <td colspan="6" class="empty-campaigns-cell">
+                  <div class="empty-campaigns-state">
+                    <svg
+                      class="empty-campaigns-icon"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 0H6.375A2.625 2.625 0 003.75 4.875v14.25a2.625 2.625 0 002.625 2.625h8.25a2.625 2.625 0 002.625-2.625V16.5M8.25 2.25V6.375A2.625 2.625 0 0010.875 9h4.125"
+                      />
+                    </svg>
+                    <span class="empty-campaigns-title">No campaigns yet</span>
+                    <span class="empty-campaigns-copy"
+                      >Create a campaign to start reaching your customers.</span
+                    >
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -72,7 +126,9 @@
         </div>
 
         <div class="table-footer">
-          <NuxtLink to="/marketing/campaigns" class="view-all-link">View all events</NuxtLink>
+          <NuxtLink to="/marketing/campaigns" class="view-all-link"
+            >View all events</NuxtLink
+          >
         </div>
       </div>
     </div>
@@ -80,42 +136,42 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, watch } from "vue";
+import { useMarketing } from "~/composables/useMarketing";
+import { useOrgState } from "~/composables/useOrgState";
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Marketing — Uzu Ticket',
+  title: "Marketing — Uzu Ticket",
   meta: [
-    { name: 'description', content: 'Create and send targeted email campaigns, promote your events, and drive more ticket sales.' },
+    {
+      name: "description",
+      content:
+        "Create and send targeted email campaigns, promote your events, and drive more ticket sales.",
+    },
   ],
-})
+});
 
-interface Campaign {
-  id: number
-  name: string
-  audience: string
-  sent: number
-  openRate: string
-  clickRate: string
-  status: 'Sent' | 'Cancelled' | 'Scheduled'
-}
+const { campaigns, stats, fetchMarketing } = useMarketing();
+const { activeOrgId } = useOrgState();
 
-const campaigns: Campaign[] = [
-  { id: 1, name: 'Summer Music Camp', audience: 'VIP Customers', sent: 2450, openRate: '30%', clickRate: '20%', status: 'Sent' },
-  { id: 2, name: 'Music Fest 2026', audience: 'All Customers', sent: 1300, openRate: '10%', clickRate: '5%', status: 'Sent' },
-  { id: 3, name: 'Business Catchup', audience: 'Regular', sent: 3210, openRate: '35%', clickRate: '40%', status: 'Cancelled' },
-  { id: 4, name: 'Tech Connect Lagos', audience: 'VIP Customers', sent: 2400, openRate: '24%', clickRate: '32%', status: 'Sent' },
-  { id: 5, name: 'Food & Night Expo', audience: 'Regular', sent: 1000, openRate: '10%', clickRate: '43%', status: 'Scheduled' },
-]
+onMounted(fetchMarketing);
+watch(activeOrgId, fetchMarketing);
 
 function statusClass(status: string) {
   const map: Record<string, string> = {
-    Sent: 'status--sent',
-    Cancelled: 'status--cancelled',
-    Scheduled: 'status--scheduled',
-  }
-  return map[status] ?? ''
+    sent: "status--sent",
+    cancelled: "status--cancelled",
+    scheduled: "status--scheduled",
+    draft: "status--scheduled",
+  };
+  return map[status] ?? "";
+}
+
+function formatStatus(status: string) {
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 </script>
 
@@ -123,7 +179,7 @@ function statusClass(status: string) {
 .marketing-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -158,7 +214,7 @@ function statusClass(status: string) {
 .card-title {
   font-size: 1.125rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -172,7 +228,7 @@ function statusClass(status: string) {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #fff;
   font-weight: 700;
   font-size: 0.875rem;
@@ -180,7 +236,9 @@ function statusClass(status: string) {
   border-radius: 0.65rem;
   text-decoration: none;
   white-space: nowrap;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
   box-shadow: 0 4px 14px rgba(63, 210, 70, 0.25);
 }
 
@@ -202,11 +260,13 @@ function statusClass(status: string) {
 }
 
 .stat-card {
-  background: #FAFDFA;
+  background: #fafdfa;
   border: 1px solid rgba(63, 210, 70, 0.45);
   border-radius: 0.9rem;
   padding: 1.25rem 1.35rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .stat-card:hover {
@@ -225,7 +285,7 @@ function statusClass(status: string) {
 .stat-value {
   font-size: 1.85rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   line-height: 1.1;
   margin-bottom: 0.5rem;
   letter-spacing: -0.02em;
@@ -234,7 +294,7 @@ function statusClass(status: string) {
 .stat-trend {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #3FD246;
+  color: #3fd246;
 }
 
 /* Table Section */
@@ -275,6 +335,37 @@ function statusClass(status: string) {
   white-space: nowrap;
 }
 
+.empty-campaigns-cell {
+  padding: 3rem 1rem !important;
+  text-align: center;
+}
+
+.empty-campaigns-state {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #6b7280;
+  white-space: normal;
+}
+
+.empty-campaigns-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.35rem;
+  color: #9ca3af;
+}
+
+.empty-campaigns-title {
+  color: #374151;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.empty-campaigns-copy {
+  font-size: 0.85rem;
+}
+
 .table-row {
   border-bottom: 1px solid #f9fafb;
   transition: background 0.15s;
@@ -290,7 +381,7 @@ function statusClass(status: string) {
 
 .campaign-name {
   font-weight: 600;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .audience-col {
@@ -340,7 +431,7 @@ function statusClass(status: string) {
 .view-all-link {
   font-size: 0.82rem;
   font-weight: 700;
-  color: #3FD246;
+  color: #3fd246;
   text-decoration: none;
 }
 

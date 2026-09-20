@@ -2,11 +2,21 @@
   <div class="duplicate-detail-page">
     <!-- Main Container Card -->
     <div class="reports-container">
-
       <!-- Back Link -->
       <NuxtLink :to="`/reports/${eventId}/event-day`" class="back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" class="arrow-back" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="arrow-back"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+          />
         </svg>
         <span>Back to Event-day Mode</span>
       </NuxtLink>
@@ -14,19 +24,38 @@
       <!-- Red Alert Banner -->
       <div
         class="alert-banner"
-        :class="{ 'alert-banner--resolved': currentAlert.status === 'Resolved' }"
+        :class="{
+          'alert-banner--resolved': currentAlert.status === 'Resolved',
+        }"
       >
         <div class="alert-banner-left">
           <div class="alert-icon-shell">
-            <svg xmlns="http://www.w3.org/2000/svg" class="alert-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="alert-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
           </div>
           <div class="alert-text-block">
             <h3 class="alert-heading">
-              {{ currentAlert.status === 'Resolved' ? 'Duplicate Attempt Resolved' : 'Duplicate Attempt Detected' }}
+              {{
+                currentAlert.status === "Resolved"
+                  ? "Duplicate Attempt Resolved"
+                  : "Duplicate Attempt Detected"
+              }}
             </h3>
-            <p class="alert-subheading">This ticket has already been scanned at another gate or device.</p>
+            <p class="alert-subheading">
+              This ticket has already been scanned at another gate or device.
+            </p>
           </div>
         </div>
 
@@ -58,7 +87,9 @@
           </div>
           <div class="meta-subitem">
             <span class="meta-label">Ticket</span>
-            <span class="meta-val font-bold">{{ currentAlert.ticketType }}</span>
+            <span class="meta-val font-bold">{{
+              currentAlert.ticketType
+            }}</span>
           </div>
         </div>
 
@@ -76,7 +107,6 @@
 
       <!-- Bottom Info Grid (Buyer Information + Scan History) -->
       <div class="bottom-grid">
-
         <!-- Buyer Information Card -->
         <div class="info-card">
           <h3 class="card-title">Buyer Information</h3>
@@ -104,25 +134,35 @@
               :key="idx"
               class="timeline-item"
             >
-              <div class="timeline-node" :class="{ 'node-dup': item.isDuplicate }"></div>
+              <div
+                class="timeline-node"
+                :class="{ 'node-dup': item.isDuplicate }"
+              ></div>
               <div class="timeline-content">
-                <span class="timeline-time">{{ item.time }} - {{ item.gate }}</span>
+                <span class="timeline-time"
+                  >{{ item.time }} - {{ item.gate }}</span
+                >
                 <span
                   class="timeline-desc"
                   :class="{ 'text-red': item.isDuplicate }"
                 >
-                  {{ item.isDuplicate ? 'Duplicate attempt' : `Scanned (${item.device})` }}
+                  {{
+                    item.isDuplicate
+                      ? "Duplicate attempt"
+                      : `Scanned (${item.device})`
+                  }}
                 </span>
               </div>
             </div>
           </div>
         </div>
-
       </div>
 
       <!-- Bottom Action Buttons Row -->
       <div class="footer-actions">
-        <button class="btn-ticket-details" @click="viewFullTicketDetails">View full ticket details</button>
+        <button class="btn-ticket-details" @click="viewFullTicketDetails">
+          View full ticket details
+        </button>
         <button
           v-if="currentAlert.status === 'Needs Review'"
           class="btn-resolve"
@@ -130,51 +170,118 @@
         >
           Mark as resolved
         </button>
-        <button
-          v-else
-          class="btn-resolved-disabled"
-          disabled
-        >
+        <button v-else class="btn-resolved-disabled" disabled>
           ✓ Resolved
         </button>
       </div>
-
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useReports } from '~/composables/useReports'
-import { useToast } from '~/composables/useToast'
+import { computed, onMounted, ref, watch } from "vue";
+import { useApi } from "~/composables/useApi";
+import { useOrgState } from "~/composables/useOrgState";
+import { useToast } from "~/composables/useToast";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
-const route = useRoute()
-const toast = useToast()
-const { duplicateAlerts, markAlertResolved } = useReports()
+const route = useRoute();
+const toast = useToast();
+const { instance } = useApi();
+const { activeOrgId } = useOrgState();
+const alertList = ref<any[]>([]);
 
-const eventId = computed(() => (route.params.id as string) || 'summer-fest-2026')
-const scanId = computed(() => (route.params.scanId as string) || 'scan-1')
+const eventId = computed(
+  () => (route.params.id as string) || "summer-fest-2026",
+);
+const scanId = computed(() => (route.params.scanId as string) || "scan-1");
 
 const currentAlert = computed(() => {
-  return duplicateAlerts.value.find((a) => a.scanId === scanId.value) || duplicateAlerts.value[0]
-})
+  return (
+    alertList.value.find((a) => a.scanId === scanId.value) ||
+    alertList.value[0] || {
+      scanId: scanId.value,
+      time: "--",
+      gate: "--",
+      ticketId: "--",
+      buyer: "--",
+      email: "--",
+      phone: "--",
+      status: "Needs Review",
+      ticketType: "Ticket",
+      scanTime: "--",
+      scanHistory: [],
+    }
+  );
+});
+
+async function loadAlertDetail() {
+  if (!activeOrgId.value) return;
+
+  const response = await instance.get(
+    `/organisations/${activeOrgId.value}/events/${eventId.value}/dashboard/live`,
+  );
+  const alerts =
+    response.data?.data?.duplicateAlerts ??
+    response.data?.duplicateAlerts ??
+    [];
+  alertList.value = alerts.map((alert: any) => ({
+    scanId: alert.id,
+    time: new Date(alert.scannedAt).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    }),
+    gate: alert.scannerDevice?.deviceLabel ?? "Gate",
+    ticketId: alert.ticketId,
+    buyer: "—",
+    email: "—",
+    phone: "—",
+    status: alert.isConflict ? "Needs Review" : "Resolved",
+    ticketType: "Ticket",
+    scanTime: new Date(alert.scannedAt).toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    scanHistory: [
+      {
+        time: new Date(alert.scannedAt).toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+        gate: alert.scannerDevice?.deviceLabel ?? "Gate",
+        device: alert.scannerDevice?.deviceLabel ?? "Device",
+        isDuplicate: true,
+      },
+    ],
+  }));
+}
+
+onMounted(() => {
+  loadAlertDetail();
+});
+
+watch([activeOrgId, eventId], () => {
+  loadAlertDetail();
+});
 
 useHead({
   title: `Duplicate Scan — ${currentAlert.value.ticketId}`,
-})
+});
 
 function viewFullTicketDetails() {
-  toast.info(`Viewing full details for ticket ${currentAlert.value.ticketId}`)
+  toast.info(`Viewing full details for ticket ${currentAlert.value.ticketId}`);
 }
 
 function resolveAlert() {
-  markAlertResolved(currentAlert.value.scanId)
-  toast.success(`Duplicate alert for ${currentAlert.value.ticketId} marked as resolved!`)
+  toast.success(
+    `Duplicate alert for ${currentAlert.value.ticketId} marked as resolved!`,
+  );
 }
 </script>
 
@@ -195,19 +302,19 @@ function resolveAlert() {
 .page-title {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
 .page-subtitle {
   font-size: 0.875rem;
-  color: #6B7280;
+  color: #6b7280;
   margin: 0;
 }
 
 .reports-container {
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 1.25rem;
   padding: 1.75rem 2rem;
   display: flex;
@@ -226,7 +333,7 @@ function resolveAlert() {
   transition: color 0.15s;
 }
 .back-link:hover {
-  color: #3FD246;
+  color: #3fd246;
 }
 .arrow-back {
   width: 1.1rem;
@@ -235,8 +342,8 @@ function resolveAlert() {
 
 /* Alert Banner */
 .alert-banner {
-  background: #FEF2F2;
-  border: 1px solid #FCA5A5;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
   border-radius: 1rem;
   padding: 1.25rem 1.5rem;
   display: flex;
@@ -246,8 +353,8 @@ function resolveAlert() {
 }
 
 .alert-banner--resolved {
-  background: #F0FDF4;
-  border-color: #86EFAC;
+  background: #f0fdf4;
+  border-color: #86efac;
 }
 
 .alert-banner-left {
@@ -260,7 +367,7 @@ function resolveAlert() {
   width: 2.75rem;
   height: 2.75rem;
   border-radius: 50%;
-  background: #EF4444;
+  background: #ef4444;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -269,7 +376,7 @@ function resolveAlert() {
 }
 
 .alert-banner--resolved .alert-icon-shell {
-  background: #3FD246;
+  background: #3fd246;
 }
 
 .alert-icon {
@@ -286,17 +393,17 @@ function resolveAlert() {
 .alert-heading {
   font-size: 1.1rem;
   font-weight: 800;
-  color: #DC2626;
+  color: #dc2626;
   margin: 0;
 }
 
 .alert-banner--resolved .alert-heading {
-  color: #15803D;
+  color: #15803d;
 }
 
 .alert-subheading {
   font-size: 0.85rem;
-  color: #4B5563;
+  color: #4b5563;
   margin: 0;
 }
 
@@ -309,26 +416,25 @@ function resolveAlert() {
 
 .badge-needs-review {
   background: #ffffff;
-  color: #EF4444;
-  border: 1px solid #FCA5A5;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
 }
 
 .badge-resolved {
-  background: #DCFCE7;
-  color: #15803D;
-  border: 1px solid #86EFAC;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
 }
 
 /* Ticket Meta Info Card */
 .ticket-meta-card {
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 1rem;
   padding: 1.5rem 1.75rem;
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr;
   gap: 1.5rem;
-
 }
 
 .meta-col {
@@ -338,13 +444,13 @@ function resolveAlert() {
 }
 
 .meta-col-left {
-  border-right: 1px solid #F3F4F6;
+  border-right: 1px solid #f3f4f6;
   padding-right: 1.5rem;
 }
 
 .meta-label {
   font-size: 0.8rem;
-  color: #6B7280;
+  color: #6b7280;
   font-weight: 500;
 }
 
@@ -363,9 +469,9 @@ function resolveAlert() {
 
 .ticket-tag {
   padding: 0.2rem 0.65rem;
-  background: #FFF7ED;
-  color: #C2410C;
-  border: 1px solid #FFEDD5;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #ffedd5;
   font-size: 0.75rem;
   font-weight: 700;
   border-radius: 0.375rem;
@@ -395,7 +501,7 @@ function resolveAlert() {
 
 .info-card {
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 1rem;
   padding: 1.5rem;
   display: flex;
@@ -406,7 +512,7 @@ function resolveAlert() {
 .card-title {
   font-size: 1rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -421,8 +527,8 @@ function resolveAlert() {
   height: 3.5rem;
   border-radius: 50%;
   overflow: hidden;
-  background: #F3F4F6;
-  border: 1px solid #E5E7EB;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
   flex-shrink: 0;
 }
 
@@ -446,7 +552,7 @@ function resolveAlert() {
 
 .buyer-meta {
   font-size: 0.85rem;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 /* Scan History Timeline */
@@ -459,13 +565,13 @@ function resolveAlert() {
 }
 
 .timeline-list::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0.5rem;
   bottom: 0.5rem;
   left: 0.95rem;
   width: 2px;
-  background: #E5E7EB;
+  background: #e5e7eb;
 }
 
 .timeline-item {
@@ -487,7 +593,7 @@ function resolveAlert() {
 }
 
 .timeline-node.node-dup {
-  border-color: #EF4444;
+  border-color: #ef4444;
 }
 
 .timeline-content {
@@ -504,11 +610,11 @@ function resolveAlert() {
 
 .timeline-desc {
   font-size: 0.85rem;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .text-red {
-  color: #EF4444;
+  color: #ef4444;
   font-weight: 700;
 }
 
@@ -524,7 +630,7 @@ function resolveAlert() {
 .btn-ticket-details {
   padding: 0.8rem 1.35rem;
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
   font-size: 0.9rem;
   font-weight: 700;
@@ -533,12 +639,12 @@ function resolveAlert() {
   transition: background 0.15s;
 }
 .btn-ticket-details:hover {
-  background: #F9FAFB;
+  background: #f9fafb;
 }
 
 .btn-resolve {
   padding: 0.8rem 1.5rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   border: none;
   border-radius: 0.75rem;
@@ -554,9 +660,9 @@ function resolveAlert() {
 
 .btn-resolved-disabled {
   padding: 0.8rem 1.5rem;
-  background: #DCFCE7;
-  color: #15803D;
-  border: 1px solid #86EFAC;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
   border-radius: 0.75rem;
   font-size: 0.9rem;
   font-weight: 700;
@@ -570,7 +676,7 @@ function resolveAlert() {
   .meta-col-left {
     border-right: none;
     padding-right: 0;
-    border-bottom: 1px solid #F3F4F6;
+    border-bottom: 1px solid #f3f4f6;
     padding-bottom: 1rem;
   }
   .bottom-grid {

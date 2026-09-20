@@ -21,10 +21,12 @@
       </div>
 
       <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <div class="spinner" />
-        <p class="loading-text">Loading event details...</p>
-      </div>
+      <AppPageSkeleton
+        v-if="loading"
+        layout="event"
+        :show-actions="true"
+        action-count="2"
+      />
 
       <!-- Error State -->
       <div v-else-if="!event" class="error-state">

@@ -1,19 +1,13 @@
 <template>
   <div class="link-ready-page">
-    <!-- Demo Nav -->
-    <div class="demo-nav-row">
-      <NuxtLink to="/promoters" class="demo-nav-link">Dashboard</NuxtLink>
-      <NuxtLink to="/promoters/create" class="demo-nav-link">+ Create Link</NuxtLink>
-      <NuxtLink to="/promoters/link-ready" class="demo-nav-link demo-nav-link--active">Link Ready</NuxtLink>
-      <NuxtLink to="/promoters/invite" class="demo-nav-link">Invite Flow</NuxtLink>
-    </div>
-
     <!-- Main Unified Card -->
     <div class="main-card">
       <!-- Title & Subtitle -->
       <div class="card-header-section">
         <h1 class="card-title">Your Promoter Link is Ready!</h1>
-        <p class="card-subtitle">Share your promoter link and start earning commission</p>
+        <p class="card-subtitle">
+          Share your promoter link and start earning commission
+        </p>
       </div>
 
       <!-- Your Link Section -->
@@ -26,9 +20,24 @@
             :value="promoterLink"
             class="copy-link-input"
           />
-          <button type="button" class="btn-copy-icon" title="Copy link" @click="copyLink">
-            <svg class="copy-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          <button
+            type="button"
+            class="btn-copy-icon"
+            title="Copy link"
+            @click="copyLink"
+          >
+            <svg
+              class="copy-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
           </button>
         </div>
@@ -41,59 +50,427 @@
           <h2 class="col-title">Scan QR Code</h2>
           <div class="qr-box">
             <div class="qr-code-wrapper">
-              <svg viewBox="0 0 100 100" class="qr-svg" xmlns="http://www.w3.org/2000/svg">
-                <rect x="10" y="10" width="25" height="25" fill="#111827" rx="2"/>
-                <rect x="14" y="14" width="17" height="17" fill="white" rx="1"/>
-                <rect x="18" y="18" width="9" height="9" fill="#111827" rx="1"/>
-                <rect x="65" y="10" width="25" height="25" fill="#111827" rx="2"/>
-                <rect x="69" y="14" width="17" height="17" fill="white" rx="1"/>
-                <rect x="73" y="18" width="9" height="9" fill="#111827" rx="1"/>
-                <rect x="10" y="65" width="25" height="25" fill="#111827" rx="2"/>
-                <rect x="14" y="69" width="17" height="17" fill="white" rx="1"/>
-                <rect x="18" y="73" width="9" height="9" fill="#111827" rx="1"/>
-                <rect x="40" y="10" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="48" y="10" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="56" y="10" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="40" y="18" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="56" y="18" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="40" y="26" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="48" y="26" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="10" y="40" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="18" y="40" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="26" y="40" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="40" y="40" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="48" y="40" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="56" y="40" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="64" y="40" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="72" y="40" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="80" y="40" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="10" y="48" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="26" y="48" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="40" y="48" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="56" y="48" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="72" y="48" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="80" y="48" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="10" y="56" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="18" y="56" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="26" y="56" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="40" y="56" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="48" y="56" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="56" y="56" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="64" y="56" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="72" y="56" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="40" y="65" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="48" y="65" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="56" y="65" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="64" y="65" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="72" y="65" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="80" y="65" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="40" y="73" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="56" y="73" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="80" y="73" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="40" y="80" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="48" y="80" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="64" y="80" width="5" height="5" fill="#111827" rx="1"/>
-                <rect x="72" y="80" width="5" height="5" fill="#111827" rx="1"/>
+              <svg
+                viewBox="0 0 100 100"
+                class="qr-svg"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  x="10"
+                  y="10"
+                  width="25"
+                  height="25"
+                  fill="#111827"
+                  rx="2"
+                />
+                <rect
+                  x="14"
+                  y="14"
+                  width="17"
+                  height="17"
+                  fill="white"
+                  rx="1"
+                />
+                <rect
+                  x="18"
+                  y="18"
+                  width="9"
+                  height="9"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="65"
+                  y="10"
+                  width="25"
+                  height="25"
+                  fill="#111827"
+                  rx="2"
+                />
+                <rect
+                  x="69"
+                  y="14"
+                  width="17"
+                  height="17"
+                  fill="white"
+                  rx="1"
+                />
+                <rect
+                  x="73"
+                  y="18"
+                  width="9"
+                  height="9"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="10"
+                  y="65"
+                  width="25"
+                  height="25"
+                  fill="#111827"
+                  rx="2"
+                />
+                <rect
+                  x="14"
+                  y="69"
+                  width="17"
+                  height="17"
+                  fill="white"
+                  rx="1"
+                />
+                <rect
+                  x="18"
+                  y="73"
+                  width="9"
+                  height="9"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="40"
+                  y="10"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="48"
+                  y="10"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="56"
+                  y="10"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="40"
+                  y="18"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="56"
+                  y="18"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="40"
+                  y="26"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="48"
+                  y="26"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="10"
+                  y="40"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="18"
+                  y="40"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="26"
+                  y="40"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="40"
+                  y="40"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="48"
+                  y="40"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="56"
+                  y="40"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="64"
+                  y="40"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="72"
+                  y="40"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="80"
+                  y="40"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="10"
+                  y="48"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="26"
+                  y="48"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="40"
+                  y="48"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="56"
+                  y="48"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="72"
+                  y="48"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="80"
+                  y="48"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="10"
+                  y="56"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="18"
+                  y="56"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="26"
+                  y="56"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="40"
+                  y="56"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="48"
+                  y="56"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="56"
+                  y="56"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="64"
+                  y="56"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="72"
+                  y="56"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="40"
+                  y="65"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="48"
+                  y="65"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="56"
+                  y="65"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="64"
+                  y="65"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="72"
+                  y="65"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="80"
+                  y="65"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="40"
+                  y="73"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="56"
+                  y="73"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="80"
+                  y="73"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="40"
+                  y="80"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="48"
+                  y="80"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="64"
+                  y="80"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
+                <rect
+                  x="72"
+                  y="80"
+                  width="5"
+                  height="5"
+                  fill="#111827"
+                  rx="1"
+                />
               </svg>
             </div>
             <button type="button" class="btn-download" @click="downloadQr">
@@ -116,7 +493,9 @@
             </div>
             <div class="summary-row">
               <span class="summary-label">Created</span>
-              <span class="summary-value font-bold">Sept 12, 2026 - 9:46 AM</span>
+              <span class="summary-value font-bold"
+                >Sept 12, 2026 - 9:46 AM</span
+              >
             </div>
             <div class="summary-row">
               <span class="summary-label">Expires</span>
@@ -138,55 +517,85 @@
       <div class="share-section">
         <span class="section-label">Share Link</span>
         <div class="social-links">
-          <button type="button" class="social-link-btn" @click="shareOn('whatsapp')">Whatsapp</button>
-          <button type="button" class="social-link-btn" @click="shareOn('twitter')">Twitter</button>
-          <button type="button" class="social-link-btn" @click="shareOn('facebook')">Facebook</button>
+          <button
+            type="button"
+            class="social-link-btn"
+            @click="shareOn('whatsapp')"
+          >
+            Whatsapp
+          </button>
+          <button
+            type="button"
+            class="social-link-btn"
+            @click="shareOn('twitter')"
+          >
+            Twitter
+          </button>
+          <button
+            type="button"
+            class="social-link-btn"
+            @click="shareOn('facebook')"
+          >
+            Facebook
+          </button>
         </div>
+      </div>
+
+      <div class="flow-actions">
+        <NuxtLink to="/promoters" class="flow-action flow-action--secondary">
+          Back to Dashboard
+        </NuxtLink>
+        <NuxtLink
+          to="/promoters/invite"
+          class="flow-action flow-action--primary"
+        >
+          Continue to Invite
+        </NuxtLink>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Promoter Link Ready — Uzu Ticket',
+  title: "Promoter Link Ready — Uzu Ticket",
   meta: [
-    { name: 'description', content: 'Promoter link created successfully' },
+    { name: "description", content: "Promoter link created successfully" },
   ],
-})
+});
 
-const promoterLink = ref('https://uzuticet.com/p/jane_may/musicFest26')
-const toast = useToast()
+const promoterLink = ref("https://uzuticet.com/p/jane_may/musicFest26");
+const toast = useToast();
 
 function copyLink() {
-  navigator.clipboard.writeText(promoterLink.value)
+  navigator.clipboard.writeText(promoterLink.value);
   toast.show({
-    title: 'Link Copied!',
-    message: 'Promoter link copied to clipboard',
-    type: 'success',
-  })
+    title: "Link Copied!",
+    message: "Promoter link copied to clipboard",
+    type: "success",
+  });
 }
 
 function downloadQr() {
   toast.show({
-    title: 'Downloading QR Code',
-    message: 'QR Code image saved to downloads',
-    type: 'info',
-  })
+    title: "Downloading QR Code",
+    message: "QR Code image saved to downloads",
+    type: "info",
+  });
 }
 
 function shareOn(platform: string) {
   toast.show({
     title: `Share on ${platform}`,
     message: `Opening ${platform} share window`,
-    type: 'info',
-  })
+    type: "info",
+  });
 }
 </script>
 
@@ -194,7 +603,7 @@ function shareOn(platform: string) {
 .link-ready-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -221,13 +630,13 @@ function shareOn(platform: string) {
 }
 
 .demo-nav-link:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   color: #16a34a;
 }
 
 .demo-nav-link--active {
-  background: #3FD246;
-  border-color: #3FD246;
+  background: #3fd246;
+  border-color: #3fd246;
   color: #ffffff;
 }
 
@@ -253,7 +662,7 @@ function shareOn(platform: string) {
 .card-title {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -273,7 +682,7 @@ function shareOn(platform: string) {
 .section-label {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .copy-link-input-wrap {
@@ -288,8 +697,8 @@ function shareOn(platform: string) {
   border-radius: 0.65rem;
   border: 1.5px solid #e5e7eb;
   font-size: 0.875rem;
-  font-family: 'Outfit', sans-serif;
-  color: #3FD246;
+  font-family: "Outfit", sans-serif;
+  color: #3fd246;
   font-weight: 600;
   outline: none;
   background: #ffffff;
@@ -313,7 +722,7 @@ function shareOn(platform: string) {
 }
 
 .btn-copy-icon:hover {
-  color: #3FD246;
+  color: #3fd246;
 }
 
 .copy-icon {
@@ -332,7 +741,7 @@ function shareOn(platform: string) {
 .col-title {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 1rem;
 }
 
@@ -366,12 +775,12 @@ function shareOn(platform: string) {
   font-weight: 700;
   cursor: pointer;
   padding: 0;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   transition: color 0.15s ease;
 }
 
 .btn-download:hover {
-  color: #3FD246;
+  color: #3fd246;
 }
 
 /* Summary Col */
@@ -402,7 +811,7 @@ function shareOn(platform: string) {
 
 .summary-value {
   font-size: 0.875rem;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .font-bold {
@@ -429,15 +838,48 @@ function shareOn(platform: string) {
   border: none;
   font-size: 0.875rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
   cursor: pointer;
   padding: 0;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   transition: color 0.15s ease;
 }
 
 .social-link-btn:hover {
-  color: #3FD246;
+  color: #3fd246;
+}
+
+.flow-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.flow-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.65rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.flow-action--secondary {
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  background: #ffffff;
+}
+
+.flow-action--primary {
+  border: 1px solid #3fd246;
+  color: #ffffff;
+  background: #3fd246;
 }
 
 @media (max-width: 900px) {

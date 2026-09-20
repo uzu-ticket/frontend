@@ -1,24 +1,27 @@
 <template>
   <div class="payout-history-page">
-    <!-- Demo Nav -->
-    <div class="demo-nav-row">
-      <NuxtLink to="/promoters" class="demo-nav-link">Dashboard</NuxtLink>
-      <NuxtLink to="/promoters/withdrawal" class="demo-nav-link">Withdrawal</NuxtLink>
-      <NuxtLink to="/promoters/payout-details" class="demo-nav-link">Payout Details</NuxtLink>
-      <NuxtLink to="/promoters/payout-history" class="demo-nav-link demo-nav-link--active">Payout History</NuxtLink>
-      <NuxtLink to="/promoters/create" class="demo-nav-link">+ Create Link</NuxtLink>
-      <NuxtLink to="/promoters/link-ready" class="demo-nav-link">Link Ready</NuxtLink>
-      <NuxtLink to="/promoters/invite" class="demo-nav-link">Invite Flow</NuxtLink>
-    </div>
-
     <!-- Main Unified Card -->
     <div class="main-card">
       <!-- Back Button & Header -->
       <div class="card-header">
         <div class="back-row">
-          <button type="button" class="back-link" @click="$router.push('/promoters')">
-            <svg class="back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          <button
+            type="button"
+            class="back-link"
+            @click="$router.push('/promoters')"
+          >
+            <svg
+              class="back-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Back
           </button>
@@ -47,11 +50,18 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in paginatedPayouts" :key="item.id" class="table-row">
+            <tr
+              v-for="item in paginatedPayouts"
+              :key="item.id"
+              class="table-row"
+            >
               <td>{{ item.date }}</td>
               <td class="amount-cell">N{{ item.amount.toLocaleString() }}</td>
               <td>
-                <span class="status-pill" :class="`status--${item.status.toLowerCase()}`">
+                <span
+                  class="status-pill"
+                  :class="`status--${item.status.toLowerCase()}`"
+                >
                   {{ item.status }}
                 </span>
               </td>
@@ -72,46 +82,93 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import AppPagination from '~/components/ui/AppPagination.vue'
+import { ref, computed } from "vue";
+import AppPagination from "~/components/ui/AppPagination.vue";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Payout History — Promoters — Uzu Ticket',
+  title: "Payout History — Promoters — Uzu Ticket",
   meta: [
-    { name: 'description', content: 'Promoter payout history and transaction logs' },
+    {
+      name: "description",
+      content: "Promoter payout history and transaction logs",
+    },
   ],
-})
+});
 
-const currentPage = ref(1)
-const pageSize = 5
+const currentPage = ref(1);
+const pageSize = 5;
 
 const payouts = ref([
-  { id: '1', date: 'Sept 12, 2026', amount: 29000, status: 'Completed', reference: 'UTX-9231' },
-  { id: '2', date: 'Sept 12, 2026', amount: 50000, status: 'Failed', reference: 'UTX-9231' },
-  { id: '3', date: 'Sept 12, 2026', amount: 50000, status: 'Completed', reference: 'UTX-9231' },
-  { id: '4', date: 'Sept 12, 2026', amount: 30000, status: 'Completed', reference: 'FTG-9231' },
-  { id: '5', date: 'Sept 12, 2026', amount: 50000, status: 'Failed', reference: 'UBX-9231' },
-  { id: '6', date: 'Sept 12, 2026', amount: 10000, status: 'Completed', reference: 'UTX-9231' },
-  { id: '7', date: 'Sept 12, 2026', amount: 15000, status: 'Completed', reference: 'UTX-9231' },
-])
+  {
+    id: "1",
+    date: "Sept 12, 2026",
+    amount: 29000,
+    status: "Completed",
+    reference: "UTX-9231",
+  },
+  {
+    id: "2",
+    date: "Sept 12, 2026",
+    amount: 50000,
+    status: "Failed",
+    reference: "UTX-9231",
+  },
+  {
+    id: "3",
+    date: "Sept 12, 2026",
+    amount: 50000,
+    status: "Completed",
+    reference: "UTX-9231",
+  },
+  {
+    id: "4",
+    date: "Sept 12, 2026",
+    amount: 30000,
+    status: "Completed",
+    reference: "FTG-9231",
+  },
+  {
+    id: "5",
+    date: "Sept 12, 2026",
+    amount: 50000,
+    status: "Failed",
+    reference: "UBX-9231",
+  },
+  {
+    id: "6",
+    date: "Sept 12, 2026",
+    amount: 10000,
+    status: "Completed",
+    reference: "UTX-9231",
+  },
+  {
+    id: "7",
+    date: "Sept 12, 2026",
+    amount: 15000,
+    status: "Completed",
+    reference: "UTX-9231",
+  },
+]);
 
-const totalPages = computed(() => Math.ceil(payouts.value.length / pageSize) || 1)
+const totalPages = computed(
+  () => Math.ceil(payouts.value.length / pageSize) || 1,
+);
 
 const paginatedPayouts = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return payouts.value.slice(start, start + pageSize)
-})
+  const start = (currentPage.value - 1) * pageSize;
+  return payouts.value.slice(start, start + pageSize);
+});
 </script>
 
 <style scoped>
 .payout-history-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -139,13 +196,13 @@ const paginatedPayouts = computed(() => {
 }
 
 .demo-nav-link:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   color: #16a34a;
 }
 
 .demo-nav-link--active {
-  background: #3FD246;
-  border-color: #3FD246;
+  background: #3fd246;
+  border-color: #3fd246;
   color: #ffffff;
 }
 
@@ -177,14 +234,14 @@ const paginatedPayouts = computed(() => {
   align-items: center;
   background: transparent;
   border: none;
-  color: #3FD246;
+  color: #3fd246;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
   padding: 0;
   gap: 0.35rem;
   transition: color 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .back-link:hover {
@@ -200,7 +257,7 @@ const paginatedPayouts = computed(() => {
 .card-title {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -224,13 +281,13 @@ const paginatedPayouts = computed(() => {
   background: transparent;
   font-size: 0.875rem;
   font-weight: 700;
-  color: #3FD246;
-  border-bottom: 2.5px solid #3FD246;
+  color: #3fd246;
+  border-bottom: 2.5px solid #3fd246;
   border-top-left-radius: 0.5rem;
   border-top-right-radius: 0.5rem;
   background: #f0fdf4;
   cursor: pointer;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 /* Table */
@@ -248,7 +305,7 @@ const paginatedPayouts = computed(() => {
   text-align: left;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #3FD246;
+  color: #3fd246;
   letter-spacing: 0.06em;
   border-bottom: 1px solid #f3f4f6;
   white-space: nowrap;
@@ -273,7 +330,7 @@ const paginatedPayouts = computed(() => {
 
 .amount-cell {
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .reference-cell {

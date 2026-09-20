@@ -1,32 +1,25 @@
 <template>
   <div class="create-promoter-page">
-    <!-- Demo Nav -->
-    <div class="demo-nav-row">
-      <NuxtLink to="/promoters" class="demo-nav-link">Dashboard</NuxtLink>
-      <NuxtLink to="/promoters/create" class="demo-nav-link demo-nav-link--active">+ Create Link</NuxtLink>
-      <NuxtLink to="/promoters/link-ready" class="demo-nav-link">Link Ready</NuxtLink>
-      <NuxtLink to="/promoters/invite" class="demo-nav-link">Invite Flow</NuxtLink>
-    </div>
+    <AppPageSkeleton v-if="isLoading" layout="event" :show-header="false" />
 
     <!-- Main Unified Card -->
-    <div class="main-card">
+    <div v-else class="main-card">
       <h1 class="card-title">Create Promoter Link</h1>
 
       <form class="create-form" @submit.prevent="handleSubmit">
         <!-- Select Event -->
         <div class="form-group">
           <label class="form-label">Select Event</label>
-          <div class="select-wrapper">
-            <select v-model="selectedEvent" class="form-select">
-              <option value="music-fest">Music Fest 2026</option>
-              <option value="summer-tech">Summer Tech Camp</option>
-              <option value="business-catchup">Business Catchup</option>
-              <option value="tech-connect">Tech Connect Lagos</option>
-            </select>
-            <svg class="select-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
+          <AppSelect
+            v-model="selectedEvent"
+            :options="eventOptions"
+            placeholder="Select an event"
+            searchable
+            :disabled="eventOptions.length === 0"
+          />
+          <p v-if="eventOptions.length === 0" class="field-hint">
+            No events are available for this organisation.
+          </p>
         </div>
 
         <!-- Commission Type -->
@@ -34,16 +27,37 @@
           <label class="form-label">Commission Type</label>
           <div class="radio-group">
             <label class="radio-item">
-              <input type="radio" v-model="commissionType" value="percentage" class="radio-input" />
-              <span class="custom-radio" :class="{ 'custom-radio--active': commissionType === 'percentage' }">
-                <span v-if="commissionType === 'percentage'" class="radio-dot" />
+              <input
+                type="radio"
+                v-model="commissionType"
+                value="percentage"
+                class="radio-input"
+              />
+              <span
+                class="custom-radio"
+                :class="{
+                  'custom-radio--active': commissionType === 'percentage',
+                }"
+              >
+                <span
+                  v-if="commissionType === 'percentage'"
+                  class="radio-dot"
+                />
               </span>
               <span class="radio-label">Percentage</span>
             </label>
 
             <label class="radio-item">
-              <input type="radio" v-model="commissionType" value="fixed" class="radio-input" />
-              <span class="custom-radio" :class="{ 'custom-radio--active': commissionType === 'fixed' }">
+              <input
+                type="radio"
+                v-model="commissionType"
+                value="fixed"
+                class="radio-input"
+              />
+              <span
+                class="custom-radio"
+                :class="{ 'custom-radio--active': commissionType === 'fixed' }"
+              >
                 <span v-if="commissionType === 'fixed'" class="radio-dot" />
               </span>
               <span class="radio-label">Fixed Amount</span>
@@ -61,24 +75,20 @@
               class="form-input"
               placeholder="10"
             />
-            <span class="input-suffix">{{ commissionType === 'percentage' ? '%' : 'NGN' }}</span>
+            <span class="input-suffix">{{
+              commissionType === "percentage" ? "%" : "NGN"
+            }}</span>
           </div>
         </div>
 
         <!-- Link Expires -->
         <div class="form-group">
           <label class="form-label">Link Expires (Optional)</label>
-          <div class="select-wrapper">
-            <select v-model="expiration" class="form-select">
-              <option value="never">Never expires</option>
-              <option value="7days">In 7 days</option>
-              <option value="30days">In 30 days</option>
-              <option value="event-end">When event ends</option>
-            </select>
-            <svg class="select-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
+          <AppSelect
+            v-model="expiration"
+            :options="expirationOptions"
+            placeholder="Select expiration"
+          />
         </div>
 
         <!-- Actions -->
@@ -86,9 +96,7 @@
           <button type="button" class="btn-cancel" @click="handleCancel">
             Cancel
           </button>
-          <button type="submit" class="btn-submit">
-            + Create Link
-          </button>
+          <button type="submit" class="btn-submit">+ Create Link</button>
         </div>
       </form>
     </div>
@@ -96,33 +104,86 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import AppPageSkeleton from "~/components/ui/AppPageSkeleton.vue";
+import AppSelect, { type SelectOption } from "~/components/ui/AppSelect.vue";
+import { useEvents } from "~/composables/useEvents";
+import { useOrgState } from "~/composables/useOrgState";
+import type { Event } from "~/types/event";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Create Promoter Link — Uzu Ticket',
-  meta: [
-    { name: 'description', content: 'Create a new promoter link' },
-  ],
-})
+  title: "Create Promoter Link — Uzu Ticket",
+  meta: [{ name: "description", content: "Create a new promoter link" }],
+});
 
-const router = useRouter()
+const router = useRouter();
+const { activeOrgId } = useOrgState();
+const { fetchEvents } = useEvents();
+const isLoading = ref(true);
+const events = ref<Event[]>([]);
 
-const selectedEvent = ref('music-fest')
-const commissionType = ref<'percentage' | 'fixed'>('percentage')
-const commissionValue = ref('10')
-const expiration = ref('never')
+const selectedEvent = ref<string | null>(null);
+const commissionType = ref<"percentage" | "fixed">("percentage");
+const commissionValue = ref("10");
+const expiration = ref("never");
+
+const eventOptions = computed<SelectOption[]>(() =>
+  events.value.map((event) => ({
+    value: event.id,
+    label: event.title,
+    subLabel: `${event.status.replaceAll("_", " ")} • ${new Date(event.startsAt).toLocaleDateString("en-GB")}`,
+  })),
+);
+
+const expirationOptions: SelectOption[] = [
+  { value: "never", label: "Never expires" },
+  { value: "7days", label: "In 7 days" },
+  { value: "30days", label: "In 30 days" },
+  { value: "event-end", label: "When event ends" },
+];
+
+async function loadEvents() {
+  if (!activeOrgId.value) {
+    events.value = [];
+    selectedEvent.value = null;
+    isLoading.value = false;
+    return;
+  }
+
+  isLoading.value = true;
+
+  try {
+    const fetchedEvents = await fetchEvents(true);
+    events.value = fetchedEvents.filter(
+      (event) => event.status !== "cancelled",
+    );
+    if (!events.value.some((event) => event.id === selectedEvent.value)) {
+      selectedEvent.value = events.value[0]?.id ?? null;
+    }
+  } catch (error) {
+    console.error("Failed to load promoter events", error);
+    events.value = [];
+    selectedEvent.value = null;
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(loadEvents);
+watch(activeOrgId, loadEvents);
 
 function handleCancel() {
-  router.push('/promoters')
+  router.push("/promoters");
 }
 
 function handleSubmit() {
-  router.push('/promoters/link-ready')
+  if (!selectedEvent.value) return;
+  router.push("/promoters/link-ready");
 }
 </script>
 
@@ -130,7 +191,7 @@ function handleSubmit() {
 .create-promoter-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -157,13 +218,13 @@ function handleSubmit() {
 }
 
 .demo-nav-link:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   color: #16a34a;
 }
 
 .demo-nav-link--active {
-  background: #3FD246;
-  border-color: #3FD246;
+  background: #3fd246;
+  border-color: #3fd246;
   color: #ffffff;
 }
 
@@ -183,7 +244,7 @@ function handleSubmit() {
 .card-title {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -202,7 +263,7 @@ function handleSubmit() {
 .form-label {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 /* Select wrapper */
@@ -217,7 +278,7 @@ function handleSubmit() {
   border-radius: 0.65rem;
   border: 1.5px solid #e5e7eb;
   font-size: 0.875rem;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   color: #374151;
   background: #ffffff;
   outline: none;
@@ -228,7 +289,7 @@ function handleSubmit() {
 }
 
 .form-select:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
 }
 
 .select-chevron {
@@ -274,14 +335,14 @@ function handleSubmit() {
 }
 
 .custom-radio--active {
-  border-color: #3FD246;
+  border-color: #3fd246;
 }
 
 .radio-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #3FD246;
+  background: #3fd246;
 }
 
 .radio-label {
@@ -302,7 +363,7 @@ function handleSubmit() {
   border-radius: 0.65rem;
   border: 1.5px solid #e5e7eb;
   font-size: 0.875rem;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   color: #374151;
   outline: none;
   transition: border-color 0.15s ease;
@@ -310,7 +371,7 @@ function handleSubmit() {
 }
 
 .form-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
 }
 
 .input-suffix {
@@ -343,7 +404,7 @@ function handleSubmit() {
   color: #374151;
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .btn-cancel:hover {
@@ -356,13 +417,13 @@ function handleSubmit() {
   padding: 0.75rem 1.5rem;
   border-radius: 0.65rem;
   border: none;
-  background: #3FD246;
+  background: #3fd246;
   font-size: 0.9rem;
   font-weight: 700;
   color: #ffffff;
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
 }
 
 .btn-submit:hover {

@@ -4,7 +4,7 @@
       <div class="success-content">
         <!-- Illustration placeholder — drop your image at /public/campaign-celebrate.png -->
         <img
-          src="/campaign-celebrate.png"
+          src="/check-email.jpg"
           alt="Campaign scheduled celebration"
           class="celebrate-img"
         />
@@ -30,22 +30,25 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Campaign Scheduled — Uzu Ticket',
+  title: "Campaign Scheduled — Uzu Ticket",
   meta: [
-    { name: 'description', content: 'Your email campaign has been successfully scheduled.' },
+    {
+      name: "description",
+      content: "Your email campaign has been successfully scheduled.",
+    },
   ],
-})
+});
 </script>
 
 <style scoped>
 .sent-page {
   max-width: 1240px;
   margin: 0 auto;
-  font-family: 'Outfit', sans-serif;
+  font-family: "Outfit", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -81,7 +84,7 @@ useHead({
 .success-title {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
   letter-spacing: -0.02em;
 }
@@ -105,7 +108,7 @@ useHead({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #3FD246;
+  background: #3fd246;
   color: #fff;
   font-weight: 700;
   font-size: 0.9rem;
@@ -114,7 +117,9 @@ useHead({
   text-decoration: none;
   flex: 1;
   max-width: 200px;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
   box-shadow: 0 4px 12px rgba(63, 210, 70, 0.25);
 }
 
@@ -137,7 +142,9 @@ useHead({
   flex: 1;
   max-width: 200px;
   border: 1.5px solid #e5e7eb;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .btn-secondary:hover {

@@ -1,12 +1,28 @@
 <template>
   <div class="reports-detail-page">
-    <!-- Main Card Container -->
-    <div class="reports-container">
+    <AppPageSkeleton
+      v-if="isLoading"
+      layout="event"
+      :show-actions="true"
+      action-count="2"
+    />
 
+    <div v-else class="reports-container">
       <!-- Back Link -->
       <NuxtLink to="/reports" class="back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" class="arrow-back" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="arrow-back"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+          />
         </svg>
         <span>Back to Sales & Report</span>
       </NuxtLink>
@@ -16,16 +32,38 @@
         <div class="event-title-group">
           <h2 class="event-name">{{ eventData.name }}</h2>
           <div class="event-meta">
-            <svg xmlns="http://www.w3.org/2000/svg" class="meta-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="meta-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
-            <span>May 1 – May 31, 2026 - 11:00AM</span>
+            <span>{{ eventMetaLabel }}</span>
           </div>
         </div>
 
         <button class="btn-event-day-mode" @click="goToEventDayMode">
-          <svg xmlns="http://www.w3.org/2000/svg" class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="btn-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
           </svg>
           <span>Event-day-mode</span>
         </button>
@@ -35,34 +73,26 @@
       <div class="metrics-grid">
         <div class="metric-card">
           <span class="metric-label">Gross Revenue</span>
-          <span class="metric-value">₦5,756,200</span>
-          <span class="metric-trend">
-            <span class="trend-icon">↑</span> 22.8%
-          </span>
+          <span class="metric-value">₦{{ grossRevenueLabel }}</span>
+          <span class="metric-trend">Paid orders</span>
         </div>
 
         <div class="metric-card">
           <span class="metric-label">Tickets Sold</span>
-          <span class="metric-value">2,812</span>
-          <span class="metric-trend">
-            <span class="trend-icon">↑</span> 19.2%
-          </span>
+          <span class="metric-value">{{ totalTicketsSold }}</span>
+          <span class="metric-trend">Total sold</span>
         </div>
 
         <div class="metric-card">
           <span class="metric-label">Orders</span>
-          <span class="metric-value">1,125</span>
-          <span class="metric-trend">
-            <span class="trend-icon">↑</span> 16.7%
-          </span>
+          <span class="metric-value">{{ paidOrderCount }}</span>
+          <span class="metric-trend">Paid orders</span>
         </div>
 
         <div class="metric-card">
           <span class="metric-label">Refunds</span>
-          <span class="metric-value">₦96,300</span>
-          <span class="metric-trend">
-            <span class="trend-icon">↑</span> 4.1%
-          </span>
+          <span class="metric-value">₦{{ refundedRevenueLabel }}</span>
+          <span class="metric-trend">Refunded orders</span>
         </div>
       </div>
 
@@ -95,52 +125,153 @@
             <tbody>
               <tr v-for="item in ticketTypesList" :key="item.type">
                 <td class="font-bold text-dark">{{ item.type }}</td>
-                <td class="font-semibold">{{ item.price }}</td>
-                <td class="font-semibold">{{ item.ticketsSold.toLocaleString() }}</td>
-                <td class="font-semibold">{{ item.orders.toLocaleString() }}</td>
-                <td class="font-bold text-dark">{{ item.grossRevenue }}</td>
+                <td class="font-semibold">₦{{ item.price }}</td>
+                <td class="font-semibold">
+                  {{ item.ticketsSold.toLocaleString() }}
+                </td>
+                <td class="font-semibold">
+                  {{ item.orders.toLocaleString() }}
+                </td>
+                <td class="font-bold text-dark">₦{{ item.grossRevenue }}</td>
                 <td class="font-semibold text-dark">{{ item.pctOfTotal }}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import ReportsSalesChart from '~/components/reports/ReportsSalesChart.vue'
-import ReportsPieChart from '~/components/reports/ReportsPieChart.vue'
-import { useReports } from '~/composables/useReports'
+import { computed, onMounted, ref, watch } from "vue";
+import AppPageSkeleton from "~/components/ui/AppPageSkeleton.vue";
+import ReportsSalesChart from "~/components/reports/ReportsSalesChart.vue";
+import ReportsPieChart from "~/components/reports/ReportsPieChart.vue";
+import { useApi } from "~/composables/useApi";
+import { useOrgState } from "~/composables/useOrgState";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
-const route = useRoute()
-const router = useRouter()
-const { eventsList, ticketTypesList } = useReports()
+const route = useRoute();
+const router = useRouter();
+const { instance } = useApi();
+const { activeOrgId } = useOrgState();
+const eventSummary = ref<any>(null);
+const isLoading = ref(true);
 
-const eventId = computed(() => (route.params.id as string) || 'summer-fest-2026')
+const eventId = computed(
+  () => (route.params.id as string) || "summer-fest-2026",
+);
 
-const eventData = computed(() => {
-  return eventsList.find((e) => e.id === eventId.value) || {
-    id: eventId.value,
-    name: 'Summer Fest 2026',
-    date: 'July 20, 2026',
+const grossRevenueLabel = computed(() => {
+  const value = Number(eventSummary.value?.grossRevenueMinor ?? 0);
+  return (value / 100).toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+});
+
+const totalTicketsSold = computed(() => {
+  return (eventSummary.value?.ticketsSoldByType ?? []).reduce(
+    (sum: number, item: any) => sum + Number(item.quantitySold ?? 0),
+    0,
+  );
+});
+
+const paidOrderCount = computed(() =>
+  Number(eventSummary.value?.paidOrderCount ?? 0),
+);
+
+const refundedRevenueLabel = computed(() => {
+  const value = Number(eventSummary.value?.refundedOrderCount ?? 0) * 0;
+  return (value / 100).toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+});
+
+const ticketTypesList = computed(() => {
+  const ticketTypes = eventSummary.value?.ticketsSoldByType ?? [];
+  const total =
+    ticketTypes.reduce(
+      (sum: number, item: any) => sum + Number(item.quantitySold ?? 0),
+      0,
+    ) || 1;
+
+  return ticketTypes.map((item: any) => ({
+    type: item.name,
+    price: (Number(item.priceMinor ?? 0) / 100).toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
+    ticketsSold: Number(item.quantitySold ?? 0),
+    orders: Number(item.quantitySold ?? 0),
+    grossRevenue: (
+      (Number(item.priceMinor ?? 0) * Number(item.quantitySold ?? 0)) /
+      100
+    ).toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
+    pctOfTotal: `${((Number(item.quantitySold ?? 0) / total) * 100).toFixed(1)}%`,
+  }));
+});
+
+const eventData = computed(() => ({
+  id: eventId.value,
+  name: eventSummary.value?.eventTitle ?? "Event report",
+  date: "Event summary",
+}));
+
+const eventMetaLabel = computed(() => {
+  const startsAt = eventSummary.value?.eventStartsAt
+    ? new Date(eventSummary.value.eventStartsAt)
+    : null;
+
+  if (!startsAt) return "Date unavailable";
+
+  return `${new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(startsAt)} • ${new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(startsAt)}`;
+});
+
+async function loadEventSummary() {
+  if (!activeOrgId.value) return;
+
+  isLoading.value = true;
+
+  try {
+    const response = await instance.get(
+      `/organisations/${activeOrgId.value}/events/${eventId.value}/dashboard`,
+    );
+    eventSummary.value = response.data?.data ?? response.data;
+  } finally {
+    isLoading.value = false;
   }
-})
+}
+
+onMounted(() => {
+  loadEventSummary();
+});
+
+watch([activeOrgId, eventId], () => {
+  loadEventSummary();
+});
 
 useHead({
   title: `${eventData.value.name} Reports — Uzu Ticket`,
-})
+});
 
 function goToEventDayMode() {
-  router.push(`/reports/${eventId.value}/event-day`)
+  router.push(`/reports/${eventId.value}/event-day`);
 }
 </script>
 
@@ -161,19 +292,19 @@ function goToEventDayMode() {
 .page-title {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
 .page-subtitle {
   font-size: 0.875rem;
-  color: #6B7280;
+  color: #6b7280;
   margin: 0;
 }
 
 .reports-container {
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 1.25rem;
   padding: 1.75rem 2rem;
   display: flex;
@@ -192,7 +323,7 @@ function goToEventDayMode() {
   transition: color 0.15s;
 }
 .back-link:hover {
-  color: #3FD246;
+  color: #3fd246;
 }
 .arrow-back {
   width: 1.1rem;
@@ -216,7 +347,7 @@ function goToEventDayMode() {
 .event-name {
   font-size: 1.35rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -225,21 +356,21 @@ function goToEventDayMode() {
   align-items: center;
   gap: 0.4rem;
   font-size: 0.85rem;
-  color: #6B7280;
+  color: #6b7280;
   font-weight: 500;
 }
 
 .meta-icon {
   width: 1rem;
   height: 1rem;
-  color: #9CA3AF;
+  color: #9ca3af;
 }
 
 .btn-event-day-mode {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-size: 0.875rem;
   font-weight: 700;
@@ -267,8 +398,8 @@ function goToEventDayMode() {
 }
 
 .metric-card {
-  background: #F9FAFB;
-  border: 1px solid #F3F4F6;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
   border-radius: 1rem;
   padding: 1.25rem;
   display: flex;
@@ -278,7 +409,7 @@ function goToEventDayMode() {
 
 .metric-label {
   font-size: 0.8rem;
-  color: #6B7280;
+  color: #6b7280;
   font-weight: 500;
 }
 
@@ -291,7 +422,7 @@ function goToEventDayMode() {
 .metric-trend {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #3FD246;
+  color: #3fd246;
   display: flex;
   align-items: center;
   gap: 0.2rem;
@@ -315,7 +446,7 @@ function goToEventDayMode() {
 .table-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -333,16 +464,16 @@ function goToEventDayMode() {
 .ticket-types-table th {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #6B7280;
+  color: #6b7280;
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid #e5e7eb;
   letter-spacing: 0.05em;
 }
 
 .ticket-types-table td {
   padding: 1.15rem 1rem;
   font-size: 0.9rem;
-  border-bottom: 1px solid #F3F4F6;
+  border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
 }
 

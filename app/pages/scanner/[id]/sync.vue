@@ -1,11 +1,28 @@
 <template>
   <div class="offline-sync-page">
-    <!-- Main Container Card -->
-    <div class="sync-container">
+    <AppPageSkeleton
+      v-if="isLoading"
+      layout="stats"
+      :show-header="true"
+      :stat-cards="2"
+    />
+
+    <div v-else class="sync-container">
       <!-- Back Link -->
       <button type="button" class="back-button" @click="goBack">
-        <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="back-icon"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+          />
         </svg>
         <span>Back</span>
       </button>
@@ -21,14 +38,32 @@
         <!-- Card 1: Offline Mode Banner -->
         <div class="info-card offline-mode-card">
           <div class="offline-header-row">
-            <svg xmlns="http://www.w3.org/2000/svg" class="wifi-slash-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728m-12.728 0a9 9 0 010-12.728m2.828 2.828a6 6 0 018.485 0m-8.485 8.485a6 6 0 010-8.485m2.829 2.829a2 2 0 012.828 0M3 3l18 18" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="wifi-slash-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M18.364 5.636a9 9 0 010 12.728m-12.728 0a9 9 0 010-12.728m2.828 2.828a6 6 0 018.485 0m-8.485 8.485a6 6 0 010-8.485m2.829 2.829a2 2 0 012.828 0M3 3l18 18"
+              />
             </svg>
             <span class="offline-mode-title">Offline Mode</span>
           </div>
 
-          <p class="offline-count-title">{{ offlineCount }} Scanner{{ offlineCount !== 1 ? 's' : '' }} Offline</p>
-          <p class="offline-desc">Scanner will continue scanning and sync when back online</p>
+          <p class="offline-count-title">
+            {{ offlineCount }} Scanner{{
+              offlineCount !== 1 ? "s" : ""
+            }}
+            Offline
+          </p>
+          <p class="offline-desc">
+            Scanner will continue scanning and sync when back online
+          </p>
         </div>
 
         <!-- Card 2: Last Synced & Auto Sync Info -->
@@ -68,12 +103,18 @@
                   <td>
                     <span
                       class="badge-pill"
-                      :class="row.status.toLowerCase() === 'valid' ? 'badge-pill--valid' : 'badge-pill--invalid'"
+                      :class="
+                        row.status.toLowerCase() === 'valid'
+                          ? 'badge-pill--valid'
+                          : 'badge-pill--invalid'
+                      "
                     >
                       {{ row.status }}
                     </span>
                   </td>
-                  <td class="font-bold text-gray-900 text-center">{{ row.pendingSync }}</td>
+                  <td class="font-bold text-gray-900 text-center">
+                    {{ row.pendingSync }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -112,8 +153,19 @@
       <div class="page-footer-actions">
         <button type="button" class="btn-sync-now" @click="handleSync">
           <span>Sync Now</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="refresh-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
         </button>
       </div>
@@ -122,100 +174,107 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useScanner } from '~/composables/useScanner'
-import { useToast } from '~/composables/useToast'
+import { ref, computed, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useScanner } from "~/composables/useScanner";
+import { useToast } from "~/composables/useToast";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Offline & Sync — Ticket Scanner',
-})
+  title: "Offline & Sync — Ticket Scanner",
+});
 
-const route = useRoute()
-const router = useRouter()
-const toast = useToast()
-const scannerStore = useScanner()
+const route = useRoute();
+const router = useRouter();
+const toast = useToast();
+const scannerStore = useScanner();
 
-const eventId = computed(() => route.params.id as string)
+const eventId = computed(() => route.params.id as string);
 
 function goBack() {
-  router.push(`/scanner/${eventId.value}`)
+  router.push(`/scanner/${eventId.value}`);
 }
 
-const eventName = ref('')
-const isLoading = ref(true)
+const eventName = ref("");
+const isLoading = ref(true);
 
 onMounted(async () => {
-  await loadSyncData()
-})
+  await loadSyncData();
+});
 
 watch(eventId, async () => {
-  await loadSyncData()
-})
+  await loadSyncData();
+});
 
 async function loadSyncData() {
-  isLoading.value = true
+  isLoading.value = true;
   try {
     const [evt, devices] = await Promise.all([
       scannerStore.fetchEvent(eventId.value),
       scannerStore.fetchDevices(true),
-    ])
+    ]);
 
-    eventName.value = evt.title
+    eventName.value = evt.title;
   } catch (e) {
     toast.show({
-      title: 'Failed to load sync data',
-      message: 'Could not load offline and sync data for this event',
-      type: 'error',
-    })
+      title: "Failed to load sync data",
+      message: "Could not load offline and sync data for this event",
+      type: "error",
+    });
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 const scannerStatuses = computed(() => {
   return scannerStore.devices.value.map((d) => ({
     scanner: d.deviceLabel || d.id,
-    gate: '',
-    status: d.isRevoked ? 'Invalid' : 'Valid',
+    gate: "",
+    status: d.isRevoked ? "Invalid" : "Valid",
     pendingSync: d.lastSyncedAt ? 0 : 0,
-  }))
-})
+  }));
+});
 
 const offlineCount = computed(() => {
-  const now = Date.now()
-  const threshold = 5 * 60 * 1000
+  const now = Date.now();
+  const threshold = 5 * 60 * 1000;
   return scannerStore.devices.value.filter(
-    (d) => !d.lastSyncedAt || now - new Date(d.lastSyncedAt).getTime() >= threshold,
-  ).length
-})
+    (d) =>
+      !d.lastSyncedAt || now - new Date(d.lastSyncedAt).getTime() >= threshold,
+  ).length;
+});
 
-const totalPendingSync = computed(() => scannerStatuses.value.reduce((sum, r) => sum + r.pendingSync, 0))
-const validPending = computed(() => scannerStatuses.value.filter((r) => r.status === 'Valid').length)
-const invalidPending = computed(() => scannerStatuses.value.filter((r) => r.status === 'Invalid').length)
-const duplicatePending = computed(() => 0)
+const totalPendingSync = computed(() =>
+  scannerStatuses.value.reduce((sum, r) => sum + r.pendingSync, 0),
+);
+const validPending = computed(
+  () => scannerStatuses.value.filter((r) => r.status === "Valid").length,
+);
+const invalidPending = computed(
+  () => scannerStatuses.value.filter((r) => r.status === "Invalid").length,
+);
+const duplicatePending = computed(() => 0);
 
 const lastSyncedTime = computed(() => {
-  const device = scannerStore.devices.value[0]
-  if (!device?.lastSyncedAt) return 'Never'
-  return new Date(device.lastSyncedAt).toLocaleString('en-US', {
-    month: 'short',
-    day: 'd',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-})
+  const device = scannerStore.devices.value[0];
+  if (!device?.lastSyncedAt) return "Never";
+  return new Date(device.lastSyncedAt).toLocaleString("en-US", {
+    month: "short",
+    day: "d",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+});
 function handleSync() {
   toast.show({
-    title: 'Sync Initiated',
-    message: 'Offline scan data is being synchronized with the server',
-    type: 'success',
-  })
+    title: "Sync Initiated",
+    message: "Offline scan data is being synchronized with the server",
+    type: "success",
+  });
 }
 </script>
 
@@ -227,7 +286,7 @@ function handleSync() {
 
 .sync-container {
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 1.25rem;
   padding: 2rem;
   display: flex;
@@ -246,14 +305,14 @@ function handleSync() {
   padding: 0;
   font-size: 0.875rem;
   font-weight: 800;
-  color: #16A34A;
+  color: #16a34a;
   cursor: pointer;
   width: fit-content;
   transition: color 0.15s ease;
 }
 
 .back-button:hover {
-  color: #15803D;
+  color: #15803d;
 }
 
 .back-icon {
@@ -277,7 +336,7 @@ function handleSync() {
 .section-subtitle {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #6B7280;
+  color: #6b7280;
   margin: 0;
 }
 
@@ -296,7 +355,7 @@ function handleSync() {
 
 .info-card {
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 1rem;
   padding: 1.5rem;
   display: flex;
@@ -304,7 +363,7 @@ function handleSync() {
 }
 
 .offline-mode-card {
-  border-color: #FEE2E2;
+  border-color: #fee2e2;
 }
 
 .offline-header-row {
@@ -317,13 +376,13 @@ function handleSync() {
 .wifi-slash-icon {
   width: 1.25rem;
   height: 1.25rem;
-  color: #EF4444;
+  color: #ef4444;
 }
 
 .offline-mode-title {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #EF4444;
+  color: #ef4444;
 }
 
 .offline-count-title {
@@ -335,7 +394,7 @@ function handleSync() {
 
 .offline-desc {
   font-size: 0.825rem;
-  color: #6B7280;
+  color: #6b7280;
   margin: 0;
 }
 
@@ -354,7 +413,7 @@ function handleSync() {
 .info-label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .info-value {
@@ -364,7 +423,7 @@ function handleSync() {
 }
 
 .auto-sync-status {
-  color: #16A34A;
+  color: #16a34a;
 }
 
 /* Bottom Grid */
@@ -382,7 +441,7 @@ function handleSync() {
 
 .grid-card {
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 1rem;
   padding: 1.5rem;
   display: flex;
@@ -412,16 +471,16 @@ function handleSync() {
   padding: 0.75rem 0.5rem;
   font-size: 0.725rem;
   font-weight: 800;
-  color: #6B7280;
-  border-bottom: 1px solid #F3F4F6;
-  background: #F9FAFB;
+  color: #6b7280;
+  border-bottom: 1px solid #f3f4f6;
+  background: #f9fafb;
 }
 
 .status-table td {
   padding: 1rem 0.5rem;
   font-size: 0.85rem;
   color: #374151;
-  border-bottom: 1px solid #F3F4F6;
+  border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
 }
 
@@ -469,18 +528,18 @@ function handleSync() {
 }
 
 .badge-pill--valid {
-  background: #DCFCE7;
-  color: #16A34A;
+  background: #dcfce7;
+  color: #16a34a;
 }
 
 .badge-pill--invalid {
-  background: #FEE2E2;
-  color: #EF4444;
+  background: #fee2e2;
+  color: #ef4444;
 }
 
 .badge-pill--duplicate {
-  background: #FEF3C7;
-  color: #D97706;
+  background: #fef3c7;
+  color: #d97706;
 }
 
 /* Page Footer Actions */
@@ -494,7 +553,7 @@ function handleSync() {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.875rem;
@@ -502,7 +561,9 @@ function handleSync() {
   border-radius: 0.75rem;
   border: none;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
   box-shadow: 0 4px 12px rgba(63, 210, 70, 0.25);
 }
 

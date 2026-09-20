@@ -3,29 +3,62 @@
     <WithdrawalForm
       :formatted-balance="formattedBalance"
       :raw-balance="walletBalance"
+      :is-submitting="isSubmitting"
       @back="router.push('/finance')"
       @continue="handleFormSubmit"
+      @validation-error="showError"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import WithdrawalForm from '~/components/finance/WithdrawalForm.vue'
-import { useFinance } from '~/composables/useFinance'
+import { onMounted, ref } from "vue";
+import WithdrawalForm from "~/components/finance/WithdrawalForm.vue";
+import { useFinance } from "~/composables/useFinance";
+import { useToast } from "~/composables/useToast";
 
 definePageMeta({
-  layout: 'dashboard',
-})
+  layout: "dashboard",
+});
 
 useHead({
-  title: 'Request Withdrawal — Uzu Ticket',
-})
+  title: "Request Withdrawal — Uzu Ticket",
+});
 
-const router = useRouter()
-const { walletBalance, formattedBalance } = useFinance()
+const router = useRouter();
+const { walletBalance, formattedBalance, requestWithdrawal, fetchWallet } =
+  useFinance();
+const { error: showToastError } = useToast();
+const isSubmitting = ref(false);
 
-function handleFormSubmit(data: any) {
-  router.push('/finance/withdraw/confirm')
+onMounted(fetchWallet);
+
+function showError(message: string) {
+  showToastError("Withdrawal cannot continue", message);
+}
+
+async function handleFormSubmit(data: {
+  amount: number;
+  twoFactorCode: string;
+  bankCode: string;
+  accountNumber: string;
+  accountName: string;
+}) {
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
+  try {
+    const withdrawal = await requestWithdrawal(data);
+    const finance = useState("finance:active-withdrawal");
+    finance.value = withdrawal;
+    router.push("/finance/withdraw/status");
+  } catch (error) {
+    showToastError(
+      "Withdrawal failed",
+      error instanceof Error ? error.message : "Unable to request withdrawal",
+    );
+  } finally {
+    isSubmitting.value = false;
+  }
 }
 </script>
 
