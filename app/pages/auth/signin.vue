@@ -126,6 +126,15 @@ async function handleSubmit() {
   if (!validate()) return
   try {
     await auth.login(form.email, form.password)
+    if (auth.user.value && !auth.user.value.isEmailVerified) {
+      toast.show({
+        title: 'Verification Required',
+        message: 'Please verify your email address to access your dashboard.',
+        type: 'warning',
+      })
+      await router.push(`/auth/verify-email?email=${encodeURIComponent(form.email)}`)
+      return
+    }
     toast.show({
       title: 'Signed In',
       message: 'Welcome back! Redirecting to your dashboard.',

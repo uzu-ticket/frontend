@@ -88,6 +88,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useApiKeys } from '~/composables/useApiKeys'
+import { useToast } from '~/composables/useToast'
 
 definePageMeta({
   layout: 'dashboard',
@@ -98,10 +99,12 @@ useHead({
 })
 
 const router = useRouter()
-const { createApiKey, createdNewKey } = useApiKeys()
+const toast = useToast()
+const { createApiKey } = useApiKeys()
 
 const keyName = ref('')
 const selectedEnv = ref<'Live (Production)' | 'Test (Sand hook)'>('Live (Production)')
+const isSubmitting = ref(false)
 
 const allPermissions = [
   'Read – View events, tickets, etc.',
@@ -120,8 +123,8 @@ function togglePerm(perm: string) {
   }
 }
 
-function handleSubmit() {
-  if (!keyName.value.trim() || selectedPerms.value.length === 0) return
+async function handleSubmit() {
+  if (!keyName.value.trim() || selectedPerms.value.length === 0 || isSubmitting.value) return
 
   // Map display labels to the composable's permission strings
   const mappedPerms = selectedPerms.value.map((p) => {
@@ -130,13 +133,20 @@ function handleSubmit() {
     return 'Webhook - Receive event notification'
   })
 
-  createApiKey({
-    name: keyName.value.trim(),
-    environment: selectedEnv.value,
-    permissions: mappedPerms,
-  })
-
-  router.push('/apikeys/success')
+  isSubmitting.value = true
+  try {
+    await createApiKey({
+      name: keyName.value.trim(),
+      environment: selectedEnv.value,
+      permissions: mappedPerms,
+    })
+    toast.success('API Key generated successfully!')
+    router.push('/apikeys/success')
+  } catch (err: any) {
+    toast.error('Failed to generate API Key', err.message || 'Please try again.')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 

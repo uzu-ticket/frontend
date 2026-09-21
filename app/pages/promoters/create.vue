@@ -110,6 +110,8 @@ import AppPageSkeleton from "~/components/ui/AppPageSkeleton.vue";
 import AppSelect, { type SelectOption } from "~/components/ui/AppSelect.vue";
 import { useEvents } from "~/composables/useEvents";
 import { useOrgState } from "~/composables/useOrgState";
+import { usePromoters } from "~/composables/usePromoters";
+import { useToast } from "~/composables/useToast";
 import type { Event } from "~/types/event";
 
 definePageMeta({
@@ -122,9 +124,13 @@ useHead({
 });
 
 const router = useRouter();
+const toast = useToast();
 const { activeOrgId } = useOrgState();
 const { fetchEvents } = useEvents();
+const { createPromoterLink } = usePromoters();
+
 const isLoading = ref(true);
+const isSubmitting = ref(false);
 const events = ref<Event[]>([]);
 
 const selectedEvent = ref<string | null>(null);
@@ -181,9 +187,52 @@ function handleCancel() {
   router.push("/promoters");
 }
 
-function handleSubmit() {
-  if (!selectedEvent.value) return;
-  router.push("/promoters/link-ready");
+async function handleSubmit() {
+  if (!selectedEvent.value) {
+    toast.show({
+      title: "Select an Event",
+      message: "Please select an event to create a promoter link",
+      type: "error",
+    });
+    return;
+  }
+
+  const parsedVal = parseFloat(commissionValue.value);
+  if (isNaN(parsedVal) || parsedVal <= 0) {
+    toast.show({
+      title: "Invalid Commission",
+      message: "Enter a valid commission value greater than zero",
+      type: "error",
+    });
+    return;
+  }
+
+  isSubmitting.value = true;
+
+  try {
+    const linkData = await createPromoterLink({
+      eventId: selectedEvent.value,
+      commissionType: commissionType.value,
+      commissionValue: parsedVal,
+      expiration: expiration.value,
+    });
+
+    toast.show({
+      title: "Promoter Link Created!",
+      message: "Your link is ready to share.",
+      type: "success",
+    });
+
+    router.push(`/promoters/link-ready?id=${linkData.id}`);
+  } catch (e: any) {
+    toast.show({
+      title: "Failed to Create Link",
+      message: e?.response?.data?.message || e.message || "An error occurred",
+      type: "error",
+    });
+  } finally {
+    isSubmitting.value = false;
+  }
 }
 </script>
 

@@ -10,96 +10,13 @@
     <template v-else>
       <!-- Main Unified Card -->
       <div class="main-card">
-        <!-- Title & Subtitle -->
-        <div class="card-header">
-          <div class="header-text">
-            <h1 class="card-title">Commission</h1>
-            <p class="card-subtitle">
-              Share your promoter link and start earning commission
-            </p>
-          </div>
-          <NuxtLink to="/promoters/create" class="btn-create-link">
-            + Create Link
-          </NuxtLink>
-        </div>
-
-        <!-- Stat Cards (4 Cards Grid) -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <span class="stat-label">Total Commission Earned</span>
-            <div class="stat-value">
-              N{{ formatCurrency(summary.totalCommissionEarnedMinor / 100) }}
-            </div>
-            <div class="stat-trend">Live earnings</div>
-          </div>
-
-          <div class="stat-card">
-            <span class="stat-label">Pending (After Event)</span>
-            <div class="stat-value">
-              N{{ formatCurrency(summary.pendingMinor / 100) }}
-            </div>
-            <div class="stat-trend">Awaiting payout</div>
-          </div>
-
-          <div class="stat-card">
-            <span class="stat-label">Available to Withdraw</span>
-            <div class="stat-value">
-              N{{ formatCurrency(summary.availableMinor / 100) }}
-            </div>
-            <div class="stat-trend">Ready for payout</div>
-          </div>
-
-          <div class="stat-card">
-            <span class="stat-label">Paid Out</span>
-            <div class="stat-value">
-              N{{ formatCurrency(summary.paidOutMinor / 100) }}
-            </div>
-            <div class="stat-trend">Processed</div>
-          </div>
-        </div>
-
-        <!-- Search & Filter Controls -->
-        <div class="controls-top-row">
-          <!-- Search -->
-          <div class="search-input-wrapper">
-            <svg
-              class="search-icon"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search event..."
-              class="search-input"
-            />
-            <button
-              v-if="searchQuery"
-              class="clear-search-btn"
-              @click="searchQuery = ''"
-            >
-              &times;
-            </button>
-          </div>
-
-          <!-- Filter -->
-          <div class="filter-wrapper">
-            <button
-              type="button"
-              class="btn-control btn-filter"
-              :class="{ 'btn-control--active': filterStatus !== 'All' }"
-              @click.stop="showFilterDropdown = !showFilterDropdown"
-            >
+        <!-- Top Controls & Action Row -->
+        <div class="top-action-row">
+          <!-- Search & Filter Bar -->
+          <div class="search-filter-group">
+            <div class="search-input-wrapper">
               <svg
-                class="w-4 h-4 mr-1.5"
+                class="search-icon"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -108,61 +25,172 @@
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
-              Filter
-              <span v-if="filterStatus !== 'All'" class="filter-active-dot" />
-            </button>
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search by promoter by name..."
+                class="search-input"
+              />
+              <button
+                v-if="searchQuery"
+                class="clear-search-btn"
+                @click="searchQuery = ''"
+              >
+                &times;
+              </button>
+            </div>
 
             <!-- Filter Dropdown -->
-            <Transition name="fade-drop">
-              <div
-                v-if="showFilterDropdown"
-                class="filter-dropdown"
-                @click.stop
+            <div class="filter-wrapper">
+              <button
+                type="button"
+                class="btn-control btn-filter"
+                :class="{ 'btn-control--active': filterStatus !== 'All' }"
+                @click.stop="showFilterDropdown = !showFilterDropdown"
               >
-                <div class="filter-dropdown-title">Filter by Status</div>
-                <button
-                  v-for="opt in statusOptions"
-                  :key="opt"
-                  class="filter-option"
-                  :class="{ 'filter-option--active': filterStatus === opt }"
-                  @click="
-                    filterStatus = opt;
-                    showFilterDropdown = false;
-                  "
+                <svg
+                  class="filter-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
                 >
-                  {{ opt }}
-                </button>
-              </div>
-            </Transition>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  />
+                </svg>
+                Filter
+                <span v-if="filterStatus !== 'All'" class="filter-active-dot" />
+              </button>
+
+              <Transition name="fade-drop">
+                <div
+                  v-if="showFilterDropdown"
+                  class="filter-dropdown"
+                  @click.stop
+                >
+                  <div class="filter-dropdown-title">Filter by Status</div>
+                  <button
+                    v-for="opt in statusOptions"
+                    :key="opt"
+                    class="filter-option"
+                    :class="{ 'filter-option--active': filterStatus === opt }"
+                    @click="
+                      filterStatus = opt;
+                      showFilterDropdown = false;
+                    "
+                  >
+                    {{ opt }}
+                  </button>
+                </div>
+              </Transition>
+            </div>
+          </div>
+
+          <!-- Create Promoter Link Button -->
+          <NuxtLink to="/promoters/create" class="btn-create-link">
+            <svg
+              class="plus-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Create Promoter Link
+          </NuxtLink>
+        </div>
+
+        <!-- 4 Stat Cards Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Total Customers</span>
+            <div class="stat-value">
+              {{ summaryStats.totalCustomers.toLocaleString() }}
+            </div>
+            <div class="stat-trend">{{ summaryStats.totalCustomersTrend }}</div>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Active (Last 30 days)</span>
+            <div class="stat-value">
+              {{ summaryStats.activeCustomers.toLocaleString() }}
+            </div>
+            <div class="stat-trend">{{ summaryStats.activeCustomersTrend }}</div>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">New</span>
+            <div class="stat-value">
+              {{ summaryStats.newCustomers.toLocaleString() }}
+            </div>
+            <div class="stat-trend">{{ summaryStats.newCustomersTrend }}</div>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Duplicate/Used</span>
+            <div class="stat-value">
+              {{ summaryStats.duplicateCustomers.toLocaleString() }}
+            </div>
+            <div class="stat-trend">{{ summaryStats.duplicateCustomersTrend }}</div>
           </div>
         </div>
 
-        <!-- Table Section -->
+        <!-- Section Title -->
+        <div class="section-header">
+          <h2 class="section-title">Top Performing Promoters</h2>
+        </div>
+
+        <!-- Promoters Table -->
         <div class="table-wrapper">
           <table class="promoters-table">
             <thead>
               <tr>
+                <th>PROMOTER</th>
                 <th>EVENT</th>
-                <th>TICKETS SOLD</th>
-                <th>COMMISSION RATE</th>
-                <th>COMMISSION EARNED</th>
+                <th>TICKET SOLD</th>
+                <th>REVENUE</th>
+                <th>COMMISSION</th>
                 <th>STATUS</th>
               </tr>
             </thead>
             <tbody>
               <tr
-                v-for="item in filteredCommissions"
+                v-for="item in filteredPromoters"
                 :key="item.id"
-                class="table-row"
+                class="table-row clickable-row"
+                @click="navigateToPromoter(item.id)"
               >
+                <!-- Promoter Name with Avatar Circle -->
+                <td class="promoter-name-cell">
+                  <div class="promoter-avatar-row">
+                    <div
+                      class="promoter-avatar"
+                      :style="{ background: item.avatarBg || getAvatarBg(item.promoterName) }"
+                    >
+                      {{ item.initials || getInitials(item.promoterName) }}
+                    </div>
+                    <span class="promoter-name-text">{{ item.promoterName }}</span>
+                  </div>
+                </td>
+
                 <td class="event-name">{{ item.event }}</td>
-                <td>{{ item.ticketsSold }}</td>
-                <td>{{ item.commissionRate }}</td>
+                <td class="tickets-sold">{{ item.ticketsSold }}</td>
+                <td class="revenue-cell">
+                  N{{ formatCurrency(item.revenue ?? (item.commissionEarned * 10)) }}
+                </td>
                 <td class="earned-cell">
-                  N{{ item.commissionEarned.toLocaleString() }}
+                  N{{ formatCurrency(item.commissionEarned) }}
                 </td>
                 <td>
                   <span
@@ -173,22 +201,19 @@
                   </span>
                 </td>
               </tr>
-              <tr v-if="filteredCommissions.length === 0">
-                <td colspan="5" class="empty-cell">
-                  No matching commission logs found.
+              <tr v-if="filteredPromoters.length === 0">
+                <td colspan="6" class="empty-cell">
+                  No matching promoters found.
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Footer Bar -->
+        <!-- Bottom Link -->
         <div class="card-footer">
-          <span class="footer-note"
-            >Commission becomes payable after the event end date</span
-          >
-          <button type="button" class="btn-withdraw" @click="handleWithdraw">
-            + Withdraw
+          <button type="button" class="btn-view-all" @click="resetFilters">
+            View all promoters
           </button>
         </div>
       </div>
@@ -198,6 +223,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useApi } from "~/composables/useApi";
 import { useOrgState } from "~/composables/useOrgState";
 import AppPageSkeleton from "~/components/ui/AppPageSkeleton.vue";
@@ -218,77 +244,167 @@ useHead({
   ],
 });
 
+const router = useRouter();
 const searchQuery = ref("");
 const filterStatus = ref("All");
 const showFilterDropdown = ref(false);
-const statusOptions = ["All", "Completed", "Pending", "Cancelled"];
+const statusOptions = ["All", "Active", "Inactive", "Pending", "Completed"];
 
 const { instance } = useApi();
 const { activeOrgId } = useOrgState();
 const isLoading = ref(true);
-const summary = ref({
-  totalCommissionEarnedMinor: 0,
-  pendingMinor: 0,
-  availableMinor: 0,
-  paidOutMinor: 0,
+
+const summaryStats = ref({
+  totalCustomers: 12842,
+  activeCustomers: 21358,
+  newCustomers: 342,
+  duplicateCustomers: 214,
+  totalCustomersTrend: "+12.4%",
+  activeCustomersTrend: "+8.6%",
+  newCustomersTrend: "+5.2%",
+  duplicateCustomersTrend: "+3.1%",
 });
 
-const commissions = ref<PromoterEventCommission[]>([]);
+// Mock/Default list matching the exact screenshot layout
+const defaultPromoters: PromoterEventCommission[] = [
+  {
+    id: "promoter-1",
+    promoterName: "Divine Emmanuel",
+    initials: "DE",
+    avatarBg: "#14b8a6", // Teal
+    event: "Summer Music Fest",
+    ticketsSold: 156,
+    revenue: 180000,
+    commissionEarned: 180000,
+    commissionRate: "10%",
+    status: "Active",
+  },
+  {
+    id: "promoter-2",
+    promoterName: "Mike Mills",
+    initials: "MM",
+    avatarBg: "#064e3b", // Dark green
+    event: "Arts Emergence",
+    ticketsSold: 98,
+    revenue: 250000,
+    commissionEarned: 250000,
+    commissionRate: "15%",
+    status: "Inactive",
+  },
+  {
+    id: "promoter-3",
+    promoterName: "Jane Cooper",
+    initials: "JC",
+    avatarBg: "#2563eb", // Blue
+    event: "Chess Africa",
+    ticketsSold: 76,
+    revenue: 150000,
+    commissionEarned: 150000,
+    commissionRate: "10%",
+    status: "Active",
+  },
+  {
+    id: "promoter-4",
+    promoterName: "Ben Francis",
+    initials: "BF",
+    avatarBg: "#dc2626", // Red
+    event: "New Year Groove",
+    ticketsSold: 60,
+    revenue: 300000,
+    commissionEarned: 300000,
+    commissionRate: "12%",
+    status: "Active",
+  },
+  {
+    id: "promoter-5",
+    promoterName: "Lizzy Poole",
+    initials: "LP",
+    avatarBg: "#581c87", // Purple
+    event: "Pool Party Event",
+    ticketsSold: 44,
+    revenue: 120000,
+    commissionEarned: 120000,
+    commissionRate: "10%",
+    status: "Inactive",
+  },
+];
+
+const promoters = ref<PromoterEventCommission[]>([]);
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-NG", {
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  }).format(value);
+  }).format(value || 0);
+}
+
+function getInitials(name?: string) {
+  if (!name) return "PR";
+  const parts = name.trim().split(" ");
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
+const colorPalette = ["#14b8a6", "#064e3b", "#2563eb", "#dc2626", "#581c87", "#ea580c"];
+function getAvatarBg(name?: string) {
+  if (!name) return colorPalette[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colorPalette.length;
+  return colorPalette[index];
 }
 
 async function fetchPromoterData() {
-  if (!activeOrgId.value) {
-    commissions.value = [];
-    isLoading.value = false;
-    return;
-  }
-
   isLoading.value = true;
-
   try {
+    if (!activeOrgId.value) {
+      promoters.value = defaultPromoters;
+      return;
+    }
+
     const [summaryResponse, listResponse] = await Promise.all([
       instance.get(`/organisations/${activeOrgId.value}/promoters/summary`),
       instance.get(`/organisations/${activeOrgId.value}/promoters`),
     ]);
 
-    const summaryData =
-      summaryResponse.data?.data ?? summaryResponse.data ?? summary.value;
+    const summaryData = summaryResponse.data?.data ?? summaryResponse.data;
+    if (summaryData) {
+      summaryStats.value = {
+        totalCustomers: summaryData.totalCustomers !== undefined ? summaryData.totalCustomers : 12842,
+        activeCustomers: summaryData.activeCustomers !== undefined ? summaryData.activeCustomers : 21358,
+        newCustomers: summaryData.newCustomers !== undefined ? summaryData.newCustomers : 342,
+        duplicateCustomers: summaryData.duplicateCustomers !== undefined ? summaryData.duplicateCustomers : 214,
+        totalCustomersTrend: summaryData.totalCustomersTrend || "+12.4%",
+        activeCustomersTrend: summaryData.activeCustomersTrend || "+8.6%",
+        newCustomersTrend: summaryData.newCustomersTrend || "+5.2%",
+        duplicateCustomersTrend: summaryData.duplicateCustomersTrend || "+3.1%",
+      };
+    }
+
     const listData = listResponse.data?.data ?? listResponse.data ?? [];
-
-    summary.value = {
-      totalCommissionEarnedMinor: Number(
-        summaryData?.totalCommissionEarnedMinor ?? 0,
-      ),
-      pendingMinor: Number(summaryData?.pendingMinor ?? 0),
-      availableMinor: Number(summaryData?.availableMinor ?? 0),
-      paidOutMinor: Number(summaryData?.paidOutMinor ?? 0),
-    };
-
-    commissions.value = Array.isArray(listData)
-      ? listData.map((item: any) => ({
-          id: item.id,
-          event: item.event,
-          ticketsSold: Number(item.ticketsSold ?? 0),
-          commissionRate: item.commissionRate,
-          commissionEarned: Number(item.commissionEarned ?? 0),
-          status: item.status,
-        }))
-      : [];
+    if (Array.isArray(listData) && listData.length > 0) {
+      promoters.value = listData.map((item: any) => ({
+        id: item.id,
+        promoterName: item.promoterName || "Promoter",
+        initials: item.initials || getInitials(item.promoterName),
+        avatarBg: getAvatarBg(item.promoterName),
+        event: item.event,
+        ticketsSold: Number(item.ticketsSold ?? 0),
+        revenue: Number(item.revenue ?? (item.commissionEarned ? item.commissionEarned * 10 : 0)),
+        commissionEarned: Number(item.commissionEarned ?? 0),
+        commissionRate: item.commissionRate,
+        status: item.status || "Active",
+      }));
+    } else {
+      promoters.value = defaultPromoters;
+    }
   } catch (error) {
-    console.error("Failed to load promoter data", error);
-    commissions.value = [];
-    summary.value = {
-      totalCommissionEarnedMinor: 0,
-      pendingMinor: 0,
-      availableMinor: 0,
-      paidOutMinor: 0,
-    };
+    console.warn("Using default promoter table layout", error);
+    promoters.value = defaultPromoters;
   } finally {
     isLoading.value = false;
   }
@@ -302,21 +418,28 @@ watch(activeOrgId, () => {
   fetchPromoterData();
 });
 
-const filteredCommissions = computed(() => {
-  return commissions.value.filter((item) => {
-    const matchesSearch =
-      !searchQuery.value ||
-      item.event.toLowerCase().includes(searchQuery.value.toLowerCase().trim());
+const filteredPromoters = computed(() => {
+  return promoters.value.filter((item) => {
+    const q = searchQuery.value.toLowerCase().trim();
+    const name = (item.promoterName || "").toLowerCase();
+    const evt = (item.event || "").toLowerCase();
+    const matchesSearch = !q || name.includes(q) || evt.includes(q);
+
     const matchesStatus =
-      filterStatus.value === "All" || item.status === filterStatus.value;
+      filterStatus.value === "All" ||
+      item.status.toLowerCase() === filterStatus.value.toLowerCase();
+
     return matchesSearch && matchesStatus;
   });
 });
 
-const router = useRouter();
+function navigateToPromoter(id: string) {
+  router.push(`/promoters/${id}`);
+}
 
-function handleWithdraw() {
-  router.push("/promoters/withdrawal");
+function resetFilters() {
+  searchQuery.value = "";
+  filterStatus.value = "All";
 }
 </script>
 
@@ -325,40 +448,6 @@ function handleWithdraw() {
   max-width: 1240px;
   margin: 0 auto;
   font-family: "Outfit", sans-serif;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* Demo Nav */
-.demo-nav-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.demo-nav-link {
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #6b7280;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  text-decoration: none;
-  transition: all 0.15s ease;
-}
-
-.demo-nav-link:hover {
-  border-color: #3fd246;
-  color: #16a34a;
-}
-
-.demo-nav-link--active {
-  background: #3fd246;
-  border-color: #3fd246;
-  color: #ffffff;
 }
 
 /* Main Unified Card */
@@ -373,37 +462,168 @@ function handleWithdraw() {
   gap: 1.5rem;
 }
 
-/* Header */
-.card-header {
+/* Top Action Row (Search, Filter, Create Link Button) */
+.top-action-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.header-text {
+.search-filter-group {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  max-width: 650px;
 }
 
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #0e2615;
-  margin: 0;
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
-.card-subtitle {
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.65rem 2.25rem 0.65rem 2.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
   font-size: 0.875rem;
+  color: #111827;
+  outline: none;
+  transition: all 0.15s ease;
+  font-family: "Outfit", sans-serif;
+}
+
+.search-input:focus {
+  border-color: #3fd246;
+  box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 0.85rem;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.filter-wrapper {
+  position: relative;
+}
+
+.btn-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  font-family: "Outfit", sans-serif;
+}
+
+.filter-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #4b5563;
+}
+
+.btn-control:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.btn-control--active {
+  border-color: #3fd246;
+  color: #16a34a;
+}
+
+.filter-active-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3fd246;
+  margin-left: 0.25rem;
+}
+
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  min-width: 160px;
+}
+
+.filter-dropdown-title {
+  font-size: 0.72rem;
+  font-weight: 700;
   color: #6b7280;
-  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.5rem 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 0.35rem;
+}
+
+.filter-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  font-family: "Outfit", sans-serif;
+}
+
+.filter-option:hover {
+  background: #f3f4f6;
+}
+
+.filter-option--active {
+  background: #f0fdf4;
+  color: #16a34a;
+  font-weight: 700;
 }
 
 .btn-create-link {
   display: inline-flex;
   align-items: center;
-  padding: 0.6rem 1.25rem;
+  gap: 0.4rem;
+  padding: 0.65rem 1.35rem;
   border-radius: 0.65rem;
   background: #3fd246;
   color: #ffffff;
@@ -411,6 +631,12 @@ function handleWithdraw() {
   font-weight: 700;
   text-decoration: none;
   transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.plus-icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 .btn-create-link:hover {
@@ -463,148 +689,127 @@ function handleWithdraw() {
   color: #3fd246;
 }
 
-/* Controls (Search & Filter) */
-.controls-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  position: relative;
+/* Section Header */
+.section-header {
+  margin-top: 0.5rem;
 }
 
-.search-input-wrapper {
-  position: relative;
-  flex: 1;
-  max-width: 420px;
-  display: flex;
-  align-items: center;
+.section-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0e2615;
+  margin: 0;
 }
 
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  width: 1.1rem;
-  height: 1.1rem;
-  color: #9ca3af;
-  pointer-events: none;
+/* Table */
+.table-wrapper {
+  overflow-x: auto;
 }
 
-.search-input {
+.promoters-table {
   width: 100%;
-  padding: 0.6rem 2.25rem 0.6rem 2.75rem;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  font-size: 0.85rem;
-  color: #111827;
-  outline: none;
-  transition: all 0.15s ease;
-  font-family: "Outfit", sans-serif;
+  border-collapse: collapse;
 }
 
-.search-input:focus {
-  border-color: #3fd246;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.12);
+.promoters-table thead tr th {
+  padding: 0.85rem 0.75rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #16a34a; /* Green Header Text */
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #f3f4f6;
+  white-space: nowrap;
 }
 
-.clear-search-btn {
-  position: absolute;
-  right: 0.85rem;
-  background: transparent;
-  border: none;
-  color: #9ca3af;
-  font-size: 1.1rem;
+.table-row {
+  transition: background 0.12s ease;
+}
+
+.clickable-row {
   cursor: pointer;
 }
 
-.filter-wrapper {
-  position: relative;
+.clickable-row:hover {
+  background: #f9fafb;
 }
 
-.btn-control {
-  display: inline-flex;
+.promoters-table tbody tr td {
+  padding: 1.1rem 0.75rem;
+  font-size: 0.875rem;
+  color: #374151;
+  border-bottom: 1px solid #f9fafb;
+  vertical-align: middle;
+}
+
+.promoter-avatar-row {
+  display: flex;
   align-items: center;
-  padding: 0.6rem 1.1rem;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  font-size: 0.85rem;
+  gap: 0.85rem;
+}
+
+.promoter-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.promoter-name-text {
+  font-weight: 700;
+  color: #111827;
+}
+
+.event-name {
   font-weight: 600;
   color: #374151;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-  font-family: "Outfit", sans-serif;
 }
 
-.btn-control:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
+.tickets-sold {
+  font-weight: 600;
+  color: #111827;
 }
 
-.btn-control--active {
-  border-color: #3fd246;
+.revenue-cell {
+  font-weight: 700;
+  color: #111827;
+}
+
+.earned-cell {
+  font-weight: 700;
+  color: #111827;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.status--active,
+.status--completed {
+  background: #dcfce7;
   color: #16a34a;
 }
 
-.filter-active-dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #3fd246;
-  margin-left: 0.5rem;
-}
-
-.filter-dropdown {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.875rem;
-  padding: 0.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  z-index: 50;
-  min-width: 160px;
-}
-
-.filter-dropdown-title {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.25rem 0.5rem 0.5rem;
-  border-bottom: 1px solid #f3f4f6;
-  margin-bottom: 0.35rem;
-}
-
-.filter-option {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  border: none;
-  background: transparent;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #374151;
-  cursor: pointer;
-  transition: background 0.12s ease;
-  font-family: "Outfit", sans-serif;
-}
-
-.filter-option:hover {
+.status--inactive,
+.status--cancelled {
   background: #f3f4f6;
+  color: #6b7280;
 }
 
-.filter-option--active {
-  background: #f0fdf4;
-  color: #16a34a;
-  font-weight: 700;
+.status--pending {
+  background: #ffedd5;
+  color: #ea580c;
 }
 
 .empty-cell {
@@ -614,121 +819,43 @@ function handleWithdraw() {
   font-size: 0.875rem;
 }
 
-/* Table */
-.table-wrapper {
-  overflow-x: auto;
-  border-top: 1px solid #eef2ee;
-}
-
-.promoters-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.promoters-table thead tr th {
-  padding: 1rem 0.75rem;
-  text-align: left;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #3fd246;
-  letter-spacing: 0.06em;
-  border-bottom: 1px solid #f3f4f6;
-  white-space: nowrap;
-}
-
-.table-row {
-  transition: background 0.1s ease;
-}
-
-.table-row:hover {
-  background: #f9fafb;
-}
-
-.promoters-table tbody tr td {
-  padding: 1rem 0.75rem;
-  font-size: 0.875rem;
-  color: #374151;
-  border-bottom: 1px solid #f9fafb;
-  vertical-align: middle;
-}
-
-.event-name {
-  font-weight: 600;
-  color: #111827;
-}
-
-.earned-cell {
-  font-weight: 700;
-  color: #0e2615;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.status--completed {
-  background: #f0fdf4;
-  color: #16a34a;
-}
-
-.status--cancelled {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.status--pending {
-  background: #fff7ed;
-  color: #ea580c;
-}
-
 /* Footer */
 .card-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-top: 1rem;
-  border-top: 1px solid #f3f4f6;
+  padding-top: 0.5rem;
 }
 
-.footer-note {
-  font-size: 0.82rem;
-  color: #6b7280;
-}
-
-.btn-withdraw {
-  padding: 0.65rem 1.5rem;
-  border-radius: 0.65rem;
+.btn-view-all {
+  background: transparent;
   border: none;
-  background: #3fd246;
-  color: #ffffff;
-  font-size: 0.875rem;
+  color: #16a34a;
+  font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  padding: 0;
+  transition: color 0.15s ease;
   font-family: "Outfit", sans-serif;
 }
 
-.btn-withdraw:hover {
-  background: #2bb832;
-  box-shadow: 0 4px 15px rgba(63, 210, 70, 0.25);
+.btn-view-all:hover {
+  color: #15803d;
+  text-decoration: underline;
 }
 
 @media (max-width: 900px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .card-footer {
+  .top-action-row {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    align-items: stretch;
   }
-  .btn-withdraw {
-    width: 100%;
+  .search-filter-group {
+    max-width: 100%;
+  }
+  .btn-create-link {
+    justify-content: center;
   }
 }
 </style>

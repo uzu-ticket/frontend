@@ -76,13 +76,19 @@
           <!-- Headline & Subtitle -->
           <h1 class="invite-title">You’re invited to promote an event!</h1>
           <p class="invite-subtitle">
-            <strong>Jane May</strong> has invited you to promote their event
+            <strong>{{ inviterName }}</strong> has invited you to promote their event
           </p>
 
           <!-- Event Card Box -->
           <div class="event-card-box">
             <div class="event-thumbnail">
-              <svg viewBox="0 0 100 100" class="thumb-svg">
+              <img
+                v-if="eventImage"
+                :src="eventImage"
+                :alt="eventName"
+                class="thumb-img-cover"
+              />
+              <svg v-else viewBox="0 0 100 100" class="thumb-svg">
                 <rect width="100" height="100" fill="#1e1b4b" rx="8" />
                 <circle
                   cx="50"
@@ -117,29 +123,39 @@
             </div>
             <div class="event-details">
               <span class="event-label">Event</span>
-              <h2 class="event-name">Music Festival 2026</h2>
-              <div class="event-meta">Aug, 30 • 10:00AM</div>
-              <div class="event-location">Maryland Yaba, Lagos, Nigeria.</div>
+              <h2 class="event-name">{{ eventName }}</h2>
+              <div class="event-meta">{{ eventFormattedDate }}</div>
+              <div class="event-location">{{ eventLocation }}</div>
             </div>
           </div>
 
           <!-- Commission text -->
           <p class="commission-text">
-            You will earn commission for every ticket sold through your link
+            You will earn <strong>{{ commissionRate }}</strong> commission for every ticket sold through your link
           </p>
 
           <!-- Buttons -->
           <div class="action-buttons">
-            <button type="button" class="btn-accept" @click="acceptInvite">
-              Accept Invitation
+            <button
+              type="button"
+              class="btn-accept"
+              :disabled="isSubmitting"
+              @click="acceptInvite"
+            >
+              {{ isSubmitting ? 'Processing...' : 'Accept Invitation' }}
             </button>
-            <button type="button" class="btn-decline" @click="declineInvite">
+            <button
+              type="button"
+              class="btn-decline"
+              :disabled="isSubmitting"
+              @click="declineInvite"
+            >
               Decline Invitation
             </button>
           </div>
 
           <!-- Expire Note -->
-          <span class="expire-note">This invitation will expire in 7 days</span>
+          <span class="expire-note">{{ expirationNote }}</span>
         </div>
       </template>
 
@@ -212,10 +228,10 @@
           <!-- Headline & Subtitle -->
           <h1 class="welcome-title">Welcome on board</h1>
           <p class="welcome-subtitle">You are now a promoter for</p>
-          <div class="welcome-event-name">Music Fest 2026</div>
+          <div class="welcome-event-name">{{ eventName }}</div>
 
           <p class="welcome-instruction">
-            Start sharing you link and earn commissions.
+            Start sharing your link and earn commissions.
           </p>
 
           <!-- Action -->
@@ -229,8 +245,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { usePromoters, type PromoterLinkDetail } from "~/composables/usePromoters";
+import { useOrgState } from "~/composables/useOrgState";
+import { useToast } from "~/composables/useToast";
 
 definePageMeta({
   layout: "dashboard",
@@ -241,15 +260,138 @@ useHead({
   meta: [{ name: "description", content: "Event promotion invitation" }],
 });
 
+const route = useRoute();
 const router = useRouter();
-const state = ref<"invite" | "welcome">("invite");
+const toast = useToast();
+const { activeOrgId } = useOrgState();
+const { getPromoterLink, fetchPromotersList, acceptInvitation, declineInvitation } = usePromoters();
 
-function acceptInvite() {
-  state.value = "welcome";
+const state = ref<"invite" | "welcome">("invite");
+const isSubmitting = ref(false);
+const linkDetail = ref<PromoterLinkDetail | null>(null);
+
+const inviterName = computed(() => linkDetail.value?.promoter?.name || "The Organizer");
+const eventName = computed(() => linkDetail.value?.event?.title || "Event Promotion");
+const eventImage = computed(() => null);
+
+const eventFormattedDate = computed(() => {
+  if (!linkDetail.value?.event?.startsAt) return "Date TBD";
+  const date = new Date(linkDetail.value.event.startsAt);
+  if (isNaN(date.getTime())) return "Date TBD";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+});
+
+const eventLocation = computed(() => {
+  if (!linkDetail.value?.event) return "Location TBD";
+  const parts = [
+    linkDetail.value.event.venueName,
+    linkDetail.value.event.city,
+    linkDetail.value.event.state,
+    linkDetail.value.event.country,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : "Location TBD";
+});
+
+const commissionRate = computed(() => {
+  if (!linkDetail.value) return "commission";
+  if (linkDetail.value.commissionType === "fixed") {
+    return `₦${linkDetail.value.commissionValue.toLocaleString("en-NG", { minimumFractionDigits: 2 })} per ticket`;
+  }
+  return `${linkDetail.value.commissionValue}%`;
+});
+
+const expirationNote = computed(() => {
+  if (!linkDetail.value?.expiresAt) return "This invitation has no expiration date";
+  const date = new Date(linkDetail.value.expiresAt);
+  if (isNaN(date.getTime())) return "This invitation has no expiration date";
+  return `This invitation will expire on ${date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+});
+
+async function loadInvitation() {
+  if (!activeOrgId.value) return;
+
+  const linkId = route.query.id as string | undefined;
+
+  if (linkId) {
+    const data = await getPromoterLink(linkId);
+    if (data) {
+      linkDetail.value = data;
+      return;
+    }
+  }
+
+  // Fallback: list all promoter links and pick the latest one
+  const list = await fetchPromotersList();
+  if (list.length > 0) {
+    const data = await getPromoterLink(list[0].id);
+    if (data) {
+      linkDetail.value = data;
+    }
+  }
 }
 
-function declineInvite() {
-  router.push("/promoters");
+onMounted(loadInvitation);
+watch(activeOrgId, loadInvitation);
+
+async function acceptInvite() {
+  const linkId = linkDetail.value?.id || (route.query.id as string);
+  if (!linkId) {
+    state.value = "welcome";
+    return;
+  }
+
+  isSubmitting.value = true;
+  try {
+    const success = await acceptInvitation(linkId);
+    if (success) {
+      toast.show({
+        title: "Invitation Accepted!",
+        message: "You are now an active promoter.",
+        type: "success",
+      });
+      state.value = "welcome";
+    } else {
+      toast.show({
+        title: "Action Failed",
+        message: "Unable to accept invitation at this time",
+        type: "error",
+      });
+    }
+  } catch (e: any) {
+    toast.show({
+      title: "Error",
+      message: e?.message || "Failed to accept invitation",
+      type: "error",
+    });
+  } finally {
+    isSubmitting.value = false;
+  }
+}
+
+async function declineInvite() {
+  const linkId = linkDetail.value?.id || (route.query.id as string);
+  if (!linkId) {
+    router.push("/promoters");
+    return;
+  }
+
+  isSubmitting.value = true;
+  try {
+    await declineInvitation(linkId);
+    toast.show({
+      title: "Invitation Declined",
+      message: "You have declined the promoter invitation.",
+      type: "info",
+    });
+  } finally {
+    isSubmitting.value = false;
+    router.push("/promoters");
+  }
 }
 
 function goToDashboard() {

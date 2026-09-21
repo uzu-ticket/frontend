@@ -3,10 +3,97 @@
     <!-- Background -->
     <div class="ve-bg" />
 
-    <!-- Card -->
     <div class="ve-card-wrapper">
-      <div class="ve-card">
+      <!-- ═════════════════════════════════════════════════════
+           STATE 1: VERIFYING LOADER (when token exists & verifying)
+           ═════════════════════════════════════════════════════ -->
+      <div v-if="token && isVerifying" class="ve-card ve-card-verifying">
+        <div class="loader-content">
+          <div class="spinner-ring" />
+          <h2>Verifying your email...</h2>
+          <p>Please wait while we confirm your account.</p>
+        </div>
+      </div>
 
+      <!-- ═════════════════════════════════════════════════════
+           STATE 2: EMAIL VERIFIED PAGE (exact design from screenshot)
+           ═════════════════════════════════════════════════════ -->
+      <div v-else-if="isVerified" class="ve-card ve-card-verified">
+        <!-- Back button -->
+        <button id="btn-back-verified" class="back-btn" aria-label="Go back" @click="goToLogin">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+
+        <!-- Heading -->
+        <div class="verified-heading">
+          <h1>Email verified</h1>
+          <p>Your email has been successfully verified.<br>You can now <strong>sign in</strong> to your account</p>
+        </div>
+
+        <!-- Shield + Stars Illustration -->
+        <div class="verified-illustration">
+          <img src="/email-verified.png" alt="" class="verified-stars-img" aria-hidden="true" />
+          <div class="verified-shield-bg">
+            <img src="/shield-mark.png" alt="Email verified" class="verified-shield-mark" />
+          </div>
+        </div>
+
+        <!-- Action CTA -->
+        <div class="verified-actions">
+          <AppButton
+            id="btn-continue-login"
+            type="button"
+            variant="primary"
+            size="lg"
+            block
+            @click="goToLogin"
+          >
+            Continue to Login
+          </AppButton>
+        </div>
+      </div>
+
+      <!-- ═════════════════════════════════════════════════════
+           STATE 3: VERIFICATION ERROR (token invalid/expired)
+           ═════════════════════════════════════════════════════ -->
+      <div v-else-if="token && verificationError" class="ve-card ve-card-error">
+        <!-- Back button -->
+        <button id="btn-back-error" class="back-btn" aria-label="Go back" @click="$router.back()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+
+        <div class="ve-heading">
+          <h1>Verification link expired</h1>
+          <p>{{ verificationError }}</p>
+        </div>
+
+        <div class="ve-info-box error-box">
+          <p>Please request a new verification link to complete your account registration.</p>
+        </div>
+
+        <div class="ve-actions">
+          <AppButton
+            id="btn-resend-error"
+            type="button"
+            variant="primary"
+            size="lg"
+            block
+            :loading="auth.loading.value"
+            @click="handleResend"
+          >
+            Resend Verification Link
+          </AppButton>
+        </div>
+      </div>
+
+      <!-- ═════════════════════════════════════════════════════
+           STATE 4: CHECK YOUR EMAIL (no token, after sign up)
+           ═════════════════════════════════════════════════════ -->
+      <div v-else class="ve-card">
         <!-- Back button -->
         <button id="btn-back" class="back-btn" aria-label="Go back" @click="$router.back()">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -36,19 +123,6 @@
         <!-- Actions -->
         <div class="ve-actions">
           <AppButton
-            v-if="token"
-            id="btn-verify"
-            type="button"
-            variant="primary"
-            size="lg"
-            block
-            :loading="auth.loading.value"
-            @click="verifyEmail"
-          >
-            Verify Email
-          </AppButton>
-          <AppButton
-            v-else
             id="btn-open-gmail"
             type="button"
             variant="primary"
@@ -74,52 +148,6 @@
         </div>
       </div>
     </div>
-
-    <!-- ── Email Verified Modal ── -->
-    <AppModal
-      v-model="showVerifiedModal"
-      size="sm"
-      :closable="false"
-      :close-on-backdrop="false"
-      no-padding
-    >
-      <div class="evm">
-        <!-- Back / close -->
-        <button class="back-btn evm-back" aria-label="Close" @click="showVerifiedModal = false">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-        </button>
-
-        <!-- Heading -->
-        <div class="evm-heading">
-          <h2>Email verified</h2>
-          <p>Your email has been successfully verified.<br>You can now <strong>sign in</strong> to your account</p>
-        </div>
-
-        <!-- Shield + sparkles illustration -->
-        <div class="evm-illustration">
-          <img src="/email-verified.png" alt="" class="evm-illustration-img" aria-hidden="true" />
-          <div class="evm-shield-bg">
-            <img src="/shield-mark.png" alt="" class="evm-shield-mark" aria-hidden="true" />
-          </div>
-        </div>
-
-        <!-- CTA -->
-        <div class="evm-footer">
-          <AppButton
-            id="btn-continue-login"
-            type="button"
-            variant="primary"
-            size="lg"
-            block
-            @click="goToLogin"
-          >
-            Continue to Login
-          </AppButton>
-        </div>
-      </div>
-    </AppModal>
   </div>
 </template>
 
@@ -131,7 +159,7 @@ import { useToast } from '~/composables/useToast'
 useHead({
   title: 'Verify Email — Uzu Ticket',
   meta: [
-    { name: 'description', content: 'Check your email to verify your Uzu Ticket account.' },
+    { name: 'description', content: 'Verify your Uzu Ticket account.' },
   ],
 })
 
@@ -140,14 +168,15 @@ definePageMeta({
 })
 
 const auth = useAuth()
-const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 
 const email = computed(() => (route.query.email as string) || 'you@example.com')
 const token = computed(() => (route.query.token as string) || '')
 
-const showVerifiedModal = ref(false)
+const isVerifying = ref(false)
+const isVerified = ref(false)
+const verificationError = ref('')
 const resendCooldown = ref(0)
 let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -181,22 +210,22 @@ async function handleResend() {
   }
 }
 
-async function verifyEmail() {
+async function runEmailVerification() {
   if (!token.value) return
+  isVerifying.value = true
+  verificationError.value = ''
   try {
     await auth.verifyEmail(email.value, token.value)
-    showVerifiedModal.value = true
+    isVerified.value = true
   } catch {
-    toast.show({
-      title: 'Email Verification Failed',
-      message: auth.error.value || 'The verification link is invalid or has expired.',
-      type: 'error',
-    })
+    verificationError.value = auth.error.value || 'The verification link is invalid or has expired.'
+  } finally {
+    isVerifying.value = false
   }
 }
 
-function goToLogin() {
-  router.push('/auth/signin')
+async function goToLogin() {
+  await auth.logout()
 }
 
 onUnmounted(() => {
@@ -205,24 +234,20 @@ onUnmounted(() => {
 
 watch(() => token.value, (newToken) => {
   if (newToken) {
-    verifyEmail()
+    runEmailVerification()
   }
-})
-
-if (import.meta.dev) {
-  setTimeout(() => { showVerifiedModal.value = false }, 0)
-}
+}, { immediate: true })
 </script>
 
 <style scoped>
-/* ── Page shell ── */
+/* ── Page Shell ── */
 .ve-page {
   position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1rem;
   font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -237,23 +262,27 @@ if (import.meta.dev) {
   filter: brightness(0.55);
 }
 
-/* ── Card ── */
+/* ── Card Wrapper ── */
 .ve-card-wrapper {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: 500px;
 }
+
+/* ── Base Card ── */
 .ve-card {
-  background: #fff;
+  background: #ffffff;
   border-radius: 0;
-  padding: 2.5rem 2.5rem 5.5rem;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  padding: 2.5rem 2.5rem 2.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
+  min-height: 560px;
+  justify-content: space-between;
 }
 
-/* ── Back button (shared) ── */
+/* ── Back button ── */
 .back-btn {
   display: inline-flex;
   align-items: center;
@@ -263,70 +292,86 @@ if (import.meta.dev) {
   border-radius: 9999px;
   background: transparent;
   border: none;
-  color: #1a1a1a;
+  color: #111827;
   cursor: pointer;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   margin-left: -0.25rem;
   transition: background 0.15s;
 }
-.back-btn:hover { background: #f3f4f6; }
+.back-btn:hover {
+  background: #f3f4f6;
+}
 
-/* ── Heading ── */
+/* ── Check Email State Headings ── */
 .ve-heading {
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 .ve-heading h1 {
-  font-size: 1.75rem;
+  font-size: 1.95rem;
   font-weight: 800;
   color: #0E2615;
   margin: 0 0 0.4rem;
   line-height: 1.2;
 }
 .ve-heading p {
-  font-size: 0.95rem;
+  font-size: 0.975rem;
   color: #6b7280;
   margin: 0;
 }
-.ve-heading strong { color: #0E2615; font-weight: 700; }
+.ve-heading strong {
+  color: #0E2615;
+  font-weight: 700;
+}
 
-/* ── Illustration ── */
+/* ── Check Email Illustration ── */
 .ve-illustration {
   display: flex;
   justify-content: center;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 .ve-illustration-img {
-  width: 320px;
+  width: 290px;
   height: auto;
   display: block;
 }
 
-/* ── Info box ── */
+/* ── Info Box ── */
 .ve-info-box {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
   background: #f0fdf1;
   border-radius: 0.875rem;
-  padding: 1rem 1.125rem;
-  margin-bottom: 2rem;
+  padding: 1.05rem 1.2rem;
+  margin-bottom: 1.5rem;
 }
 .ve-info-icon {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.35rem;
+  height: 1.35rem;
   color: #374151;
   flex-shrink: 0;
   margin-top: 0.05rem;
 }
 .ve-info-box p {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: #374151;
   margin: 0;
   line-height: 1.5;
 }
+.error-box {
+  background: #fef2f2;
+}
+.error-box p {
+  color: #991b1b;
+}
 
 /* ── Actions ── */
-.ve-actions { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+.ve-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-bottom: 0;
+}
 .ve-resend {
   text-align: center;
   font-size: 0.875rem;
@@ -345,82 +390,131 @@ if (import.meta.dev) {
   margin-left: 0.2rem;
   transition: color 0.15s;
 }
-.resend-link:hover:not(:disabled) { color: #2db83a; }
-.resend-link:disabled { color: #9ca3af; cursor: default; }
+.resend-link:hover:not(:disabled) {
+  color: #2db83a;
+}
+.resend-link:disabled {
+  color: #9ca3af;
+  cursor: default;
+}
 
 /* ══════════════════════════════════════
-   Email Verified Modal inner content
+   VERIFYING LOADER STATE
    ══════════════════════════════════════ */
-.evm {
-  padding: 2.5rem 2.25rem 2.5rem;
+.ve-card-verifying {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.loader-content {
   display: flex;
   flex-direction: column;
-  min-height: 560px;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
 }
-.evm-back {
-  margin-bottom: 1rem;
-}
-
-/* Heading */
-.evm-heading {
+.spinner-ring {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3FD246;
+  border-radius: 50%;
+  animation: ve-spin 0.8s linear infinite;
   margin-bottom: 1.5rem;
 }
-.evm-heading h2 {
+@keyframes ve-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.loader-content h2 {
   font-size: 1.75rem;
   font-weight: 800;
   color: #0E2615;
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.5rem;
 }
-.evm-heading p {
+.loader-content p {
   font-size: 0.95rem;
   color: #6b7280;
   margin: 0;
-  line-height: 1.6;
 }
-.evm-heading strong { color: #0E2615; font-weight: 700; }
 
-/* Illustration */
-.evm-illustration {
+/* ══════════════════════════════════════
+   EMAIL VERIFIED STATE (Matching Screenshot)
+   ══════════════════════════════════════ */
+.ve-card-verified {
+  padding: 2.5rem 2.25rem 2.5rem;
+  min-height: 560px;
+  justify-content: space-between;
+}
+
+.verified-heading {
+  margin-bottom: 1rem;
+}
+.verified-heading h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #0E2615;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.verified-heading p {
+  font-size: 0.975rem;
+  color: #4b5563;
+  margin: 0;
+  line-height: 1.5;
+}
+.verified-heading strong {
+  color: #0E2615;
+  font-weight: 700;
+}
+
+/* Illustration matching screenshot */
+.verified-illustration {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 1rem;
-  margin-bottom: 2rem;
+  margin: 1.5rem 0 2rem;
 }
-.evm-illustration-img {
+.verified-stars-img {
   width: 290px;
   height: auto;
   display: block;
 }
-.evm-shield-bg {
+.verified-shield-bg {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 152px;
-  height: 152px;
+  width: 148px;
+  height: 148px;
   background-color: #EEF7EE;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(63, 210, 70, 0.22);
+  box-shadow: 0 8px 24px rgba(63, 210, 70, 0.2);
 }
-.evm-shield-mark {
-  width: 94px;
-  height: 94px;
+.verified-shield-mark {
+  width: 90px;
+  height: 90px;
   object-fit: contain;
 }
 
-/* CTA */
-.evm-footer { margin-top: 0.5rem; }
+/* Footer CTA */
+.verified-actions {
+  margin-top: 0.5rem;
+}
 
 /* ── Responsive ── */
 @media (max-width: 540px) {
-  .ve-card { padding: 2rem 1.5rem 3.5rem; }
-  .ve-heading h1 { font-size: 1.4rem; }
-  .evm { padding: 1.75rem 1.5rem 2rem; }
+  .ve-card {
+    padding: 2rem 1.5rem 2rem;
+  }
+  .verified-heading h1 {
+    font-size: 1.85rem;
+  }
 }
 </style>

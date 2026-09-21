@@ -130,10 +130,10 @@ async function handleSubmit() {
     await auth.register(form.email, form.password, form.fullName, form.phone)
     toast.show({
       title: 'Account Created',
-      message: 'Your account has been created successfully. Redirecting to your dashboard.',
+      message: 'A verification link has been sent to your email address.',
       type: 'success',
     })
-    await router.push('/overview')
+    await router.push(`/auth/verify-email?email=${encodeURIComponent(form.email)}`)
   } catch {
     toast.show({
       title: 'Sign Up Failed',

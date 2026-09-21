@@ -120,28 +120,13 @@
             <label class="form-label"
               >Select Audience <span class="required">*</span></label
             >
-            <div class="select-wrapper">
-              <select v-model="form.audience" class="form-select">
-                <option value="all">All Customers (5,245)</option>
-                <option value="vip">VIP Customers (1,120)</option>
-                <option value="regular">Regular (4,125)</option>
-              </select>
-              <svg
-                class="select-chevron"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
+            <AppSelect
+              v-model="form.audience"
+              :options="audienceOptions"
+              placeholder="Choose an audience segment"
+            />
             <p class="form-hint">
-              This audience includes all your registered customers
+              {{ audienceOptions.find(o => o.value === form.audience)?.subLabel ?? 'Select who will receive this campaign.' }}
             </p>
           </div>
 
@@ -403,6 +388,27 @@ const audienceSources = [
   { value: "saved", label: "Saved Audiences" },
   { value: "attendees", label: "Event Attendees" },
   { value: "segments", label: "Segments" },
+];
+
+const audienceOptions = [
+  {
+    value: "all",
+    label: "All Customers",
+    subLabel: "5,245 recipients — every registered customer",
+    icon: "👥",
+  },
+  {
+    value: "vip",
+    label: "VIP Customers",
+    subLabel: "1,120 recipients — top-tier buyers",
+    icon: "⭐",
+  },
+  {
+    value: "regular",
+    label: "Regular Customers",
+    subLabel: "4,125 recipients — non-VIP audience",
+    icon: "🎟️",
+  },
 ];
 
 const contentBlocks = [

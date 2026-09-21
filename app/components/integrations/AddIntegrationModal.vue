@@ -35,7 +35,9 @@
           class="modal-item-row"
         >
           <div class="item-left">
-            <IntegrationLogo :logo-key="item.logoKey" />
+            <div class="logo-shell">
+              <IntegrationLogo :logo-key="item.logoKey" />
+            </div>
             <div class="item-info">
               <h3 class="item-title">{{ item.name }}</h3>
               <p class="item-desc">{{ item.description }}</p>
@@ -213,6 +215,15 @@ function handleToggle(item: IntegrationItem) {
   display: flex;
   align-items: center;
   gap: 1.1rem;
+}
+
+.logo-shell {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.65rem;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid #F3F4F6;
 }
 
 .item-info {

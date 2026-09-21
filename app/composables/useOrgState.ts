@@ -123,6 +123,8 @@ export function useOrgState() {
 
   function clearActiveOrg() {
     activeOrgCookie.value = null
+    organizations.value = []
+    pendingInvitations.value = []
   }
 
   function syncActiveOrg() {

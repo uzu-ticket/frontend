@@ -485,29 +485,27 @@
           <div class="summary-list">
             <div class="summary-row">
               <span class="summary-label">Event</span>
-              <span class="summary-value font-bold">Music Fest 2026</span>
+              <span class="summary-value font-bold">{{ linkDetail?.event?.title || 'Loading...' }}</span>
             </div>
             <div class="summary-row">
               <span class="summary-label">Commission</span>
-              <span class="summary-value font-bold">10%</span>
+              <span class="summary-value font-bold">{{ formattedCommission }}</span>
             </div>
             <div class="summary-row">
               <span class="summary-label">Created</span>
-              <span class="summary-value font-bold"
-                >Sept 12, 2026 - 9:46 AM</span
-              >
+              <span class="summary-value font-bold">{{ formattedCreatedDate }}</span>
             </div>
             <div class="summary-row">
               <span class="summary-label">Expires</span>
-              <span class="summary-value font-bold">Never</span>
+              <span class="summary-value font-bold">{{ formattedExpiration }}</span>
             </div>
             <div class="summary-row">
               <span class="summary-label">Apply to</span>
-              <span class="summary-value font-bold">All Ticket Types</span>
+              <span class="summary-value font-bold">{{ linkDetail?.ticketType || 'All Ticket Types' }}</span>
             </div>
             <div class="summary-row">
-              <span class="summary-label">Alias</span>
-              <span class="summary-value font-bold">music-fest-26.live</span>
+              <span class="summary-label">Alias / Code</span>
+              <span class="summary-value font-bold">{{ linkDetail?.code || '—' }}</span>
             </div>
           </div>
         </div>
@@ -557,7 +555,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import { usePromoters, type PromoterLinkDetail } from "~/composables/usePromoters";
+import { useOrgState } from "~/composables/useOrgState";
+import { useToast } from "~/composables/useToast";
 
 definePageMeta({
   layout: "dashboard",
@@ -570,8 +572,79 @@ useHead({
   ],
 });
 
-const promoterLink = ref("https://uzuticet.com/p/jane_may/musicFest26");
+const route = useRoute();
 const toast = useToast();
+const { activeOrgId } = useOrgState();
+const { getPromoterLink, fetchPromotersList, isLoading } = usePromoters();
+
+const linkDetail = ref<PromoterLinkDetail | null>(null);
+
+const promoterLink = computed(() => {
+  if (!linkDetail.value?.code) return "https://uzutickets.com/p/promoter-link";
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return `${window.location.origin}/p/${linkDetail.value.code}`;
+  }
+  return `https://uzutickets.com/p/${linkDetail.value.code}`;
+});
+
+const formattedCommission = computed(() => {
+  if (!linkDetail.value) return "—";
+  if (linkDetail.value.commissionType === "fixed") {
+    return `₦${linkDetail.value.commissionValue.toLocaleString("en-NG", { minimumFractionDigits: 2 })}/ticket`;
+  }
+  return `${linkDetail.value.commissionValue}%`;
+});
+
+const formattedCreatedDate = computed(() => {
+  if (!linkDetail.value?.createdAt) return "—";
+  const date = new Date(linkDetail.value.createdAt);
+  if (isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+});
+
+const formattedExpiration = computed(() => {
+  if (!linkDetail.value?.expiresAt) return "Never";
+  const date = new Date(linkDetail.value.expiresAt);
+  if (isNaN(date.getTime())) return "Never";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+});
+
+async function loadLink() {
+  if (!activeOrgId.value) return;
+
+  const linkId = route.query.id as string | undefined;
+
+  if (linkId) {
+    const data = await getPromoterLink(linkId);
+    if (data) {
+      linkDetail.value = data;
+      return;
+    }
+  }
+
+  // Fallback: list all promoter links and pick the latest one
+  const list = await fetchPromotersList();
+  if (list.length > 0) {
+    const latest = list[0];
+    const data = await getPromoterLink(latest.id);
+    if (data) {
+      linkDetail.value = data;
+    }
+  }
+}
+
+onMounted(loadLink);
+watch(activeOrgId, loadLink);
 
 function copyLink() {
   navigator.clipboard.writeText(promoterLink.value);
@@ -583,6 +656,20 @@ function copyLink() {
 }
 
 function downloadQr() {
+  const svgElement = document.querySelector(".qr-svg") as SVGElement | null;
+  if (!svgElement) return;
+
+  const svgData = new XMLSerializer().serializeToString(svgElement);
+  const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `promoter-qr-${linkDetail.value?.code || "link"}.svg`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
   toast.show({
     title: "Downloading QR Code",
     message: "QR Code image saved to downloads",
@@ -591,9 +678,28 @@ function downloadQr() {
 }
 
 function shareOn(platform: string) {
+  const url = encodeURIComponent(promoterLink.value);
+  const title = encodeURIComponent(
+    `Check out tickets for ${linkDetail.value?.event?.title || "this event"}!`,
+  );
+
+  let shareUrl = "";
+
+  if (platform === "whatsapp") {
+    shareUrl = `https://api.whatsapp.com/send?text=${title}%20${url}`;
+  } else if (platform === "twitter") {
+    shareUrl = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
+  } else if (platform === "facebook") {
+    shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+  }
+
+  if (shareUrl && typeof window !== "undefined") {
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+  }
+
   toast.show({
-    title: `Share on ${platform}`,
-    message: `Opening ${platform} share window`,
+    title: `Sharing on ${platform}`,
+    message: `Opened ${platform} share window`,
     type: "info",
   });
 }

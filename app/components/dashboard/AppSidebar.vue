@@ -7,8 +7,8 @@
       </NuxtLink>
     </div>
 
-    <!-- Active Organization Switcher -->
-    <div class="sidebar-org-switcher">
+    <!-- Active Organization Switcher (Only shown if user has organizations) -->
+    <div v-if="organizations && organizations.length > 0" class="sidebar-org-switcher">
       <span class="org-section-title">ORGANIZATION</span>
       <div class="org-selector-pill" @click.stop="toggleOrgDropdown">
         <div class="org-badge-dark">

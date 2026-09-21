@@ -50,10 +50,11 @@ const router = useRouter()
 const { createdNewKey } = useApiKeys()
 const copied = ref(false)
 
-const fullKey = computed(() => createdNewKey.value?.fullKey || 'SK_Live_87acb3456780098811260867493a')
+const fullKey = computed(() => createdNewKey.value?.fullKey || '')
 
 const displayKey = computed(() => {
   const k = fullKey.value
+  if (!k) return '••••••••••••••••••••••••••••••••'
   return k.length > 38 ? k.slice(0, 38) + '...' : k
 })
 

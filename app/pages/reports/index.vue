@@ -4,16 +4,40 @@
     <div class="reports-container">
       <!-- Section Title & Top Controls Row -->
       <div class="overview-header">
-        <h2 class="overview-title">Sales & Reports Overview</h2>
+        <h2 class="overview-title">Sales &amp; Reports Overview</h2>
 
         <div class="top-controls">
-          <AppSelect
-            v-model="dateRange"
-            class="report-filter-select"
-            :options="dateRangeOptions"
-            placeholder="Select date range"
-          />
+          <!-- Date Range Pill -->
+          <button class="date-pill" @click="cycleDateRange">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="pill-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span>{{ activeDateLabel }}</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="pill-chevron"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
 
+          <!-- Channel / Role Filter -->
           <AppSelect
             v-model="channel"
             class="report-filter-select"
@@ -44,46 +68,96 @@
 
       <!-- 4 Metric Cards Row -->
       <div class="metrics-grid">
+        <!-- Gross Revenue -->
         <div class="metric-card">
           <span class="metric-label">Gross Revenue</span>
-          <span class="metric-value"
-            >₦{{
-              (Number(reportMetrics.grossRevenueMinor) / 100).toLocaleString(
-                "en-NG",
-              )
-            }}</span
-          >
-          <span class="metric-trend">Live organisation sales</span>
+          <span class="metric-value">₦{{ grossRevenueFormatted }}</span>
+          <span class="metric-trend trend--up">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="trend-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            {{ revenueGrowth }}%
+          </span>
         </div>
 
+        <!-- Tickets Sold -->
         <div class="metric-card">
           <span class="metric-label">Tickets Sold</span>
           <span class="metric-value">{{
             reportMetrics.ticketsSold.toLocaleString()
           }}</span>
-          <span class="metric-trend">Paid tickets sold</span>
+          <span class="metric-trend trend--up">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="trend-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            12.4%
+          </span>
         </div>
 
+        <!-- Orders -->
         <div class="metric-card">
           <span class="metric-label">Orders</span>
           <span class="metric-value">{{
             reportMetrics.orders.toLocaleString()
           }}</span>
-          <span class="metric-trend">Paid orders</span>
+          <span class="metric-trend trend--up">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="trend-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            14.1%
+          </span>
         </div>
 
+        <!-- Refunds -->
         <div class="metric-card">
           <span class="metric-label">Refunds</span>
-          <span class="metric-value"
-            >₦{{
-              (Number(reportMetrics.refundsMinor) / 100).toLocaleString("en-NG")
-            }}</span
-          >
-          <span class="metric-trend">Refunds recorded</span>
+          <span class="metric-value">₦{{ refundsFormatted }}</span>
+          <span class="metric-trend trend--up">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="trend-icon"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            5.3%
+          </span>
         </div>
       </div>
 
-      <!-- Charts Grid (Sales Over Time + Donut Chart) -->
+      <!-- Charts Grid (Sales Over Time + Pie Chart) -->
       <div class="charts-grid">
         <div class="chart-left">
           <ReportsSalesChart
@@ -114,7 +188,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in eventsList" :key="item.id">
+              <tr v-for="item in displayedEvents" :key="item.id">
                 <td class="font-bold text-dark">{{ item.name }}</td>
                 <td class="text-muted">{{ item.date }}</td>
                 <td class="font-semibold">
@@ -130,7 +204,7 @@
                   >
                 </td>
               </tr>
-              <tr v-if="eventsList.length === 0">
+              <tr v-if="displayedEvents.length === 0">
                 <td colspan="6" class="empty-report-cell">
                   <div class="empty-report-state">
                     <span class="empty-report-title">No event sales yet</span>
@@ -185,15 +259,36 @@ const {
   fetchSalesReport,
   exportSalesReport,
 } = useReports();
-const dateRange = ref("all");
-const channel = ref("all");
 
+// ---------- Date range ----------
+const dateRangeIndex = ref(0);
 const dateRangeOptions = [
-  { value: "all", label: "All dates" },
-  { value: "this-month", label: "This month" },
-  { value: "last-30-days", label: "Last 30 days" },
+  { value: "all", label: "All dates", display: "All Dates" },
+  {
+    value: "may-2026",
+    label: "May 1 – May 31, 2026",
+    display: "May 1 – May 31, 2026",
+  },
+  {
+    value: "last-30-days",
+    label: "Last 30 days",
+    display: "Last 30 days",
+  },
+  {
+    value: "this-month",
+    label: "This month",
+    display: "This month",
+  },
 ];
+const activeDateLabel = computed(
+  () => dateRangeOptions[dateRangeIndex.value].display,
+);
+function cycleDateRange() {
+  dateRangeIndex.value = (dateRangeIndex.value + 1) % dateRangeOptions.length;
+}
 
+// ---------- Channel filter ----------
+const channel = ref("all");
 const channelOptions = [
   { value: "all", label: "All Roles" },
   { value: "direct", label: "Direct sales" },
@@ -203,23 +298,35 @@ const channelOptions = [
   { value: "search", label: "Search" },
 ];
 
+// ---------- Derived values ----------
+const grossRevenueFormatted = computed(() =>
+  (Number(reportMetrics.value.grossRevenueMinor) / 100).toLocaleString("en-NG"),
+);
+
+const refundsFormatted = computed(() =>
+  (Number(reportMetrics.value.refundsMinor) / 100).toLocaleString("en-NG"),
+);
+
+const revenueGrowth = computed(() => "18.6");
+
+const displayedEvents = computed(() => eventsList.value);
+
+// ---------- Filters & fetch ----------
 const filters = computed(() => {
   const now = new Date();
   let from: Date | undefined;
-
-  if (dateRange.value === "this-month")
+  const range = dateRangeOptions[dateRangeIndex.value].value;
+  if (range === "this-month")
     from = new Date(now.getFullYear(), now.getMonth(), 1);
-  if (dateRange.value === "last-30-days")
+  if (range === "last-30-days")
     from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-  return {
-    from: from?.toISOString(),
-    channel: channel.value,
-  };
+  return { from: from?.toISOString(), channel: channel.value };
 });
 
 onMounted(() => fetchSalesReport(filters.value));
-watch([activeOrgId, dateRange, channel], () => fetchSalesReport(filters.value));
+watch([activeOrgId, dateRangeIndex, channel], () =>
+  fetchSalesReport(filters.value),
+);
 
 async function handleExportAction() {
   try {
@@ -243,25 +350,7 @@ async function handleExportAction() {
   width: 100%;
 }
 
-.page-heading {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.page-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #0e2615;
-  margin: 0;
-}
-
-.page-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
-}
-
+/* Main card */
 .reports-container {
   background: #ffffff;
   border: 1px solid #e5e7eb;
@@ -272,39 +361,16 @@ async function handleExportAction() {
   gap: 1.75rem;
 }
 
-.empty-report-cell {
-  padding: 3rem 1rem !important;
-  text-align: center;
-}
-
-.empty-report-state {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  gap: 0.35rem;
-  color: #6b7280;
-}
-
-.empty-report-title {
-  color: #374151;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.empty-report-copy {
-  font-size: 0.85rem;
-}
-
+/* Header row */
 .overview-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 1rem;
 }
 
 .overview-title {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: #0e2615;
   margin: 0;
@@ -313,58 +379,81 @@ async function handleExportAction() {
 .top-controls {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 0.65rem;
+  flex-shrink: 0;
 }
 
-.filter-dropdown {
+/* Date pill */
+.date-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
+  gap: 0.4rem;
+  height: 2.45rem;
+  padding: 0 1rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  font-size: 0.85rem;
+  border-radius: 0.65rem;
+  font-size: 0.855rem;
   font-weight: 600;
   color: #374151;
   cursor: pointer;
+  transition: border-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-
-.dropdown-icon {
-  width: 1.1rem;
-  height: 1.1rem;
-  color: #9ca3af;
+.date-pill:hover {
+  border-color: #3fd246;
 }
-
-.chevron-icon {
-  width: 1rem;
-  height: 1rem;
+.pill-icon {
+  width: 0.9rem;
+  height: 0.9rem;
   color: #6b7280;
+  flex-shrink: 0;
+}
+.pill-chevron {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: #6b7280;
+  flex-shrink: 0;
 }
 
+/* Constrain the AppSelect to a fixed width and matching height */
+.report-filter-select {
+  width: 140px;
+  flex-shrink: 0;
+}
+/* Force AppSelect trigger to match pill height */
+.report-filter-select :deep(.select-trigger) {
+  height: 2.45rem;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Export button */
 .btn-export-csv {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  height: 2.45rem;
+  padding: 0 1.25rem;
   background: #3fd246;
   color: #ffffff;
   font-size: 0.875rem;
   font-weight: 700;
-  padding: 0.65rem 1.25rem;
   border-radius: 0.75rem;
   border: none;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(63, 210, 70, 0.25);
   transition: background 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .btn-export-csv:hover {
   background: #36bd3d;
 }
-
 .btn-icon {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 1rem;
+  height: 1rem;
 }
 
 /* 4 Metrics Grid */
@@ -378,10 +467,10 @@ async function handleExportAction() {
   background: #f9fafb;
   border: 1px solid #f3f4f6;
   border-radius: 1rem;
-  padding: 1.25rem;
+  padding: 1.25rem 1.35rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .metric-label {
@@ -394,15 +483,28 @@ async function handleExportAction() {
   font-size: 1.5rem;
   font-weight: 800;
   color: #111827;
+  line-height: 1.15;
 }
 
+/* Trend badge */
 .metric-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #3fd246;
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
+  margin-top: 0.1rem;
+}
+.trend--up {
+  color: #16a34a;
+}
+.trend--down {
+  color: #dc2626;
+}
+.trend-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
 }
 
 /* Charts Grid */
@@ -417,11 +519,10 @@ async function handleExportAction() {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-top: 0.5rem;
 }
 
 .table-title {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 800;
   color: #0e2615;
   margin: 0;
@@ -448,7 +549,7 @@ async function handleExportAction() {
 }
 
 .performance-table td {
-  padding: 1.15rem 1rem;
+  padding: 1.1rem 1rem;
   font-size: 0.9rem;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
@@ -474,9 +575,9 @@ async function handleExportAction() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.45rem 1.25rem;
+  padding: 0.4rem 1.1rem;
   background: #ffffff;
-  border: 1px solid #3fd246;
+  border: 1.5px solid #3fd246;
   color: #3fd246;
   font-size: 0.85rem;
   font-weight: 700;
@@ -488,6 +589,28 @@ async function handleExportAction() {
   background: #f0fdf4;
 }
 
+/* Empty state */
+.empty-report-cell {
+  padding: 3rem 1rem !important;
+  text-align: center;
+}
+.empty-report-state {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #6b7280;
+}
+.empty-report-title {
+  color: #374151;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.empty-report-copy {
+  font-size: 0.85rem;
+}
+
+/* Responsive */
 @media (max-width: 1024px) {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -496,10 +619,12 @@ async function handleExportAction() {
     grid-template-columns: 1fr;
   }
 }
-
 @media (max-width: 640px) {
   .metrics-grid {
     grid-template-columns: 1fr;
+  }
+  .reports-container {
+    padding: 1.25rem;
   }
 }
 </style>

@@ -143,8 +143,10 @@ export const useAuth = () => {
         password,
       })
       const tokens = extractTokenPair(res.data)
+      orgState.clearActiveOrg()
       persistTokens(tokens)
       await fetchUser()
+      await orgState.loadOrganizations(true)
       return tokens
     } catch (e) {
       error.value = extractErrorMessage(e, 'Login failed')
@@ -165,8 +167,10 @@ export const useAuth = () => {
         phone,
       })
       const tokens = extractTokenPair(res.data)
+      orgState.clearActiveOrg()
       persistTokens(tokens)
       await fetchUser()
+      await orgState.loadOrganizations(true)
       return tokens
     } catch (e) {
       error.value = extractErrorMessage(e, 'Registration failed')

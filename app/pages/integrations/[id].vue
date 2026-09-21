@@ -3,6 +3,7 @@
     <IntegrationConnectStep
       v-if="targetIntegration"
       :integration="targetIntegration"
+      :is-saving="isConnecting"
       @back="router.push('/integrations')"
       @connect="handleConnect"
     />
@@ -22,7 +23,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
-const { integrationsList, toggleConnection } = useIntegrations()
+const { integrationsList, isConnecting, connectIntegration, fetchIntegrations } = useIntegrations()
 
 const targetIntegration = computed(() => {
   const paramId = route.params.id as string
@@ -33,14 +34,24 @@ useHead({
   title: computed(() => `Connect ${targetIntegration.value?.name || 'Integration'} — Uzu Ticket`),
 })
 
-function handleConnect(keys: { publicKey: string; secretKey: string }) {
-  if (targetIntegration.value) {
-    if (!targetIntegration.value.connected) {
-      toggleConnection(targetIntegration.value.id)
-    }
+// Ensure integrations are loaded if arriving directly from URL
+onMounted(() => fetchIntegrations())
+
+async function handleConnect(keys: { publicKey: string; secretKey: string }) {
+  if (!targetIntegration.value) return
+  try {
+    await connectIntegration(targetIntegration.value.provider, {
+      publicKey: keys.publicKey,
+      secretKey: keys.secretKey,
+    })
     toast.success(`${targetIntegration.value.name} connection saved and activated!`)
+    router.push('/integrations')
+  } catch {
+    toast.error(
+      `Failed to connect ${targetIntegration.value.name}`,
+      'Please check your credentials and try again.',
+    )
   }
-  router.push('/integrations')
 }
 </script>
 

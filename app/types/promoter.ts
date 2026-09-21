@@ -7,11 +7,15 @@ export interface PromoterCommission {
 
 export interface PromoterEventCommission {
   id: string
+  promoterName?: string
+  initials?: string
+  avatarBg?: string
   event: string
   ticketsSold: number
-  commissionRate: string
+  revenue?: number
+  commissionRate?: string
   commissionEarned: number
-  status: 'Completed' | 'Cancelled' | 'Pending'
+  status: 'Active' | 'Inactive' | 'Completed' | 'Cancelled' | 'Pending'
 }
 
 export interface CreatePromoterLinkDto {
