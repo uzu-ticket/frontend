@@ -148,8 +148,14 @@ export class AuthController {
   })
   @ApiResponse({ status: 200, description: "Verification email sent if account exists and is unverified" })
   async requestEmailVerification(@Body() dto: RequestEmailVerificationDto) {
-    await this.authService.requestEmailVerification(dto.email);
-    return { message: "If an unverified account exists, a verification email has been sent" };
+    const result = await this.authService.requestEmailVerification(dto.email);
+    const response: { message: string; devLink?: string } = {
+      message: "If an unverified account exists, a verification email has been sent",
+    };
+    if (process.env.NODE_ENV !== "production" && result?.link) {
+      response.devLink = result.link;
+    }
+    return response;
   }
 
   @Public()

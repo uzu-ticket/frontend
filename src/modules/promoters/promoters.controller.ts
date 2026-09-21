@@ -32,6 +32,33 @@ export class PromotersController {
     return this.promotersService.getLink(organisationId, user.id, linkId);
   }
 
+  @Post("links/:linkId/accept")
+  acceptInvitation(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("linkId") linkId: string,
+  ) {
+    return this.promotersService.acceptInvitation(organisationId, user.id, linkId);
+  }
+
+  @Post("links/:linkId/decline")
+  declineInvitation(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("linkId") linkId: string,
+  ) {
+    return this.promotersService.declineInvitation(organisationId, user.id, linkId);
+  }
+
+  @Get(":promoterId")
+  getPromoter(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("promoterId") promoterId: string,
+  ) {
+    return this.promotersService.getPromoter(organisationId, user.id, promoterId);
+  }
+
   @Get()
   list(@CurrentUser() user: AuthenticatedUser, @Param("organisationId") organisationId: string) {
     return this.promotersService.list(organisationId, user.id);

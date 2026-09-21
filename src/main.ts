@@ -19,7 +19,22 @@ async function bootstrap() {
 
   app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
   app.enableCors({
-    origin: true,
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!origin) return callback(null, true);
+      const configuredOrigins = config.corsOrigins;
+      if (
+        configuredOrigins.includes("*") ||
+        configuredOrigins.includes(origin) ||
+        origin.startsWith("http://localhost:") ||
+        origin.startsWith("http://127.0.0.1:")
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
     credentials: true,
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
     allowedHeaders: [

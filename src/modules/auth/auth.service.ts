@@ -29,21 +29,27 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   async register(email: string, password: string, fullName?: string, phone?: string): Promise<TokenPair> {
-    const existing = await this.prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) {
       throw new ConflictException("An account with this email already exists");
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await this.linkGuestOrdersOnCreate(
       await this.prisma.user.create({
-        data: { id: newId(), email, passwordHash, fullName, phone, isEmailVerified: false },
+        data: { id: newId(), email: normalizedEmail, passwordHash, fullName, phone, isEmailVerified: false },
       }),
     );
+
+    // Send email verification link
+    await this.requestEmailVerification(normalizedEmail);
+
     return this.issueTokens(user.id, user.email);
   }
 
   async login(email: string, password: string): Promise<TokenPair> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user || !user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException("Invalid credentials");
     }
@@ -171,30 +177,53 @@ export class AuthService {
     }
   }
 
-  async requestEmailVerification(email: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+  async requestEmailVerification(email: string): Promise<{ token: string; link: string } | undefined> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user || user.isEmailVerified) return;
     const token = randomInt(0, 1_000_000_000_000).toString(36);
-    await this.redis.set(`email_verify:${email}`, token, "EX", 86400);
-    const link = `${this.config.appBaseUrl}/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+    await this.redis.set(`email_verify:${normalizedEmail}`, token, "EX", 86400);
+    const link = `${this.config.appBaseUrl}/auth/verify-email?token=${token}&email=${encodeURIComponent(normalizedEmail)}`;
+    this.logger.log(`[VERIFICATION EMAIL LINK]: ${link}`);
     try {
       await this.notifications.sendEmail({
-        to: email,
+        to: normalizedEmail,
         subject: "Verify your UzuTicket email",
-        html: `<p>Click <a href="${link}">here</a> to verify your email address.</p>`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <h2 style="color: #0E2615; margin-top: 0;">Verify your email address</h2>
+            <p style="color: #374151; font-size: 15px; line-height: 1.5;">Welcome to UzuTicket! Please click the button below to verify your email address and activate your account.</p>
+            <p style="margin: 24px 0;">
+              <a href="${link}" style="background-color: #3FD246; color: #0E2615; font-weight: bold; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                Verify Email Address
+              </a>
+            </p>
+            <p style="color: #6b7280; font-size: 13px;">If you didn't create an account with UzuTicket, you can safely ignore this email.</p>
+          </div>
+        `,
         text: `Verify your email: ${link}`,
       });
     } catch (e) {
-      this.logger.error(`Failed to send verification email to ${email}`, e instanceof Error ? e.stack : undefined);
+      this.logger.error(`Failed to send verification email to ${normalizedEmail}`, e instanceof Error ? e.stack : undefined);
     }
+    return { token, link };
   }
 
   async verifyEmail(email: string, token: string): Promise<void> {
-    const stored = await this.redis.get(`email_verify:${email}`);
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (!user) {
+      throw new UnauthorizedException("User account not found");
+    }
+    if (user.isEmailVerified) {
+      return;
+    }
+
+    const stored = await this.redis.get(`email_verify:${normalizedEmail}`);
     if (!stored || stored !== token) {
       throw new UnauthorizedException("Invalid or expired verification token");
     }
-    await this.redis.del(`email_verify:${email}`);
-    await this.prisma.user.update({ where: { email }, data: { isEmailVerified: true } });
+    await this.redis.del(`email_verify:${normalizedEmail}`);
+    await this.prisma.user.update({ where: { id: user.id }, data: { isEmailVerified: true } });
   }
 }
