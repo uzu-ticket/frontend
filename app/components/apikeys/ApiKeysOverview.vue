@@ -28,7 +28,11 @@
           <tbody v-if="displayedApiKeysList.length > 0">
             <tr v-for="key in displayedApiKeysList" :key="key.id" class="table-row">
               <!-- Name -->
-              <td class="td-name">{{ key.name }}</td>
+              <td class="td-name">
+                <NuxtLink :to="`/apikeys/${key.id}`" class="key-name-link">
+                  {{ key.name }}
+                </NuxtLink>
+              </td>
 
               <!-- Key (masked with eye toggle) -->
               <td class="td-key">
@@ -77,29 +81,34 @@
                     </svg>
                   </button>
 
-                  <!-- Dropdown Menu -->
+                  <!-- Dropdown Menu (Matches Screenshot 1) -->
                   <div v-if="openMenuId === key.id" class="dropdown-menu">
-                    <button class="dropdown-item" @click="handleCopy(key); closeMenu()">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="dropdown-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Copy Key
-                    </button>
-                    <button class="dropdown-item" @click="toggleVisibility(key); closeMenu()">
+                    <!-- 1. View Details -->
+                    <NuxtLink :to="`/apikeys/${key.id}`" class="dropdown-item" @click="closeMenu()">
                       <svg xmlns="http://www.w3.org/2000/svg" class="dropdown-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
-                      {{ (visibleKeys[key.id] && key.fullKey) ? 'Hide Key' : 'Reveal Key' }}
+                      View Details
+                    </NuxtLink>
+
+                    <!-- 2. Regenerate Key -->
+                    <button class="dropdown-item" @click="confirmRegenerate(key); closeMenu()">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="dropdown-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Regenerate Key
                     </button>
-                    <div class="dropdown-divider" />
+
+                    <!-- 3. Revoke Key -->
                     <button
                       v-if="key.status === 'Active'"
                       class="dropdown-item dropdown-item--danger"
                       @click="confirmRevoke(key.id, key.name); closeMenu()"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" class="dropdown-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6" />
                       </svg>
                       Revoke Key
                     </button>
@@ -168,6 +177,25 @@
       </div>
     </div>
 
+    <!-- Regenerate Confirm Modal -->
+    <div v-if="regenerateTarget" class="modal-overlay" @click.self="regenerateTarget = null">
+      <div class="confirm-modal">
+        <div class="confirm-icon-bg confirm-icon-bg--blue">
+          <svg xmlns="http://www.w3.org/2000/svg" class="confirm-icon confirm-icon--blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+        <h3 class="confirm-title">Regenerate API Key?</h3>
+        <p class="confirm-text">
+          Regenerating <strong>"{{ regenerateTarget.name }}"</strong> will immediately replace its secret key. Any active applications using the old key will stop working.
+        </p>
+        <div class="confirm-actions">
+          <button class="btn-cancel-modal" @click="regenerateTarget = null">Cancel</button>
+          <button class="btn-confirm-regen" @click="doRegenerate">Regenerate Key</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Revoke Confirm Modal -->
     <div v-if="revokeTarget" class="modal-overlay" @click.self="revokeTarget = null">
       <div class="confirm-modal">
@@ -183,7 +211,7 @@
         </p>
         <div class="confirm-actions">
           <button class="btn-cancel-modal" @click="revokeTarget = null">Cancel</button>
-          <button class="btn-confirm-revoke" @click="doRevoke">Revoke</button>
+          <button class="btn-confirm-revoke" @click="doRevoke">Revoke Key</button>
         </div>
       </div>
     </div>
@@ -210,6 +238,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   generate: []
   revoke: [id: string]
+  regenerate: [id: string]
   copy: [key: string]
 }>()
 
@@ -227,6 +256,7 @@ const displayedApiKeysList = computed(() => {
 const visibleKeys = reactive<Record<string, boolean>>({})
 const openMenuId = ref<string | null>(null)
 const revokeTarget = ref<{ id: string; name: string } | null>(null)
+const regenerateTarget = ref<ApiKey | null>(null)
 
 function toggleVisibility(key: ApiKey) {
   if (!key.fullKey && !visibleKeys[key.id]) {
@@ -244,8 +274,15 @@ function closeMenu() {
   openMenuId.value = null
 }
 
-function handleCopy(key: ApiKey) {
-  emit('copy', key.fullKey || key.keyMasked)
+function confirmRegenerate(key: ApiKey) {
+  regenerateTarget.value = key
+}
+
+function doRegenerate() {
+  if (regenerateTarget.value) {
+    emit('regenerate', regenerateTarget.value.id)
+    regenerateTarget.value = null
+  }
 }
 
 function confirmRevoke(id: string, name: string) {
@@ -392,6 +429,16 @@ onUnmounted(() => window.removeEventListener('click', onDocClick))
   white-space: nowrap;
 }
 
+.key-name-link {
+  color: #0E2615;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.key-name-link:hover {
+  color: #3FD246;
+  text-decoration: underline;
+}
+
 /* Key */
 .td-key {
   min-width: 280px;
@@ -503,9 +550,9 @@ onUnmounted(() => window.removeEventListener('click', onDocClick))
   z-index: 50;
   background: #ffffff;
   border: 1px solid #E5E7EB;
-  border-radius: 0.75rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  min-width: 160px;
+  border-radius: 0.875rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  min-width: 175px;
   padding: 0.4rem 0;
   animation: dropIn 0.12s ease;
 }
@@ -518,15 +565,16 @@ onUnmounted(() => window.removeEventListener('click', onDocClick))
 .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.65rem;
   width: 100%;
-  padding: 0.6rem 1rem;
+  padding: 0.65rem 1rem;
   background: none;
   border: none;
   text-align: left;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: #0E2615;
+  text-decoration: none;
   cursor: pointer;
   transition: background 0.12s;
   white-space: nowrap;
@@ -543,18 +591,12 @@ onUnmounted(() => window.removeEventListener('click', onDocClick))
 }
 
 .dropdown-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 1.1rem;
+  height: 1.1rem;
   flex-shrink: 0;
 }
 
-.dropdown-divider {
-  height: 1px;
-  background: #F3F4F6;
-  margin: 0.3rem 0;
-}
-
-/* Revoke Confirm Modal */
+/* Revoke / Regenerate Confirm Modals */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -590,11 +632,17 @@ onUnmounted(() => window.removeEventListener('click', onDocClick))
   align-items: center;
   justify-content: center;
 }
+.confirm-icon-bg--blue {
+  background: #EFF6FF;
+}
 
 .confirm-icon {
   width: 1.75rem;
   height: 1.75rem;
   color: #D97706;
+}
+.confirm-icon--blue {
+  color: #3B82F6;
 }
 
 .confirm-title {
@@ -632,6 +680,22 @@ onUnmounted(() => window.removeEventListener('click', onDocClick))
 }
 .btn-cancel-modal:hover {
   background: #F3F4F6;
+}
+
+.btn-confirm-regen {
+  flex: 1;
+  background: #3FD246;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.7rem 1.25rem;
+  border-radius: 0.75rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.btn-confirm-regen:hover {
+  background: #36bd3d;
 }
 
 .btn-confirm-revoke {
@@ -701,19 +765,5 @@ onUnmounted(() => window.removeEventListener('click', onDocClick))
 
 .btn-create--empty {
   margin-top: 0.25rem;
-}
-
-.loading-spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid #F3F4F6;
-  border-top-color: #3FD246;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 </style>

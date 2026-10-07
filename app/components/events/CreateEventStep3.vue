@@ -4,7 +4,8 @@
     <AppModal
       v-model="isTicketModalOpen"
       :title="editingIndex !== null ? 'Edit Ticket' : 'Add Ticket'"
-      size="lg"
+      size="sm"
+      :panel-class="editingIndex !== null ? 'ticket-edit-modal' : undefined"
       :close-on-backdrop="false"
       @close="handleCancelAdd"
     >
@@ -14,6 +15,28 @@
           novalidate
           @submit.prevent="handleSaveTicket"
         >
+          <button
+            v-if="editingIndex !== null"
+            type="button"
+            class="btn-edit-ticket-delete"
+            aria-label="Delete ticket"
+            title="Delete ticket"
+            @click="requestDeleteTicket(editingIndex)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 6h18" />
+              <path d="M8 6V4h8v2m3 0-1 14H6L5 6" />
+              <path d="M10 11v5m4-5v5" />
+            </svg>
+          </button>
+          <p class="add-ticket-modal-subtitle">
+            {{
+              editingIndex !== null
+                ? "Update the details for this ticket."
+                : "Create a ticket type for your event"
+            }}
+          </p>
+
           <!-- Ticket Name -->
           <div class="field-group">
             <label class="field-label"
@@ -22,6 +45,7 @@
             <input
               v-model="ticketForm.name"
               type="text"
+              maxlength="60"
               placeholder="e.g Early bird"
               class="form-input"
               :class="{ 'form-input--error': errors.name }"
@@ -40,7 +64,7 @@
               v-model="ticketForm.price"
               type="text"
               inputmode="decimal"
-              placeholder="₦ 0"
+              placeholder="₦ 0.00"
               class="form-input"
               :class="{ 'form-input--error': errors.price }"
               @input="formatPriceInput"
@@ -89,81 +113,11 @@
             </div>
           </div>
 
-          <!-- Sales Start -->
-          <div class="field-group">
-            <label class="field-label"
-              >Sales Start <span class="required-star">*</span></label
-            >
-            <div
-              class="combined-datetime-input"
-              :class="{ 'combined-datetime-input--error': errors.salesStart }"
-            >
-              <div class="datetime-part">
-                <DatePicker
-                  v-model="ticketForm.startDate"
-                  placeholder="Aug 24, 2026"
-                />
-              </div>
-              <div class="datetime-divider" />
-              <div class="datetime-part">
-                <TimePicker
-                  v-model="ticketForm.startTime"
-                  placeholder="10:00 AM"
-                />
-              </div>
-            </div>
-            <span v-if="errors.salesStart" class="field-error">{{
-              errors.salesStart
-            }}</span>
-          </div>
-
-          <!-- Sales End -->
-          <div class="field-group">
-            <label class="field-label"
-              >Sales End <span class="required-star">*</span></label
-            >
-            <div
-              class="combined-datetime-input"
-              :class="{ 'combined-datetime-input--error': errors.salesEnd }"
-            >
-              <div class="datetime-part">
-                <DatePicker
-                  v-model="ticketForm.endDate"
-                  placeholder="Sep 24, 2026"
-                />
-              </div>
-              <div class="datetime-divider" />
-              <div class="datetime-part">
-                <TimePicker
-                  v-model="ticketForm.endTime"
-                  placeholder="10:00 AM"
-                />
-              </div>
-            </div>
-            <span v-if="errors.salesEnd" class="field-error">{{
-              errors.salesEnd
-            }}</span>
-          </div>
-
-          <!-- Description -->
-          <div class="field-group">
-            <label class="field-label"
-              >Description <span class="required-star">*</span></label
-            >
-            <textarea
-              v-model="ticketForm.description"
-              rows="3"
-              placeholder="Describe this ticket type and what it includes"
-              class="form-textarea"
-              :class="{ 'form-textarea--error': errors.description }"
-            />
-            <span v-if="errors.description" class="field-error">{{
-              errors.description
-            }}</span>
-          </div>
-
           <!-- Form Actions -->
           <div class="add-ticket-actions">
+            <button type="submit" class="btn-create-ticket">
+              {{ editingIndex !== null ? "Save Changes" : "Add ticket" }}
+            </button>
             <button
               type="button"
               class="btn-cancel-form"
@@ -171,268 +125,349 @@
             >
               Cancel
             </button>
-            <button type="submit" class="btn-create-ticket">
-              {{
-                editingIndex !== null
-                  ? "Update Ticket Type"
-                  : "Create Ticket Type"
-              }}
-            </button>
           </div>
         </form>
       </div>
+    </AppModal>
+
+    <AppModal
+      v-model="isDeleteTicketModalOpen"
+      title="Delete ticket?"
+      size="sm"
+      :close-on-backdrop="false"
+      @close="cancelDeleteTicket"
+    >
+      <p class="delete-ticket-copy">
+        Are you sure you want to delete {{ pendingDeleteTicketName }}? This
+        action cannot be undone.
+      </p>
+      <template #footer>
+        <div class="delete-ticket-actions">
+          <button
+            type="button"
+            class="btn-cancel-ticket-delete"
+            @click="cancelDeleteTicket"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn-confirm-ticket-delete"
+            @click="confirmDeleteTicket"
+          >
+            Delete Ticket
+          </button>
+        </div>
+      </template>
     </AppModal>
 
     <!-- TICKETS LIST VIEW -->
     <div class="step-view view-list">
       <div class="list-header-row">
         <div>
-          <h3 class="form-title">Tickets Type</h3>
+          <h3 class="form-title">Tickets</h3>
           <p class="form-subtitle">
             Create one or more ticket options for attendees.
           </p>
         </div>
-        <button
-          type="button"
-          class="btn-add-ticket-top"
-          @click="handleOpenSelectView"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="btn-icon"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-              clip-rule="evenodd"
-            />
-          </svg>
-          <span>Add Ticket</span>
-        </button>
       </div>
 
-      <!-- Tickets Cards -->
+      <!-- Schedule batches and their ticket types -->
       <div class="tickets-list">
-        <div
-          v-for="(ticket, index) in tickets"
-          :key="index"
-          class="ticket-card"
-          :class="{ 'ticket-deactivated': ticket.deactivated }"
+        <section
+          v-for="group in scheduleGroups"
+          :key="group.slotIndex"
+          class="schedule-batch"
         >
-          <!-- Left Color Accent Strip -->
           <div
-            class="ticket-accent-strip"
-            :style="{ background: ticket.color }"
-          />
+            class="schedule-batch-header"
+            :class="{
+              'schedule-batch-header--collapsed': !expandedSlots.includes(
+                group.slotIndex,
+              ),
+            }"
+          >
+            <button
+              type="button"
+              class="schedule-toggle"
+              :aria-expanded="expandedSlots.includes(group.slotIndex)"
+              @click="toggleSchedule(group.slotIndex)"
+            >
+              <svg
+                class="schedule-chevron"
+                :class="{
+                  'schedule-chevron--open': expandedSlots.includes(
+                    group.slotIndex,
+                  ),
+                }"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <svg
+                class="schedule-ticket-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3 8a2 2 0 0 0 0 4v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 1 0-4V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"
+                />
+                <path d="M13 5v2m0 2v2m0 2v2m0 2v2" />
+              </svg>
+              <span class="schedule-name">{{ group.name }}</span>
+              <span class="schedule-ticket-count"
+                >{{ group.ticketCount }} ticket types</span
+              >
+            </button>
 
-          <!-- Ticket Content -->
-          <div class="ticket-content">
-            <div class="ticket-top-row">
-              <!-- Type & Price -->
-              <div class="ticket-meta">
-                <span class="ticket-type" :style="{ color: ticket.color }">{{
-                  ticket.type
-                }}</span>
-                <span class="ticket-price" :style="{ color: ticket.color }">{{
-                  ticket.price
-                }}</span>
-              </div>
-
-              <!-- Available -->
-              <div class="ticket-avail">
-                <span class="ticket-avail-label">Available</span>
-                <span
-                  class="ticket-avail-count"
-                  :class="{ 'avail-green': ticket.color === '#3FD246' }"
-                  >{{ ticket.quantity }}</span
-                >
-              </div>
-
-              <!-- 3-Dots Action Menu -->
-              <div class="ticket-action-wrapper" @click.stop>
-                <button
-                  type="button"
-                  class="dots-btn"
-                  @click="
-                    openMenuIndex = openMenuIndex === index ? null : index
-                  "
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="dots-icon"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
-                    />
-                  </svg>
-                </button>
-
-                <div v-if="openMenuIndex === index" class="context-menu">
-                  <button
-                    type="button"
-                    class="menu-item"
-                    @click="editTicket(index)"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="item-icon"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    <span>Edit</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    class="menu-item"
-                    @click="duplicateTicket(index)"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="item-icon"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <span>Duplicate</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    class="menu-item"
-                    @click="toggleDeactivateTicket(index)"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="item-icon"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                      />
-                    </svg>
-                    <span>{{
-                      ticket.deactivated ? "Activate" : "Deactivate"
-                    }}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    class="menu-item menu-item--delete"
-                    @click="deleteTicket(index)"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="item-icon"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                    <span>Delete</span>
-                  </button>
-                </div>
-              </div>
+            <div class="schedule-summary">
+              <span class="schedule-summary-item">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M8 3v4m8-4v4M4 9h16M5 5h14a1 1 0 0 1 1 1v13H4V6a1 1 0 0 1 1-1Z"
+                  />
+                </svg>
+                {{ group.date }}
+              </span>
+              <span v-if="group.time" class="schedule-summary-item">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+                {{ group.time }}
+              </span>
             </div>
 
-            <!-- Sales Period -->
-            <div class="ticket-sales-row">
-              <div class="sales-col">
-                <span class="sales-label">Sales Start</span>
-                <div class="sales-date-badge">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="date-icon"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span>{{ ticket.salesStart }}</span>
-                </div>
-              </div>
+            <button
+              v-if="
+                group.ticketCount > 0 ||
+                !expandedSlots.includes(group.slotIndex)
+              "
+              type="button"
+              class="btn-add-ticket-top"
+              @click="handleOpenSelectView(group.slotIndex)"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path
+                  fill-rule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Add Ticket</span>
+            </button>
+          </div>
 
-              <div class="sales-col">
-                <span class="sales-label">Sales End</span>
-                <div class="sales-date-badge">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="date-icon"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span>{{ ticket.salesEnd }}</span>
-                </div>
+          <div
+            class="schedule-disclosure"
+            :class="{
+              'schedule-disclosure--open': expandedSlots.includes(
+                group.slotIndex,
+              ),
+            }"
+            :aria-hidden="!expandedSlots.includes(group.slotIndex)"
+            :inert="!expandedSlots.includes(group.slotIndex)"
+          >
+            <div v-if="group.ticketCount === 0" class="schedule-empty-state">
+              <div class="empty-ticket-art">
+                <svg
+                  class="empty-ticket-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M3 8a2 2 0 0 0 0 4v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 1 0-4V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"
+                  />
+                  <path d="M13 5v2m0 2v2m0 2v2m0 2v2" />
+                </svg>
+                <span class="empty-ticket-plus" aria-hidden="true">+</span>
               </div>
+              <h4 class="empty-state-title">
+                No ticket available for this batch
+              </h4>
+              <p class="empty-state-copy">
+                You haven't created any ticket types yet. Add your first ticket
+                to set up pricing, quantity, and other details.
+              </p>
+              <button
+                type="button"
+                class="empty-add-ticket"
+                @click="handleOpenSelectView(group.slotIndex)"
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                <span>Add Ticket</span>
+              </button>
+            </div>
+            <div v-else class="schedule-ticket-list">
+              <template v-for="(ticket, index) in tickets" :key="index">
+                <div
+                  v-if="ticket.slotIndex === group.slotIndex"
+                  class="ticket-card"
+                  :class="{ 'ticket-deactivated': ticket.deactivated }"
+                >
+                  <div class="ticket-icon-box" :style="{ color: ticket.color }">
+                    <svg
+                      class="ticket-vertical-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M3 8a2 2 0 0 0 0 4v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 1 0-4V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"
+                      />
+                      <path d="M13 5v2m0 2v2m0 2v2m0 2v2" />
+                    </svg>
+                  </div>
+
+                  <!-- Ticket Content -->
+                  <div class="ticket-content">
+                    <div class="ticket-top-row">
+                      <!-- Type & Price -->
+                      <div class="ticket-meta">
+                        <span class="ticket-type">{{ ticket.type }}</span>
+                        <span
+                          class="ticket-tag"
+                          :class="ticketTagClass(ticket)"
+                          >{{ ticketTag(ticket) }}</span
+                        >
+                        <span
+                          class="ticket-price"
+                          :style="{ color: ticket.color }"
+                          >{{ ticket.price }}</span
+                        >
+                      </div>
+
+                      <!-- Quantity -->
+                      <div class="ticket-avail">
+                        <span class="ticket-avail-label">Quantity</span>
+                        <span
+                          class="ticket-avail-count"
+                          :class="{ 'avail-green': ticket.color === '#3FD246' }"
+                          >{{ ticket.quantity }}</span
+                        >
+                      </div>
+
+                      <div class="ticket-avail">
+                        <span class="ticket-avail-label">Sold</span>
+                        <span class="ticket-avail-count">{{
+                          ticket.quantitySold
+                        }}</span>
+                      </div>
+
+                      <!-- Ticket actions -->
+                      <div class="ticket-action-wrapper" @click.stop>
+                        <button
+                          type="button"
+                          class="ticket-edit-btn"
+                          :aria-label="`Edit ${ticket.type}`"
+                          title="Edit ticket"
+                          @click="editTicket(index)"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path d="M12 20h9" />
+                            <path
+                              d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          class="ticket-delete-btn"
+                          :aria-label="`Delete ${ticket.type}`"
+                          title="Delete ticket"
+                          @click="requestDeleteTicket(index)"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4h8v2m3 0-1 14H6L5 6" />
+                            <path d="M10 11v5m4-5v5" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Sales Period -->
+                    <div class="ticket-sales-row">
+                      <div class="sales-col">
+                        <span class="sales-label">Sales Start</span>
+                        <div class="sales-date-badge">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="date-icon"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <span>{{ ticket.salesStart }}</span>
+                        </div>
+                      </div>
+
+                      <div class="sales-col">
+                        <span class="sales-label">Sales End</span>
+                        <div class="sales-date-badge">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="date-icon"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <span>{{ ticket.salesEnd }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
       <!-- Navigation Footer -->
       <div class="form-footer">
-        <button type="button" class="btn-back" @click="$emit('back')">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="btn-arrow"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-              clip-rule="evenodd"
-            />
-          </svg>
-          <span>Back</span>
+        <button type="button" class="btn-back" @click="$emit('cancel')">
+          <span>Cancel</span>
         </button>
 
         <button type="button" class="btn-next" @click="handleNextStep">
-          <span>Next</span>
+          <span>Save &amp; Continue</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="btn-arrow"
@@ -452,14 +487,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted, onUnmounted } from "vue";
+import { ref, reactive, watch, computed } from "vue";
 import AppModal from "~/components/AppModal.vue";
-import DatePicker from "~/components/ui/DatePicker.vue";
-import TimePicker from "~/components/ui/TimePicker.vue";
 import { getEventTicketColor } from "~/utils/eventTicketColors";
 
 const emit = defineEmits<{
   back: [];
+  cancel: [];
   next: [data?: any];
 }>();
 
@@ -481,16 +515,85 @@ interface TicketItem {
   startTimeStr?: string;
   endDateObj?: Date | null;
   endTimeStr?: string;
+  slotIndex: number;
+  quantitySold: number;
 }
 
 // Initial tickets list starts empty so the user can add a ticket from the list view.
 const tickets = ref<TicketItem[]>([]);
+const expandedSlots = ref([0]);
+const selectedSlotIndex = ref(0);
+
+const scheduleGroups = computed(() => {
+  const eventSlots = props.eventData?.eventSlots;
+  const schedules = Array.isArray(eventSlots) ? eventSlots : [];
+  const availableSchedules = schedules.length
+    ? schedules
+    : [
+        {
+          name: "Event Schedule",
+          dateObj: null,
+          startTime: "",
+          endTime: "",
+        },
+      ];
+
+  return availableSchedules.map((schedule, slotIndex) => {
+    const slot = schedule as Record<string, unknown>;
+    const slotTickets = tickets.value.filter(
+      (ticket) => ticket.slotIndex === slotIndex,
+    );
+    return {
+      slotIndex,
+      name: String(slot.name || `Batch ${String.fromCharCode(65 + slotIndex)}`),
+      date: formatScheduleDate(slot.dateObj),
+      time: `${String(slot.startTime || "").trim()}${slot.endTime ? ` - ${String(slot.endTime).trim()}` : ""}`,
+      ticketCount: slotTickets.length,
+    };
+  });
+});
+
+function formatScheduleDate(value: unknown): string {
+  if (!value) return "Date not set";
+  const date = value instanceof Date ? value : new Date(String(value));
+  if (Number.isNaN(date.getTime())) return "Date not set";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function ticketTag(ticket: TicketItem): string {
+  const type = ticket.type.toLowerCase();
+  if (type.includes("vip") || type.includes("premium")) return "Premium Access";
+  if (type.includes("diamond") || type.includes("exclusive"))
+    return "Exclusive Access";
+  return "General Admission";
+}
+
+function ticketTagClass(ticket: TicketItem): string {
+  const type = ticket.type.toLowerCase();
+  if (type.includes("vip") || type.includes("premium"))
+    return "ticket-tag--premium";
+  if (type.includes("diamond") || type.includes("exclusive"))
+    return "ticket-tag--exclusive";
+  return "ticket-tag--general";
+}
+
+function toggleSchedule(slotIndex: number) {
+  expandedSlots.value = expandedSlots.value.includes(slotIndex)
+    ? expandedSlots.value.filter((index) => index !== slotIndex)
+    : [...expandedSlots.value, slotIndex];
+}
 
 // View state: 'add' | 'list'
 const viewMode = ref<"add" | "list">("list");
 const isTicketModalOpen = ref(false);
+const isDeleteTicketModalOpen = ref(false);
 const editingIndex = ref<number | null>(null);
-const openMenuIndex = ref<number | null>(null);
+const pendingDeleteTicketIndex = ref<number | null>(null);
+const pendingDeleteTicketName = ref("");
 
 // Add / Edit Ticket Form Data
 const ticketForm = reactive({
@@ -564,6 +667,8 @@ function hydrateTickets(value: unknown) {
           hour12: true,
         }) || "",
       description: "",
+      slotIndex: typeof item.slotIndex === "number" ? item.slotIndex : 0,
+      quantitySold: Number(item.quantitySold || 0),
     };
   });
 }
@@ -578,9 +683,18 @@ watch(
   ticketForm,
   (form) => {
     if (form.name.trim()) errors.name = "";
-    if (/\d/.test(form.price)) errors.price = "";
-    if (/\d/.test(form.quantity)) errors.quantity = "";
-    if (/\d/.test(form.maxPerOrder)) errors.maxPerOrder = "";
+    const price = parsePriceAmount(form.price);
+    const quantity = parseWholeNumber(form.quantity);
+    const maxPerOrder = parseWholeNumber(form.maxPerOrder);
+    if (price !== null && price >= 0) errors.price = "";
+    if (quantity !== null && quantity > 0) errors.quantity = "";
+    if (
+      maxPerOrder !== null &&
+      maxPerOrder > 0 &&
+      (quantity === null || maxPerOrder <= quantity)
+    ) {
+      errors.maxPerOrder = "";
+    }
     if (form.startDate && form.startTime) errors.salesStart = "";
     if (form.endDate && form.endTime) errors.salesEnd = "";
     if (form.description.trim()) errors.description = "";
@@ -599,12 +713,13 @@ function resetErrors() {
   errors.description = "";
 }
 
-function handleOpenSelectView() {
+function handleOpenSelectView(slotIndex: number) {
   const step1 = props.eventData?.step1;
   const eventType =
     step1 && typeof step1 === "object"
       ? (step1 as Record<string, unknown>).eventType
       : undefined;
+  selectedSlotIndex.value = slotIndex;
   handleOpenAddForm(eventType === "free" ? "free" : "paid");
 }
 
@@ -658,42 +773,50 @@ function formatIntegerInput(field: "quantity" | "maxPerOrder", event: Event) {
   ticketForm[field] = digits ? Number(digits).toLocaleString("en-US") : "";
 }
 
+function parsePriceAmount(value: string): number | null {
+  const normalized = value.replace(/[^\d.]/g, "");
+  if (!/^\d+(\.\d{0,2})?$/.test(normalized)) return null;
+  const amount = Number(normalized);
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function parseWholeNumber(value: string): number | null {
+  const normalized = value.replace(/\D/g, "");
+  if (!normalized) return null;
+  const amount = Number(normalized);
+  return Number.isSafeInteger(amount) ? amount : null;
+}
+
 function validateForm() {
   resetErrors();
   let valid = true;
+  const price = parsePriceAmount(ticketForm.price);
+  const quantity = parseWholeNumber(ticketForm.quantity);
+  const maxPerOrder = parseWholeNumber(ticketForm.maxPerOrder);
 
   if (!ticketForm.name.trim()) {
     errors.name = "Ticket name is required.";
     valid = false;
-  }
-
-  if (!/\d/.test(ticketForm.price)) {
-    errors.price = "Price is required.";
+  } else if (ticketForm.name.trim().length > 60) {
+    errors.name = "Ticket name must be 60 characters or fewer.";
     valid = false;
   }
 
-  if (!/\d/.test(ticketForm.quantity)) {
-    errors.quantity = "Available quantity is required.";
+  if (price === null || price < 0) {
+    errors.price = "Enter a valid price with up to 2 decimal places.";
     valid = false;
   }
 
-  if (!/\d/.test(ticketForm.maxPerOrder)) {
-    errors.maxPerOrder = "Max per order is required.";
+  if (quantity === null || quantity < 1) {
+    errors.quantity = "Available quantity must be at least 1.";
     valid = false;
   }
 
-  if (!ticketForm.startDate || !ticketForm.startTime) {
-    errors.salesStart = "Sales start date and time are required.";
+  if (maxPerOrder === null || maxPerOrder < 1) {
+    errors.maxPerOrder = "Max per order must be at least 1.";
     valid = false;
-  }
-
-  if (!ticketForm.endDate || !ticketForm.endTime) {
-    errors.salesEnd = "Sales end date and time are required.";
-    valid = false;
-  }
-
-  if (!ticketForm.description.trim()) {
-    errors.description = "Description is required.";
+  } else if (quantity !== null && maxPerOrder > quantity) {
+    errors.maxPerOrder = "Max per order cannot exceed available quantity.";
     valid = false;
   }
 
@@ -708,6 +831,7 @@ function handleSaveTicket() {
     editingIndex.value !== null ? tickets.value[editingIndex.value] : undefined;
   const color =
     existingTicket?.color ?? getEventTicketColor(tickets.value.length);
+  const targetSlotIndex = existingTicket?.slotIndex ?? selectedSlotIndex.value;
   const startStr = `${formatDateStr(ticketForm.startDate)} • ${ticketForm.startTime || "10:00 AM"}`;
   const endStr = `${formatDateStr(ticketForm.endDate)} • ${ticketForm.endTime || "10:00 AM"}`;
 
@@ -724,6 +848,8 @@ function handleSaveTicket() {
     endDateObj: ticketForm.endDate,
     endTimeStr: ticketForm.endTime,
     description: ticketForm.description,
+    slotIndex: targetSlotIndex,
+    quantitySold: existingTicket?.quantitySold ?? 0,
   };
 
   if (editingIndex.value !== null) {
@@ -733,12 +859,15 @@ function handleSaveTicket() {
     tickets.value.push(newTicket);
   }
 
+  if (!expandedSlots.value.includes(targetSlotIndex)) {
+    expandedSlots.value = [...expandedSlots.value, targetSlotIndex];
+  }
+
   viewMode.value = "list";
   isTicketModalOpen.value = false;
 }
 
 function editTicket(index: number) {
-  openMenuIndex.value = null;
   resetErrors();
   const t = tickets.value[index];
   if (!t) return;
@@ -757,27 +886,34 @@ function editTicket(index: number) {
   isTicketModalOpen.value = true;
 }
 
-function duplicateTicket(index: number) {
-  openMenuIndex.value = null;
-  const t = tickets.value[index];
-  if (!t) return;
-
-  tickets.value.push({
-    ...t,
-    type: `${t.type} (COPY)`,
-  });
+function requestDeleteTicket(index: number) {
+  const ticket = tickets.value[index];
+  if (!ticket) return;
+  pendingDeleteTicketIndex.value = index;
+  pendingDeleteTicketName.value = ticket.type;
+  isDeleteTicketModalOpen.value = true;
 }
 
-function toggleDeactivateTicket(index: number) {
-  openMenuIndex.value = null;
-  const t = tickets.value[index];
-  if (t) {
-    t.deactivated = !t.deactivated;
+function cancelDeleteTicket() {
+  isDeleteTicketModalOpen.value = false;
+  pendingDeleteTicketIndex.value = null;
+  pendingDeleteTicketName.value = "";
+}
+
+function confirmDeleteTicket() {
+  if (pendingDeleteTicketIndex.value !== null) {
+    const deletingIndex = pendingDeleteTicketIndex.value;
+    deleteTicket(deletingIndex);
+    if (editingIndex.value === deletingIndex) {
+      isTicketModalOpen.value = false;
+      editingIndex.value = null;
+      viewMode.value = "list";
+    }
   }
+  cancelDeleteTicket();
 }
 
 function deleteTicket(index: number) {
-  openMenuIndex.value = null;
   tickets.value.splice(index, 1);
   if (tickets.value.length === 0) {
     viewMode.value = "list";
@@ -791,22 +927,6 @@ function handleNextStep() {
   }
   emit("next", tickets.value);
 }
-
-function closeMenus() {
-  openMenuIndex.value = null;
-}
-
-onMounted(() => {
-  if (import.meta.client) {
-    window.addEventListener("click", closeMenus);
-  }
-});
-
-onUnmounted(() => {
-  if (import.meta.client) {
-    window.removeEventListener("click", closeMenus);
-  }
-});
 </script>
 
 <style scoped>
@@ -1020,7 +1140,56 @@ onUnmounted(() => {
 .add-ticket-form-body {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
+}
+
+.add-ticket-modal-subtitle {
+  margin: -0.85rem 0 0.25rem;
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+:deep(.ticket-edit-modal .app-modal-close) {
+  display: none;
+}
+
+.btn-edit-ticket-delete {
+  position: absolute;
+  top: 0.85rem;
+  right: 1rem;
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #ef4444;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.btn-edit-ticket-delete svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.btn-edit-ticket-delete:hover {
+  transform: scale(1.06);
+  background: #fecaca;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.2);
+}
+
+.btn-edit-ticket-delete:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 3px;
 }
 
 .field-group {
@@ -1121,14 +1290,46 @@ onUnmounted(() => {
 .add-ticket-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #f3f4f6;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.delete-ticket-copy {
+  margin: 0;
+  color: #53665a;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.delete-ticket-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.btn-cancel-ticket-delete,
+.btn-confirm-ticket-delete {
+  min-height: 2.4rem;
+  padding: 0 0.9rem;
+  border: 1px solid #d5deeb;
+  border-radius: 0.45rem;
+  background: #fff;
+  color: #0e2615;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-confirm-ticket-delete {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
 }
 
 .btn-cancel-form {
-  padding: 0.65rem 1.75rem;
+  flex: 1;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   color: #0e2615;
@@ -1144,7 +1345,9 @@ onUnmounted(() => {
 }
 
 .btn-create-ticket {
-  padding: 0.65rem 1.75rem;
+  flex: 1;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
   background: #3fd246;
   color: #ffffff;
   font-weight: 700;
@@ -1455,6 +1658,439 @@ onUnmounted(() => {
 .btn-arrow {
   width: 1rem;
   height: 1rem;
+}
+
+.list-header-row {
+  margin-bottom: 1rem;
+}
+
+.tickets-list {
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.schedule-batch {
+  overflow: hidden;
+  border: 1px solid #cfd9e8;
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.schedule-batch-header {
+  display: flex;
+  min-height: 4rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 0.9rem;
+  transition: min-height 240ms ease;
+}
+
+.schedule-batch-header--collapsed {
+  min-height: 5rem;
+}
+
+.schedule-toggle {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #102317;
+  text-align: left;
+  cursor: pointer;
+}
+
+.schedule-chevron {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+
+.schedule-chevron--open {
+  transform: rotate(0);
+}
+
+.schedule-ticket-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  color: #90a0b8;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.schedule-name {
+  overflow: hidden;
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-ticket-count {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.55rem;
+  border-radius: 99px;
+  background: #eef4fd;
+  color: #53677f;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.schedule-summary {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  color: #53665a;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.schedule-summary-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.schedule-summary-item svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.schedule-ticket-list {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+  padding: 0 0.65rem 0.65rem;
+}
+
+.schedule-disclosure {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 240ms ease,
+    opacity 180ms ease;
+}
+
+.schedule-disclosure--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.schedule-empty-state {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  overflow: hidden;
+  margin: 0 0.65rem 0.65rem;
+  padding: 1.25rem;
+  border: 1px solid #d5deeb;
+  border-radius: 0.65rem;
+  background: #fff;
+  text-align: center;
+}
+
+.empty-ticket-art {
+  position: relative;
+  display: grid;
+  width: 5rem;
+  height: 5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  margin-bottom: 0.25rem;
+  border-radius: 50%;
+  background: #effaf0;
+}
+
+.empty-ticket-icon {
+  width: 2.8rem;
+  height: 2.8rem;
+  color: #92a08f;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.empty-ticket-plus {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.65rem;
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #3fd246;
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.empty-state-title {
+  margin: 0;
+  color: #17231a;
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.empty-state-copy {
+  max-width: 20rem;
+  margin: 0;
+  color: #65756b;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.empty-add-ticket {
+  display: inline-flex;
+  min-width: 7.5rem;
+  min-height: 2.3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.1rem;
+  padding: 0 0.8rem;
+  border: 1px solid #b7e5be;
+  border-radius: 0.5rem;
+  background: #f2fbf3;
+  color: #176a2a;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.empty-add-ticket:hover {
+  border-color: #3fd246;
+  background: #e7f8e9;
+}
+
+.empty-add-ticket svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.ticket-card {
+  min-height: 4rem;
+  align-items: center;
+  gap: 0.75rem;
+  border-color: #d5deeb;
+  border-radius: 0.6rem;
+}
+
+.ticket-icon-box {
+  display: grid;
+  width: 1.5rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  margin-left: 0.7rem;
+}
+
+.ticket-icon-box svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+
+.ticket-vertical-icon {
+  transform: rotate(90deg);
+}
+
+.ticket-content {
+  display: flex;
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem 0.8rem 0.55rem 0;
+}
+
+.ticket-top-row {
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ticket-meta {
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+}
+
+.ticket-type {
+  color: #18221c;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: capitalize;
+}
+
+.ticket-tag {
+  padding: 0.18rem 0.5rem;
+  border-radius: 99px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ticket-tag--general {
+  background: #edf5ff;
+  color: #1680e5;
+}
+
+.ticket-tag--premium {
+  background: #ffeaf4;
+  color: #d93e91;
+}
+
+.ticket-tag--exclusive {
+  background: #fff3e3;
+  color: #c87517;
+}
+
+.ticket-price {
+  flex-basis: 100%;
+  color: #8b99b0 !important;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.ticket-avail {
+  min-width: 5rem;
+  flex: 0 0 auto;
+  gap: 0.25rem;
+}
+
+.ticket-avail-label {
+  color: #53665a;
+  font-size: 0.68rem;
+}
+
+.ticket-avail-count {
+  color: #101a13;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.ticket-action-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid #e6eaf0;
+}
+
+.ticket-edit-btn,
+.ticket-delete-btn {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: #24382b;
+  cursor: pointer;
+}
+
+.ticket-edit-btn svg,
+.ticket-delete-btn svg {
+  width: 1rem;
+  height: 1rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.ticket-delete-btn {
+  color: #dc2626;
+}
+
+.ticket-delete-btn:hover {
+  background: #fef2f2;
+}
+
+.ticket-sales-row {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .schedule-batch-header {
+    flex-wrap: wrap;
+  }
+
+  .schedule-toggle {
+    flex-basis: calc(100% - 8rem);
+  }
+
+  .schedule-summary {
+    order: 3;
+    flex: 1 1 100%;
+    padding-left: 2rem;
+  }
+
+  .schedule-ticket-list .ticket-top-row {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 560px) {
+  .schedule-ticket-count {
+    display: none;
+  }
+
+  .ticket-card {
+    align-items: flex-start;
+  }
+
+  .ticket-content {
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .ticket-top-row {
+    flex-wrap: wrap;
+  }
+
+  .ticket-meta {
+    flex-basis: 100%;
+  }
+
+  .ticket-avail {
+    min-width: 3.8rem;
+  }
+
+  .ticket-action-wrapper {
+    margin-left: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .schedule-batch-header,
+  .schedule-disclosure {
+    transition: none;
+  }
 }
 
 @media (max-width: 768px) {

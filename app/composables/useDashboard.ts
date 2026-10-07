@@ -38,9 +38,10 @@ export const useDashboard = () => {
   const { instance } = useApi()
   const { activeOrgId } = useOrgState()
 
-  const data = ref<DashboardData | null>(null)
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const data = useState<DashboardData | null>('dashboard:data', () => null)
+  const loading = useState<boolean>('dashboard:loading', () => false)
+  const error = useState<string | null>('dashboard:error', () => null)
+  const selectedDays = useState<number>('dashboard:selectedDays', () => 7)
 
   function extractErrorMessage(e: unknown, fallback: string): string {
     const apiError = e as {
@@ -65,14 +66,16 @@ export const useDashboard = () => {
     return fallback
   }
 
-  const fetchDashboardData = async (): Promise<DashboardData | null> => {
+  const fetchDashboardData = async (days: number = selectedDays.value): Promise<DashboardData | null> => {
     if (!activeOrgId.value) return null
 
     try {
       loading.value = true
       error.value = null
+      selectedDays.value = days
       const res = await instance.get<DashboardData>(
         `/organisations/${activeOrgId.value}/dashboard`,
+        { params: { days } },
       )
       const raw = res.data?.data ?? res.data
       if (raw && typeof raw === 'object' && 'eventCount' in raw) {
@@ -85,6 +88,36 @@ export const useDashboard = () => {
       throw e
     } finally {
       loading.value = false
+    }
+  }
+
+  const fetchMoreUpcomingEvents = async (skip: number, take: number = 10): Promise<DashboardUpcomingEvent[]> => {
+    if (!activeOrgId.value) return []
+    try {
+      const res = await instance.get<DashboardUpcomingEvent[]>(
+        `/organisations/${activeOrgId.value}/dashboard/upcoming-events`,
+        { params: { skip, take } },
+      )
+      const raw = res.data?.data ?? res.data
+      return Array.isArray(raw) ? raw : []
+    } catch (e) {
+      console.error('Failed to fetch more upcoming events:', e)
+      return []
+    }
+  }
+
+  const fetchMoreActivities = async (skip: number, take: number = 10): Promise<DashboardRecentActivity[]> => {
+    if (!activeOrgId.value) return []
+    try {
+      const res = await instance.get<DashboardRecentActivity[]>(
+        `/organisations/${activeOrgId.value}/dashboard/activities`,
+        { params: { skip, take } },
+      )
+      const raw = res.data?.data ?? res.data
+      return Array.isArray(raw) ? raw : []
+    } catch (e) {
+      console.error('Failed to fetch more activities:', e)
+      return []
     }
   }
 
@@ -107,7 +140,10 @@ export const useDashboard = () => {
     data,
     loading,
     error,
+    selectedDays,
     fetchDashboardData,
+    fetchMoreUpcomingEvents,
+    fetchMoreActivities,
     chartData,
     upcomingEvents,
     recentActivities,

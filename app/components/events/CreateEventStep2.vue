@@ -3,44 +3,13 @@
     <!-- Form Header -->
     <div class="form-header">
       <h3 class="form-title">Venue & Schedule</h3>
-      <p class="form-subtitle">Where and when is your event happening?.</p>
+      <p class="form-subtitle">Where and when is your event happening?</p>
     </div>
 
     <!-- 2-Column Layout -->
     <div class="form-body-grid">
       <!-- Left Column: Form Fields -->
       <div class="form-left-col">
-        <!-- Start & End Date + Time -->
-        <div class="two-col-grid">
-          <!-- Start Date & Time -->
-          <div class="field-group">
-            <label class="field-label">
-              Start Date & Time <span class="required-star">*</span>
-            </label>
-            <div class="date-time-row">
-              <DatePicker
-                v-model="formData.startDate"
-                placeholder="Start date"
-              />
-              <TimePicker
-                v-model="formData.startTime"
-                placeholder="Start time"
-              />
-            </div>
-          </div>
-
-          <!-- End Date & Time -->
-          <div class="field-group">
-            <label class="field-label">
-              End Date & Time <span class="required-star">*</span>
-            </label>
-            <div class="date-time-row">
-              <DatePicker v-model="formData.endDate" placeholder="End date" />
-              <TimePicker v-model="formData.endTime" placeholder="End time" />
-            </div>
-          </div>
-        </div>
-
         <!-- Venue Name -->
         <div class="field-group">
           <label for="input-venue-name" class="field-label">
@@ -114,16 +83,52 @@
       <!-- Right Column: Interactive Map Graphic -->
       <div class="form-right-col">
         <div class="map-card">
-          <div class="map-graphic">
-            <!-- Simulated Map roads and pin -->
-            <div class="map-road map-road-1" />
-            <div class="map-road map-road-2" />
-            <div class="map-pin-box">
-              <div class="map-tooltip">
-                Victoria Island, Lagos 106104, Lagos, Nigeria
-              </div>
-              <div class="pin-icon-wrap">📍</div>
-            </div>
+          <iframe
+            title="Interactive map of Victoria Island, Lagos"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=3.382%2C6.423%2C3.458%2C6.485&layer=mapnik&marker=6.4541%2C3.4316"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+          />
+        </div>
+      </div>
+
+      <!-- Start & End Date + Time -->
+      <div class="schedule-fields two-col-grid">
+        <div class="field-group">
+          <label class="field-label">
+            Start Date & Time <span class="required-star">*</span>
+          </label>
+          <div class="combined-date-time">
+            <DatePicker
+              class="date-control"
+              v-model="formData.startDate"
+              placeholder="Start date"
+            />
+            <span class="date-time-divider" />
+            <TimePicker
+              class="time-control"
+              v-model="formData.startTime"
+              placeholder="Start time"
+            />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">
+            End Date & Time <span class="required-star">*</span>
+          </label>
+          <div class="combined-date-time">
+            <DatePicker
+              class="date-control"
+              v-model="formData.endDate"
+              placeholder="End date"
+            />
+            <span class="date-time-divider" />
+            <TimePicker
+              class="time-control"
+              v-model="formData.endTime"
+              placeholder="End time"
+            />
           </div>
         </div>
       </div>
@@ -268,22 +273,20 @@ function handleSubmit() {
 
 .form-body-grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.9fr);
   gap: 2.25rem;
-  margin-bottom: 2.25rem;
+  align-items: start;
+  margin-bottom: 1.5rem;
 }
 
 .form-left-col {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
-/* Date + Time stacked side-by-side within a field */
-.date-time-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.form-right-col {
+  min-width: 0;
 }
 
 .two-col-grid {
@@ -360,7 +363,6 @@ function handleSubmit() {
   pointer-events: none;
 }
 
-/* Combined Date Time Box */
 .combined-date-time-box {
   display: flex;
   align-items: center;
@@ -368,6 +370,51 @@ function handleSubmit() {
   border-radius: 0.65rem;
   background: #ffffff;
   overflow: hidden;
+}
+
+.schedule-fields {
+  grid-column: 1;
+  align-self: end;
+  margin-top: -0.25rem;
+}
+
+.combined-date-time {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  overflow: visible;
+  border: 1px solid #d5deeb;
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.combined-date-time :deep(.date-control),
+.combined-date-time :deep(.time-control) {
+  min-width: 0;
+  flex: 1;
+}
+
+.combined-date-time :deep(.date-trigger),
+.combined-date-time :deep(.time-trigger) {
+  min-height: 2.8rem;
+  padding: 0 0.55rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.combined-date-time :deep(.trigger-value) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date-time-divider {
+  width: 1px;
+  height: 1.8rem;
+  flex: 0 0 1px;
+  background: #d5deeb;
 }
 
 .date-part,
@@ -400,74 +447,19 @@ function handleSubmit() {
   flex-shrink: 0;
 }
 
-/* Map Card */
 .map-card {
   width: 100%;
-  height: 100%;
-  min-height: 320px;
-  border-radius: 1.15rem;
+  height: 22rem;
+  border-radius: 0.7rem;
   overflow: hidden;
   border: 1px solid #e5e7eb;
-  position: relative;
 }
 
-.map-graphic {
+.map-card iframe {
+  display: block;
   width: 100%;
   height: 100%;
-  background: #fde68a; /* soft warm map styling */
-  background-image:
-    radial-gradient(#fcd34d 1.5px, transparent 1.5px),
-    radial-gradient(#fcd34d 1.5px, #fef3c7 1.5px);
-  background-size: 30px 30px;
-  background-position:
-    0 0,
-    15px 15px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.map-road-1 {
-  position: absolute;
-  top: 40%;
-  left: 0;
-  right: 0;
-  height: 24px;
-  background: #ffffff;
-  transform: rotate(-15deg);
-}
-
-.map-road-2 {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 55%;
-  width: 24px;
-  background: #ffffff;
-}
-
-.map-pin-box {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.map-tooltip {
-  background: #000000;
-  color: #ffffff;
-  font-size: 0.675rem;
-  font-weight: 700;
-  padding: 0.25rem 0.6rem;
-  border-radius: 0.35rem;
-  margin-bottom: 0.25rem;
-  white-space: nowrap;
-}
-
-.pin-icon-wrap {
-  font-size: 1.75rem;
+  border: 0;
 }
 
 /* Footer Actions */
@@ -528,8 +520,29 @@ function handleSubmit() {
   .form-body-grid {
     grid-template-columns: 1fr;
   }
+
   .two-col-grid {
     grid-template-columns: 1fr;
+  }
+
+  .schedule-fields {
+    grid-column: 1;
+  }
+
+  .map-card {
+    height: 18rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .combined-date-time :deep(.date-trigger),
+  .combined-date-time :deep(.time-trigger) {
+    padding: 0 0.35rem;
+  }
+
+  .combined-date-time :deep(.trigger-icon),
+  .combined-date-time :deep(.trigger-chevron) {
+    display: none;
   }
 }
 </style>

@@ -26,11 +26,14 @@
                 currentStep === 1
                   ? eventData.step1
                   : currentStep === 2
-                    ? eventData.step2
-                    : currentStep === 4
-                      ? eventData.step4
-                      : undefined
+                    ? eventData.eventSlots
+                    : currentStep === 3
+                      ? eventData.step2
+                      : currentStep === 5
+                        ? eventData.step4
+                        : undefined
               "
+              :event-slot="selectedEventSlot"
               @cancel="handleCancel"
               @back="currentStep--"
               @next="handleStepNext"
@@ -48,6 +51,7 @@
 import { ref, watch, onMounted, onUnmounted, computed } from "vue";
 import EventVerticalStepper from "~/components/events/EventVerticalStepper.vue";
 import CreateEventStep1 from "~/components/events/CreateEventStep1.vue";
+import CreateEventSlots from "~/components/events/CreateEventSlots.vue";
 import CreateEventStep2 from "~/components/events/CreateEventStep2.vue";
 import CreateEventStep3 from "~/components/events/CreateEventStep3.vue";
 import CreateEventStep4 from "~/components/events/CreateEventStep4.vue";
@@ -55,7 +59,12 @@ import CreateEventStep5 from "~/components/events/CreateEventStep5.vue";
 import EventSuccessCard from "~/components/events/EventSuccessCard.vue";
 import { useEvents } from "~/composables/useEvents";
 import { useToast } from "~/composables/useToast";
-import type { Event, CreateEventDto, EventCategory } from "~/types/event";
+import type {
+  Event,
+  CreateEventDto,
+  EventCategory,
+  EventSchedule,
+} from "~/types/event";
 
 definePageMeta({
   layout: "dashboard",
@@ -83,6 +92,10 @@ const isSubmitting = ref(false);
 const editEventId = computed(() => {
   const value = route.query.eventId;
   return typeof value === "string" ? value : null;
+});
+const selectedEventSlot = computed(() => {
+  const step1 = eventData.value.step1 as Record<string, unknown> | undefined;
+  return typeof step1?.eventSlot === "string" ? step1.eventSlot : "multiple";
 });
 
 const hideSidebarState = useState<boolean>("hide-app-sidebar", () => false);
@@ -132,6 +145,17 @@ function formatTimeValue(value: string): string {
 function hydrateEvent(existing: Event) {
   const start = new Date(existing.startsAt);
   const end = existing.endsAt ? new Date(existing.endsAt) : null;
+  const eventSlots = existing.schedules?.length
+    ? existing.schedules.map((schedule) => ({
+        id: schedule.id,
+        name: schedule.name,
+        dateObj: schedule.scheduleDate,
+        startTime: schedule.startTime || "09:00 AM",
+        endTime: schedule.endTime || "11:00 AM",
+      }))
+    : Array.isArray(existing.slots)
+      ? existing.slots
+      : undefined;
 
   eventData.value = {
     step1: {
@@ -142,8 +166,8 @@ function hydrateEvent(existing: Event) {
       visibility: existing.visibility,
       eventType: existing.isPaid ? "paid" : "free",
       coverImage: null,
-      slots: Array.isArray(existing.slots) ? existing.slots : [],
     },
+    eventSlots,
     step2: {
       venueName: existing.venueName || "",
       address: existing.venueAddress || "",
@@ -155,11 +179,17 @@ function hydrateEvent(existing: Event) {
       endDate: end,
       endTime: end ? formatTimeValue(existing.endsAt as string) : "",
     },
-    step3: existing.ticketTypes,
+    step3: existing.ticketTypes.map((ticket) => ({
+      ...ticket,
+      slotIndex: Math.max(
+        0,
+        existing.schedules?.findIndex(
+          (schedule) => schedule.id === ticket.scheduleId,
+        ) ?? 0,
+      ),
+    })),
     step4: {
       salesClose: "1h",
-      customCloseDate: null,
-      customCloseTime: "",
       reminders: ["24h", "1h"],
     },
   };
@@ -167,6 +197,7 @@ function hydrateEvent(existing: Event) {
 
 const stepComponents = [
   CreateEventStep1,
+  CreateEventSlots,
   CreateEventStep2,
   CreateEventStep3,
   CreateEventStep4,
@@ -178,9 +209,10 @@ const activeStepComponent = computed(
 
 function handleStepNext(data: unknown) {
   if (currentStep.value === 1) handleStep1Next(data);
-  else if (currentStep.value === 2) handleStep2Next(data);
-  else if (currentStep.value === 3) handleStep3Next(data);
-  else if (currentStep.value === 4) handleStep4Next(data);
+  else if (currentStep.value === 2) handleSlotsNext(data);
+  else if (currentStep.value === 3) handleStep2Next(data);
+  else if (currentStep.value === 4) handleStep3Next(data);
+  else if (currentStep.value === 5) handleStep4Next(data);
 }
 
 function handleStep1Next(data: unknown) {
@@ -188,19 +220,24 @@ function handleStep1Next(data: unknown) {
   currentStep.value = 2;
 }
 
+function handleSlotsNext(data: unknown) {
+  eventData.value.eventSlots = data;
+  currentStep.value = 3;
+}
+
 function handleStep2Next(data: unknown) {
   eventData.value.step2 = data;
-  currentStep.value = 3;
+  currentStep.value = 4;
 }
 
 function handleStep3Next(data?: unknown) {
   if (data) eventData.value.step3 = data;
-  currentStep.value = 4;
+  currentStep.value = 5;
 }
 
 function handleStep4Next(data: unknown) {
   eventData.value.step4 = data;
-  currentStep.value = 5;
+  currentStep.value = 6;
 }
 
 function resolveCategoryId(categoryName: string): string | undefined {
@@ -239,7 +276,7 @@ function buildCreateDto(): CreateEventDto {
     state: s2.state as string,
     city: s2.city as string,
     eventSlot: s1.eventSlot as string,
-    slots: s1.slots as unknown[],
+    slots: eventData.value.eventSlots as unknown[],
     startsAt: startsAtDate.toISOString(),
     endsAt,
     salesCloseAt: computeSalesCloseAt(startsAtDate, s4),
@@ -254,17 +291,7 @@ function computeSalesCloseAt(
   let hoursBefore = 1;
   if (closeOption === "3h") hoursBefore = 3;
   else if (closeOption === "6h") hoursBefore = 6;
-  else if (
-    closeOption === "custom" &&
-    s4.customCloseDate &&
-    s4.customCloseTime
-  ) {
-    return (
-      new Date(s4.customCloseDate as string).toISOString().split("T")[0] +
-      "T" +
-      s4.customCloseTime
-    );
-  }
+  else if (closeOption === "12h") hoursBefore = 12;
 
   const salesCloseAt = new Date(
     startsAt.getTime() - hoursBefore * 60 * 60 * 1000,
@@ -290,7 +317,10 @@ function buildTicketDateTime(date: unknown, time: unknown): string | undefined {
   return result.toISOString();
 }
 
-async function createTicketsForEvent(eventId: string) {
+async function createTicketsForEvent(
+  eventId: string,
+  schedules: EventSchedule[] = [],
+) {
   const step3Tickets =
     (eventData.value.step3 as Array<Record<string, unknown>>) || [];
   for (const t of step3Tickets) {
@@ -307,6 +337,10 @@ async function createTicketsForEvent(eventId: string) {
         parseInt(String(t.maxPerOrder || "0").replace(/,/g, ""), 10) || 10,
       saleStartsAt: buildTicketDateTime(t.startDateObj, t.startTimeStr),
       saleEndsAt: buildTicketDateTime(t.endDateObj, t.endTimeStr),
+      scheduleId:
+        typeof t.slotIndex === "number"
+          ? schedules[t.slotIndex]?.id
+          : undefined,
     };
 
     try {
@@ -328,7 +362,7 @@ async function handleSaveDraft() {
     if (coverFile) {
       await uploadEventImage(created.id, coverFile);
     }
-    await createTicketsForEvent(created.id);
+    await createTicketsForEvent(created.id, created.schedules);
     toast.show({
       title: "Draft Saved",
       message: "Your event draft has been saved successfully.",
@@ -359,7 +393,7 @@ async function handlePublish() {
     if (coverFile) {
       await uploadEventImage(created.id, coverFile);
     }
-    await createTicketsForEvent(created.id);
+    await createTicketsForEvent(created.id, created.schedules);
     await publishEvent(created.id);
     isLive.value = true;
     toast.show({

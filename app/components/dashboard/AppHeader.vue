@@ -190,7 +190,7 @@ const headerConfig = computed(() => {
   if (path.startsWith('/settings')) {
     return {
       title: 'Settings',
-      subtitle: 'Manage organization preferences and account settings.',
+      subtitle: 'Manage your account and platform preferences',
     }
   }
   // Default Overview

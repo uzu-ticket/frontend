@@ -26,10 +26,13 @@
       <!-- Middle 2-Column Row: Sales Summary Chart & Upcoming Events -->
       <div class="data-grid-row margin-bottom-row">
         <div class="grid-col-left">
-          <OverviewSalesChart />
+          <OverviewSalesChart :chart-data="chartData" />
         </div>
         <div class="grid-col-right">
-          <OverviewUpcomingEvents />
+          <OverviewUpcomingEvents
+            :events="upcomingEvents"
+            :loading="isOrgDashboardLoading || isDashboardRollupLoading"
+          />
         </div>
       </div>
 
@@ -39,7 +42,10 @@
           <OverviewRecentOrders />
         </div>
         <div class="grid-col-right">
-          <OverviewActivityFeed />
+          <OverviewActivityFeed
+            :activities="recentActivities"
+            :loading="isOrgDashboardLoading || isDashboardRollupLoading"
+          />
         </div>
       </div>
     </template>
@@ -61,6 +67,7 @@ import OverviewActivityFeed from '~/components/dashboard/OverviewActivityFeed.vu
 import { useOrgState } from '~/composables/useOrgState'
 import { useEvents } from '~/composables/useEvents'
 import { useOrders } from '~/composables/useOrders'
+import { useDashboard } from '~/composables/useDashboard'
 
 definePageMeta({
   layout: 'dashboard',
@@ -75,7 +82,14 @@ useHead({
 
 const { hasActiveOrg, activeOrgId } = useOrgState()
 const { fetchEvents } = useEvents()
-const { fetchOrders, orders, getMetrics } = useOrders()
+const { fetchOrders, getMetrics } = useOrders()
+const {
+  fetchDashboardData,
+  chartData,
+  upcomingEvents,
+  recentActivities,
+  loading: isDashboardRollupLoading,
+} = useDashboard()
 
 const isOrgDashboardLoading = ref(false)
 const totalEventsCount = ref(0)
@@ -86,9 +100,12 @@ async function loadDashboardData() {
   if (!activeOrgId.value) return
   isOrgDashboardLoading.value = true
   try {
-    const eventsList = await fetchEvents(true)
-    totalEventsCount.value = eventsList.length
-    await fetchOrders(activeOrgId.value, true)
+    const [eventsList] = await Promise.all([
+      fetchEvents(true),
+      fetchOrders(activeOrgId.value, true),
+      fetchDashboardData(),
+    ])
+    totalEventsCount.value = eventsList?.length ?? 0
   } catch (e) {
     console.error('Failed to load dashboard data:', e)
   } finally {

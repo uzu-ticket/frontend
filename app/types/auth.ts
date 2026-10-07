@@ -3,7 +3,11 @@ export interface User {
   email: string
   phone?: string
   fullName?: string
+  avatarUrl?: string
   city?: string
+  preferredCurrency?: string
+  marketingOptIn?: boolean
+  isTotpEnabled?: boolean
   isEmailVerified: boolean
   isPhoneVerified?: boolean
   lastLoginAt?: string

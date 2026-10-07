@@ -4,14 +4,15 @@
     <div class="chart-header">
       <div class="chart-title-area">
         <h3 class="chart-title">Sales Summary</h3>
-        <span class="chart-period-tag">(Last 7 days)</span>
+        <span class="chart-period-tag">(Last {{ selectedDays === 365 ? '1 year' : selectedDays + ' days' }})</span>
       </div>
 
-      <div class="select-dropdown-box">
-        <span>7 Days</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="arrow-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
+      <div class="chart-select-container">
+        <AppSelect
+          :model-value="selectedDays"
+          :options="periodOptions"
+          @update:model-value="onPeriodSelect"
+        />
       </div>
     </div>
 
@@ -77,12 +78,30 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import AppSelect from '~/components/ui/AppSelect.vue'
+import type { SelectOption } from '~/components/ui/AppSelect.vue'
+import { useDashboard } from '~/composables/useDashboard'
 
 const props = defineProps<{
   chartData?: { day: string; orders: number; revenue: number }[]
 }>()
 
+const { selectedDays, fetchDashboardData } = useDashboard()
+
 const chartData = computed(() => props.chartData ?? [])
+
+const periodOptions: SelectOption[] = [
+  { value: 7, label: '7 Days' },
+  { value: 30, label: '30 Days' },
+  { value: 90, label: '90 Days' },
+  { value: 365, label: '1 Year' },
+]
+
+function onPeriodSelect(val: string | number | null) {
+  if (val && typeof val === 'number') {
+    fetchDashboardData(val)
+  }
+}
 
 function niceMax(value: number): number {
   if (value <= 0) return 100
@@ -203,24 +222,15 @@ const areaPath = computed(() => {
   color: #9ca3af;
 }
 
-.select-dropdown-box {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.85rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #4b5563;
-  cursor: pointer;
+.chart-select-container {
+  width: 120px;
 }
 
-.arrow-icon {
-  width: 0.9rem;
-  height: 0.9rem;
-  color: #6b7280;
+:deep(.select-trigger) {
+  padding: 0.35rem 0.75rem !important;
+  min-height: 2.25rem !important;
+  border-radius: 0.5rem !important;
+  font-size: 0.8rem !important;
 }
 
 .chart-wrapper {

@@ -19,25 +19,6 @@
           <span class="radio-label">{{ opt.label }}</span>
         </label>
       </div>
-
-      <!-- Custom Date & Time Inputs (shown when 'custom' is selected) -->
-      <Transition name="fade-slide">
-        <div v-if="salesClose === 'custom'" class="custom-datetime-box">
-          <div class="field-group">
-            <label class="field-label">Custom Close Date & Time</label>
-            <div class="datetime-row">
-              <DatePicker
-                v-model="customCloseDate"
-                placeholder="Select close date"
-              />
-              <TimePicker
-                v-model="customCloseTime"
-                placeholder="Select close time"
-              />
-            </div>
-          </div>
-        </div>
-      </Transition>
     </div>
 
     <!-- Horizontal Divider -->
@@ -119,8 +100,6 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import DatePicker from "~/components/ui/DatePicker.vue";
-import TimePicker from "~/components/ui/TimePicker.vue";
 
 const emit = defineEmits<{
   back: [];
@@ -130,8 +109,6 @@ const emit = defineEmits<{
 const props = defineProps<{
   initialData?: {
     salesClose?: string;
-    customCloseDate?: Date | null;
-    customCloseTime?: string;
     reminders?: string[];
   };
 }>();
@@ -140,7 +117,7 @@ const salesCloseOptions = [
   { value: "1h", label: "1 hour before event" },
   { value: "3h", label: "3 hours before event" },
   { value: "6h", label: "6 hours before event" },
-  { value: "custom", label: "Custom date & time" },
+  { value: "12h", label: "12 hours before event" },
 ];
 
 const reminderOptions = [
@@ -149,8 +126,6 @@ const reminderOptions = [
 ];
 
 const salesClose = ref("1h");
-const customCloseDate = ref<Date | null>(null);
-const customCloseTime = ref("");
 
 const reminders = ref<string[]>(["24h", "1h"]);
 
@@ -159,10 +134,6 @@ watch(
   (data) => {
     if (!data) return;
     if (data.salesClose) salesClose.value = data.salesClose;
-    if (data.customCloseDate !== undefined)
-      customCloseDate.value = data.customCloseDate;
-    if (data.customCloseTime !== undefined)
-      customCloseTime.value = data.customCloseTime;
     if (data.reminders) reminders.value = [...data.reminders];
   },
   { immediate: true, deep: true },
@@ -177,8 +148,6 @@ function toggleReminder(val: string) {
 function handleNext() {
   emit("next", {
     salesClose: salesClose.value,
-    customCloseDate: customCloseDate.value,
-    customCloseTime: customCloseTime.value,
     reminders: reminders.value,
   });
 }
@@ -252,21 +221,6 @@ function handleNext() {
   font-size: 0.875rem;
   font-weight: 700;
   color: #0e2615;
-}
-
-/* Custom Datetime Box */
-.custom-datetime-box {
-  margin-top: 1.25rem;
-  padding: 1.25rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  max-width: 480px;
-}
-
-.datetime-row {
-  display: flex;
-  gap: 0.75rem;
 }
 
 /* Divider */

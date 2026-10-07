@@ -27,9 +27,22 @@ export interface EventImage {
   createdAt: string;
 }
 
+export interface EventSchedule {
+  id: string;
+  eventId: string;
+  name: string;
+  scheduleDate: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TicketType {
   id: string;
   eventId: string;
+  scheduleId: string | null;
   name: string;
   priceMinor: string;
   currency: string;
@@ -81,6 +94,7 @@ export interface Event {
   updatedAt: string;
   category: EventCategory | null;
   ticketTypes: TicketType[];
+  schedules?: EventSchedule[];
   images: EventImage[];
   signingKeys: EventSigningKey[];
 }
@@ -92,6 +106,15 @@ export interface CreateTicketTypeDto {
   perOrderLimit?: number;
   saleStartsAt?: string;
   saleEndsAt?: string;
+  scheduleId?: string;
+}
+
+export interface CreateEventScheduleDto {
+  id?: string;
+  name: string;
+  dateObj?: Date | string | null;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface CreateEventDto {
@@ -105,7 +128,7 @@ export interface CreateEventDto {
   country?: string;
   state?: string;
   eventSlot?: string;
-  slots?: unknown[];
+  slots?: CreateEventScheduleDto[];
   latitude?: number;
   longitude?: number;
   city?: string;

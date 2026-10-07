@@ -69,6 +69,7 @@ import CreateOrgSuccess from "~/components/organizations/CreateOrgSuccess.vue";
 import { useOrgState } from "~/composables/useOrgState";
 import { useApi } from "~/composables/useApi";
 import { useToast } from "~/composables/useToast";
+import { useFileUpload } from "~/composables/useFileUpload";
 
 definePageMeta({
   layout: "dashboard",
@@ -291,15 +292,29 @@ async function syncStepData(stepKey: string, data: unknown): Promise<boolean> {
           logoFile?: File | null;
           coverFile?: File | null;
         };
-        const uploadData = new FormData();
-        if (step2.logoFile) uploadData.append("logo", step2.logoFile);
-        if (step2.coverFile) uploadData.append("cover", step2.coverFile);
 
-        if (step2.logoFile || step2.coverFile) {
-          await instance.post(
-            `/organisations/${organisationId.value}/uploads`,
-            uploadData,
-          );
+        // Upload logo and cover in parallel using presigned URLs
+        const { uploadFile } = useFileUpload();
+        const presignBase = `/organisations/${organisationId.value}/uploads/presign`;
+
+        const uploads = await Promise.all([
+          step2.logoFile
+            ? uploadFile(presignBase, step2.logoFile, "logo")
+            : Promise.resolve(null),
+          step2.coverFile
+            ? uploadFile(presignBase, step2.coverFile, "cover")
+            : Promise.resolve(null),
+        ]);
+
+        const [logoUrl, coverUrl] = uploads;
+
+        // Persist the returned public URLs back to the organisation record
+        const urlPatch: Record<string, string> = {};
+        if (logoUrl) urlPatch.logoUrl = logoUrl;
+        if (coverUrl) urlPatch.coverUrl = coverUrl;
+
+        if (Object.keys(urlPatch).length) {
+          await instance.patch(`/organisations/${organisationId.value}`, urlPatch);
         }
       }
 

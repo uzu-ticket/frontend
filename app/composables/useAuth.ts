@@ -316,7 +316,7 @@ export const useAuth = () => {
       loading.value = true
       error.value = null
       const res = await instance.post('/auth/2fa/setup')
-      return res.data.data
+      return res.data?.data ?? res.data
     } catch (e) {
       error.value = extractErrorMessage(e, 'Failed to setup 2FA')
       throw e
@@ -330,6 +330,7 @@ export const useAuth = () => {
       loading.value = true
       error.value = null
       await instance.post('/auth/2fa/enable', { secret, code })
+      await fetchUser()
     } catch (e) {
       error.value = extractErrorMessage(e, 'Failed to enable 2FA')
       throw e
@@ -343,6 +344,7 @@ export const useAuth = () => {
       loading.value = true
       error.value = null
       await instance.post('/auth/2fa/disable', { code })
+      await fetchUser()
     } catch (e) {
       error.value = extractErrorMessage(e, 'Failed to disable 2FA')
       throw e

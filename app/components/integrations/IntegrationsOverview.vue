@@ -1,11 +1,21 @@
 <template>
   <div class="integrations-page">
-
     <!-- Top Bar: Search + Add Integration -->
     <div class="top-bar">
       <div class="search-wrapper">
-        <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="search-icon"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
         </svg>
         <input
           v-model="localSearch"
@@ -15,9 +25,22 @@
         />
       </div>
 
-      <button id="btn-add-integration" class="btn-add" @click="$emit('open-add')">
-        <svg xmlns="http://www.w3.org/2000/svg" class="btn-plus" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+      <button
+        id="btn-add-integration"
+        class="btn-add"
+        @click="$emit('open-add')"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="btn-plus"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+            clip-rule="evenodd"
+          />
         </svg>
         <span>Add Integration</span>
       </button>
@@ -25,9 +48,33 @@
 
     <!-- Connected Integrations -->
     <section class="section">
-      <h2 class="section-title">Connected Integrations ({{ filteredConnected.length }})</h2>
+      <h2 class="section-title">
+        Connected Integrations ({{ filteredConnected.length }})
+      </h2>
 
-      <div v-if="filteredConnected.length > 0" class="connected-grid">
+      <div v-if="isLoading" class="connected-grid" aria-hidden="true">
+        <div
+          v-for="n in 3"
+          :key="`connected-skeleton-${n}`"
+          class="connected-card skeleton-card"
+        >
+          <div class="card-top-row">
+            <AppSkeleton variant="rectangle" width="3rem" height="3rem" />
+            <div class="skeleton-card-info">
+              <AppSkeleton variant="text" width="7rem" height="0.9rem" />
+              <AppSkeleton variant="text" width="5.5rem" height="0.75rem" />
+              <AppSkeleton
+                variant="text"
+                width="3.5rem"
+                height="1.25rem"
+                border-radius="9999px"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="filteredConnected.length > 0" class="connected-grid">
         <div
           v-for="item in filteredConnected"
           :key="item.id"
@@ -57,9 +104,28 @@
 
     <!-- Available Integrations -->
     <section class="section">
-      <h2 class="section-title">Available Integrations ({{ filteredAvailable.length }})</h2>
+      <h2 class="section-title">
+        Available Integrations ({{ filteredAvailable.length }})
+      </h2>
 
-      <div v-if="filteredAvailable.length > 0" class="available-grid">
+      <div v-if="isLoading" class="available-grid" aria-hidden="true">
+        <div
+          v-for="n in 4"
+          :key="`available-skeleton-${n}`"
+          class="available-card skeleton-card"
+        >
+          <div class="card-top-row">
+            <AppSkeleton variant="rectangle" width="3rem" height="3rem" />
+            <div class="skeleton-card-info">
+              <AppSkeleton variant="text" width="6rem" height="0.9rem" />
+              <AppSkeleton variant="text" width="4rem" height="0.75rem" />
+            </div>
+          </div>
+          <AppSkeleton variant="rectangle" width="100%" height="2.3rem" />
+        </div>
+      </div>
+
+      <div v-else-if="filteredAvailable.length > 0" class="available-grid">
         <div
           v-for="item in filteredAvailable"
           :key="item.id"
@@ -74,8 +140,11 @@
               <span class="card-name">{{ item.name }}</span>
               <span
                 class="card-category"
-                :class="{ 'card-category--payment': item.category === 'Payment' }"
-              >{{ item.category }}</span>
+                :class="{
+                  'card-category--payment': item.category === 'Payment',
+                }"
+                >{{ item.category }}</span
+              >
             </div>
           </div>
 
@@ -84,8 +153,19 @@
             class="btn-connect"
             @click.stop="$emit('open-connect', item.id)"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="plug-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="plug-icon"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              />
             </svg>
             <span>Connect</span>
           </button>
@@ -98,39 +178,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import IntegrationLogo from './IntegrationLogo.vue'
-import type { IntegrationItem } from '~/composables/useIntegrations'
+import { ref, computed } from "vue";
+import IntegrationLogo from "./IntegrationLogo.vue";
+import AppSkeleton from "~/components/ui/AppSkeleton.vue";
+import type { IntegrationItem } from "~/composables/useIntegrations";
 
 const props = defineProps<{
-  connectedList: IntegrationItem[]
-  availableList: IntegrationItem[]
-}>()
+  connectedList: IntegrationItem[];
+  availableList: IntegrationItem[];
+  isLoading: boolean;
+}>();
 
 const emit = defineEmits<{
-  'open-add': []
-  'open-connect': [id: string]
-  'toggle-connect': [id: string]
-  'test-connect': [item: IntegrationItem]
-}>()
+  "open-add": [];
+  "open-connect": [id: string];
+  "toggle-connect": [id: string];
+  "test-connect": [item: IntegrationItem];
+}>();
 
-const localSearch = ref('')
+const localSearch = ref("");
 
 const filteredConnected = computed(() => {
-  const q = localSearch.value.toLowerCase().trim()
-  if (!q) return props.connectedList
+  const q = localSearch.value.toLowerCase().trim();
+  if (!q) return props.connectedList;
   return props.connectedList.filter(
-    (i) => i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q),
-  )
-})
+    (i) =>
+      i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q),
+  );
+});
 
 const filteredAvailable = computed(() => {
-  const q = localSearch.value.toLowerCase().trim()
-  if (!q) return props.availableList
+  const q = localSearch.value.toLowerCase().trim();
+  if (!q) return props.availableList;
   return props.availableList.filter(
-    (i) => i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q),
-  )
-})
+    (i) =>
+      i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q),
+  );
+});
 </script>
 
 <style scoped>
@@ -161,7 +245,7 @@ const filteredAvailable = computed(() => {
   transform: translateY(-50%);
   width: 1.1rem;
   height: 1.1rem;
-  color: #9CA3AF;
+  color: #9ca3af;
   pointer-events: none;
 }
 
@@ -171,25 +255,27 @@ const filteredAvailable = computed(() => {
   font-size: 0.9rem;
   color: #111827;
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   box-sizing: border-box;
 }
 .search-input:focus {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 0 0 3px rgba(63, 210, 70, 0.1);
 }
 .search-input::placeholder {
-  color: #9CA3AF;
+  color: #9ca3af;
 }
 
 .btn-add {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-size: 0.9rem;
   font-weight: 700;
@@ -198,7 +284,9 @@ const filteredAvailable = computed(() => {
   border: none;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(63, 210, 70, 0.25);
-  transition: background 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -222,7 +310,7 @@ const filteredAvailable = computed(() => {
 .section-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -235,17 +323,19 @@ const filteredAvailable = computed(() => {
 
 .connected-card {
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 1rem;
   padding: 1.25rem 1.5rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 .connected-card:hover {
-  border-color: #D1D5DB;
+  border-color: #d1d5db;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
@@ -258,17 +348,32 @@ const filteredAvailable = computed(() => {
 
 .available-card {
   background: #ffffff;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 1rem;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 .available-card:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   box-shadow: 0 4px 14px rgba(63, 210, 70, 0.08);
+}
+
+.skeleton-card {
+  cursor: default;
+  pointer-events: none;
+}
+
+.skeleton-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding-top: 0.15rem;
 }
 
 /* Shared card internals */
@@ -284,7 +389,7 @@ const filteredAvailable = computed(() => {
   border-radius: 0.75rem;
   overflow: hidden;
   flex-shrink: 0;
-  border: 1px solid #F3F4F6;
+  border: 1px solid #f3f4f6;
 }
 
 .card-info {
@@ -304,24 +409,24 @@ const filteredAvailable = computed(() => {
 /* Connected meta: "Category • Live" */
 .card-meta {
   font-size: 0.8rem;
-  color: #6B7280;
+  color: #6b7280;
   display: flex;
   align-items: center;
   gap: 0.35rem;
 }
 
 .meta-dot {
-  color: #D1D5DB;
+  color: #d1d5db;
 }
 
 /* Available category label */
 .card-category {
   font-size: 0.8rem;
-  color: #6B7280;
+  color: #6b7280;
   font-weight: 500;
 }
 .card-category--payment {
-  color: #3FD246;
+  color: #3fd246;
   font-weight: 600;
 }
 
@@ -331,8 +436,8 @@ const filteredAvailable = computed(() => {
   align-items: center;
   margin-top: 0.35rem;
   padding: 0.25rem 0.85rem;
-  background: #DCFCE7;
-  color: #15803D;
+  background: #dcfce7;
+  color: #15803d;
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 9999px;
@@ -347,17 +452,21 @@ const filteredAvailable = computed(() => {
   width: 100%;
   padding: 0.6rem 1rem;
   background: #ffffff;
-  color: #3FD246;
+  color: #3fd246;
   font-size: 0.85rem;
   font-weight: 700;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 0.65rem;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
 }
 .btn-connect:hover {
-  background: #F0FDF4;
-  border-color: #3FD246;
+  background: #f0fdf4;
+  border-color: #3fd246;
   color: #36bd3d;
   box-shadow: 0 2px 8px rgba(63, 210, 70, 0.15);
 }
@@ -366,12 +475,12 @@ const filteredAvailable = computed(() => {
   width: 0.95rem;
   height: 0.95rem;
   flex-shrink: 0;
-  color: #3FD246;
+  color: #3fd246;
 }
 
 /* Empty */
 .empty-state {
-  color: #9CA3AF;
+  color: #9ca3af;
   font-size: 0.875rem;
   padding: 1rem 0;
 }

@@ -7,10 +7,13 @@ export interface ApiKey {
   name: string
   keyMasked: string
   fullKey?: string
-  environment: 'Live (Production)' | 'Test (Sand hook)' | string
+  environment: string
   permissions: string[]
   createdDate: string
+  createdDateTime?: string
   status: 'Active' | 'Revoked'
+  lastUsed?: string
+  usageRequests?: number
 }
 
 const apiKeysList = ref<ApiKey[]>([])
@@ -34,9 +37,23 @@ export function useApiKeys() {
     }
   }
 
+  async function fetchApiKey(keyId: string): Promise<ApiKey | null> {
+    if (!activeOrgId.value) return null
+    isLoading.value = true
+    try {
+      const res = await instance.get<ApiKey>(`/organisations/${activeOrgId.value}/api-keys/${keyId}`)
+      return res.data || null
+    } catch {
+      const cached = apiKeysList.value.find((k) => k.id === keyId)
+      return cached || null
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   async function createApiKey(input: {
     name: string
-    environment: 'Live (Production)' | 'Test (Sand hook)'
+    environment: string
     permissions: string[]
   }) {
     if (!activeOrgId.value) throw new Error('No active organisation')
@@ -52,6 +69,22 @@ export function useApiKeys() {
     return newKey
   }
 
+  async function regenerateApiKey(id: string): Promise<ApiKey | null> {
+    if (!activeOrgId.value) return null
+    try {
+      const res = await instance.post<ApiKey>(`/organisations/${activeOrgId.value}/api-keys/${id}/regenerate`, {})
+      const updated = res.data
+      const idx = apiKeysList.value.findIndex((k) => k.id === id)
+      if (idx !== -1 && updated) {
+        apiKeysList.value[idx] = updated
+      }
+      return updated
+    } catch (e) {
+      console.error('Failed to regenerate key:', e)
+      throw e
+    }
+  }
+
   async function revokeApiKey(id: string) {
     if (!activeOrgId.value) return
     try {
@@ -62,7 +95,6 @@ export function useApiKeys() {
         target.status = updated.status
       }
     } catch {
-      // On error, fallback local status update
       const target = apiKeysList.value.find((k) => k.id === id)
       if (target) target.status = 'Revoked'
     }
@@ -73,7 +105,9 @@ export function useApiKeys() {
     createdNewKey,
     isLoading,
     fetchApiKeys,
+    fetchApiKey,
     createApiKey,
+    regenerateApiKey,
     revokeApiKey,
   }
 }

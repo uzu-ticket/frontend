@@ -106,7 +106,7 @@
               <div class="radio-card-content">
                 <h4 class="card-option-title">Multiple Slot</h4>
                 <p class="card-option-desc">
-                  Divide your event into multiple sessions or time slots.
+                  Create separate schedules for different dates or times.
                 </p>
               </div>
             </div>
@@ -197,110 +197,6 @@
       </div>
     </div>
 
-    <!-- Set Your Event Slot Section (Shown when Multiple Slot is active) -->
-    <div v-if="formData.eventSlot === 'multiple'" class="event-slots-section">
-      <div class="slots-header">
-        <h3 class="slots-title">Set Your Event Slot</h3>
-        <p class="slots-subtitle">
-          Add the different time slots or sessions for your event.
-        </p>
-      </div>
-
-      <div class="slots-stack">
-        <div v-for="(slotItem, index) in slots" :key="index" class="slot-card">
-          <!-- Left Content -->
-          <div class="slot-card-left">
-            <div class="drag-handle" title="Drag to reorder">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="drag-icon"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  d="M7 4a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0zM7 16a2 2 0 11-4 0 2 2 0 014 0zM17 4a2 2 0 11-4 0 2 2 0 014 0zM17 10a2 2 0 11-4 0 2 2 0 014 0zM17 16a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-
-            <div class="slot-body">
-              <h4 class="slot-name">{{ slotItem.name }}</h4>
-
-              <div class="slot-inputs-row">
-                <!-- Date -->
-                <div class="slot-field">
-                  <label class="slot-field-label">Date</label>
-                  <DatePicker
-                    v-model="slotItem.dateObj"
-                    placeholder="Pick date"
-                  />
-                </div>
-
-                <!-- Start Time -->
-                <div class="slot-field">
-                  <label class="slot-field-label">Start Time</label>
-                  <TimePicker
-                    v-model="slotItem.startTime"
-                    placeholder="Start time"
-                  />
-                </div>
-
-                <!-- End Time -->
-                <div class="slot-field">
-                  <label class="slot-field-label">End Time</label>
-                  <TimePicker
-                    v-model="slotItem.endTime"
-                    placeholder="End time"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right Actions -->
-          <div class="slot-actions">
-            <button type="button" class="btn-slot-edit" title="Edit slot">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="action-svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.8"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
-              class="btn-slot-delete"
-              title="Delete slot"
-              @click="slots.splice(index, 1)"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="action-svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.8"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Footer Actions -->
     <div class="form-footer">
       <button type="button" class="btn-cancel" @click="$emit('cancel')">
@@ -329,8 +225,6 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from "vue";
 import AppSelect from "~/components/ui/AppSelect.vue";
-import DatePicker from "~/components/ui/DatePicker.vue";
-import TimePicker from "~/components/ui/TimePicker.vue";
 
 const emit = defineEmits<{
   cancel: [];
@@ -338,14 +232,7 @@ const emit = defineEmits<{
 }>();
 
 const props = defineProps<{
-  initialData?: Partial<typeof formData> & {
-    slots?: Array<{
-      name: string;
-      dateObj?: Date | string | null;
-      startTime?: string;
-      endTime?: string;
-    }>;
-  };
+  initialData?: Partial<typeof formData>;
 }>();
 
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -374,21 +261,6 @@ const formData = reactive({
   coverImage: null as File | null,
 });
 
-const slots = reactive([
-  {
-    name: "Morning Session",
-    dateObj: null as Date | null,
-    startTime: "09:00 AM",
-    endTime: "11:00 AM",
-  },
-  {
-    name: "Afternoon Session",
-    dateObj: null as Date | null,
-    startTime: "09:00 AM",
-    endTime: "11:00 AM",
-  },
-]);
-
 const errors = reactive({
   eventName: "",
   category: "",
@@ -400,18 +272,6 @@ watch(
   (data) => {
     if (!data) return;
     Object.assign(formData, data);
-    if (data.slots) {
-      slots.splice(
-        0,
-        slots.length,
-        ...data.slots.map((slot) => ({
-          name: slot.name,
-          dateObj: slot.dateObj ? new Date(slot.dateObj) : null,
-          startTime: slot.startTime || "09:00 AM",
-          endTime: slot.endTime || "11:00 AM",
-        })),
-      );
-    }
   },
   { immediate: true, deep: true },
 );
@@ -451,7 +311,7 @@ function validate() {
 
 function handleSubmit() {
   if (!validate()) return;
-  emit("next", { ...formData, slots: [...slots] });
+  emit("next", { ...formData });
 }
 </script>
 
@@ -742,166 +602,6 @@ function handleSubmit() {
 .hint-text {
   font-size: 0.725rem;
   color: #9ca3af;
-}
-
-/* Set Your Event Slot Section */
-.event-slots-section {
-  border-top: 1px solid #f3f4f6;
-  padding-top: 1.75rem;
-  margin-bottom: 2.25rem;
-}
-
-.slots-header {
-  margin-bottom: 1.25rem;
-}
-
-.slots-title {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #0e2615;
-  margin: 0 0 0.2rem;
-}
-
-.slots-subtitle {
-  font-size: 0.825rem;
-  color: #6b7280;
-  margin: 0;
-}
-
-.slots-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.slot-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.875rem;
-  padding: 1.25rem 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-}
-
-.slot-card-left {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  flex: 1;
-}
-
-.drag-handle {
-  color: #9ca3af;
-  cursor: grab;
-  padding: 0.25rem;
-}
-
-.drag-icon {
-  width: 1.1rem;
-  height: 1.1rem;
-}
-
-.slot-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.slot-name {
-  font-size: 0.9rem;
-  font-weight: 800;
-  color: #0e2615;
-  margin: 0;
-}
-
-.slot-inputs-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
-}
-
-.slot-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.slot-field-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #6b7280;
-}
-
-.slot-input-icon-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon {
-  position: absolute;
-  left: 0.75rem;
-  width: 1rem;
-  height: 1rem;
-  color: #6b7280;
-  pointer-events: none;
-}
-
-.slot-input {
-  width: 100%;
-  padding: 0.6rem 0.75rem 0.6rem 2.25rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.6rem;
-  font-size: 0.825rem;
-  color: #1f2937;
-  outline: none;
-}
-
-.slot-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-left: 1px solid #f3f4f6;
-  padding-left: 1.25rem;
-}
-
-.btn-slot-edit,
-.btn-slot-delete {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.6rem;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-slot-edit {
-  color: #4b5563;
-}
-.btn-slot-edit:hover {
-  background: #f9fafb;
-  color: #0e2615;
-}
-
-.btn-slot-delete {
-  color: #ef4444;
-  border-color: #fecaca;
-}
-.btn-slot-delete:hover {
-  background: #fef2f2;
-}
-
-.action-svg {
-  width: 1rem;
-  height: 1rem;
 }
 
 .field-error {

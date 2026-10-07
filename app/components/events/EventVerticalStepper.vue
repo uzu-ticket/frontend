@@ -3,8 +3,17 @@
     <!-- Back to Events Link -->
     <div class="back-link-wrapper">
       <NuxtLink to="/events" class="btn-back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" class="back-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="back-icon"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
         <span>Back to events</span>
       </NuxtLink>
@@ -14,26 +23,35 @@
     <div class="stepper-timeline">
       <div
         v-for="(step, index) in steps"
-        :key="step.number"
+        :key="step.displayNumber"
         class="stepper-item"
         :class="{
-          'stepper-item--completed': step.number < currentStep,
-          'stepper-item--active': step.number === currentStep,
-          'stepper-item--clickable': step.number < currentStep,
-          'stepper-item--last': index === steps.length - 1
+          'stepper-item--completed': step.displayNumber < displayCurrentStep,
+          'stepper-item--active': step.displayNumber === displayCurrentStep,
+          'stepper-item--clickable': step.displayNumber < displayCurrentStep,
+          'stepper-item--last': index === steps.length - 1,
         }"
-        @click="handleStepClick(step.number)"
+        @click="handleStepClick(step.routeStep, step.displayNumber)"
       >
         <!-- Circle & Line Wrapper -->
         <div class="stepper-left-col">
           <div class="step-circle">
-            <template v-if="step.number < currentStep">
-              <svg xmlns="http://www.w3.org/2000/svg" class="check-icon" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            <template v-if="step.displayNumber < displayCurrentStep">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="check-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clip-rule="evenodd"
+                />
               </svg>
             </template>
             <template v-else>
-              <span>{{ step.number }}</span>
+              <span>{{ step.displayNumber }}</span>
             </template>
           </div>
 
@@ -45,7 +63,13 @@
         <div class="stepper-right-col">
           <h4 class="step-title">{{ step.title }}</h4>
           <span class="step-status">
-            {{ step.number < currentStep ? 'Completed' : (step.number === currentStep ? 'In Progress' : 'Pending') }}
+            {{
+              step.displayNumber < displayCurrentStep
+                ? "Completed"
+                : step.displayNumber === displayCurrentStep
+                  ? "In Progress"
+                  : "Pending"
+            }}
           </span>
         </div>
       </div>
@@ -54,43 +78,57 @@
     <!-- Bottom Progress Auto-save Badge -->
     <div class="auto-save-box">
       <div class="check-icon-circle">
-        <svg xmlns="http://www.w3.org/2000/svg" class="save-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="save-icon"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+            clip-rule="evenodd"
+          />
         </svg>
       </div>
-      <p class="save-text">
-        Your progress is saved automatically as you go
-      </p>
+      <p class="save-text">Your progress is saved automatically as you go</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+
 interface Props {
-  currentStep?: number
+  currentStep?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   currentStep: 1,
-})
+});
 
 const emit = defineEmits<{
-  'select-step': [step: number]
-}>()
+  "select-step": [step: number];
+}>();
 
-function handleStepClick(stepNumber: number) {
-  if (stepNumber < props.currentStep) {
-    emit('select-step', stepNumber)
+const displayCurrentStep = computed(() => {
+  if (props.currentStep <= 2) return 1;
+  return props.currentStep - 1;
+});
+
+function handleStepClick(routeStep: number, displayNumber: number) {
+  if (displayNumber < displayCurrentStep.value) {
+    emit("select-step", routeStep);
   }
 }
 
 const steps = [
-  { number: 1, title: 'Event Details' },
-  { number: 2, title: 'Venue & Schedule' },
-  { number: 3, title: 'Tickets' },
-  { number: 4, title: 'Sales' },
-  { number: 5, title: 'Preview & Publish' },
-]
+  { displayNumber: 1, routeStep: 1, title: "Event Details" },
+  { displayNumber: 2, routeStep: 3, title: "Venue & Schedule" },
+  { displayNumber: 3, routeStep: 4, title: "Tickets" },
+  { displayNumber: 4, routeStep: 5, title: "Sales" },
+  { displayNumber: 5, routeStep: 6, title: "Preview & Publish" },
+];
 </script>
 
 <style scoped>
@@ -117,7 +155,7 @@ const steps = [
 }
 
 .btn-back-link:hover {
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .back-icon {
@@ -143,7 +181,7 @@ const steps = [
   cursor: pointer;
 }
 .stepper-item--clickable:hover .step-title {
-  color: #3FD246;
+  color: #3fd246;
 }
 
 .stepper-left-col {
@@ -169,15 +207,15 @@ const steps = [
 }
 
 .stepper-item--active .step-circle {
-  background: #3FD246;
-  border-color: #3FD246;
+  background: #3fd246;
+  border-color: #3fd246;
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(63, 210, 70, 0.25);
 }
 
 .stepper-item--completed .step-circle {
-  background: #3FD246;
-  border-color: #3FD246;
+  background: #3fd246;
+  border-color: #3fd246;
   color: #ffffff;
 }
 
@@ -194,7 +232,7 @@ const steps = [
 }
 
 .stepper-item--completed .stepper-line {
-  background: #3FD246;
+  background: #3fd246;
 }
 
 .stepper-right-col {
@@ -211,7 +249,7 @@ const steps = [
 }
 
 .stepper-item--active .step-title {
-  color: #0E2615;
+  color: #0e2615;
   font-weight: 800;
 }
 
@@ -221,14 +259,14 @@ const steps = [
 }
 
 .stepper-item--active .step-status {
-  color: #3FD246;
+  color: #3fd246;
   font-weight: 600;
 }
 
 /* Auto Save Box */
 .auto-save-box {
   margin-top: 3rem;
-  background: #E8F9E9;
+  background: #e8f9e9;
   border: 1px solid #dcfce7;
   border-radius: 0.875rem;
   padding: 0.85rem 1rem;
@@ -242,7 +280,7 @@ const steps = [
   height: 1.75rem;
   border-radius: 50%;
   background: #ffffff;
-  color: #3FD246;
+  color: #3fd246;
   display: flex;
   align-items: center;
   justify-content: center;

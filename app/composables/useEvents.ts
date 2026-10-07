@@ -199,13 +199,11 @@ export const useEvents = () => {
   const uploadEventImage = async (
     eventId: string,
     file: File,
-  ): Promise<void> => {
-    const formData = new FormData();
-    formData.append("image", file);
-    await instance.post(
-      `/organisations/${activeOrgId.value}/events/${eventId}/uploads`,
-      formData,
-    );
+    assetType: "cover" | "gallery" = "cover",
+  ): Promise<string> => {
+    const { uploadFile } = useFileUpload();
+    const presignEndpoint = `/organisations/${activeOrgId.value}/events/${eventId}/uploads/presign`;
+    return uploadFile(presignEndpoint, file, assetType);
   };
 
   const deleteTicketType = async (

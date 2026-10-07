@@ -208,7 +208,15 @@ export function useOrgState() {
     }
   }
 
-  async function inviteMember(organisationId: string, payload: { email: string; role: string }) {
+  async function inviteMember(
+    organisationId: string,
+    payloadOrEmail: { email: string; role: string } | string,
+    role?: string,
+  ) {
+    const payload =
+      typeof payloadOrEmail === 'string'
+        ? { email: payloadOrEmail, role: role || 'admin' }
+        : payloadOrEmail
     try {
       const { instance } = useApi()
       const res = await instance.post(`/organisations/${organisationId}/members`, payload)
@@ -251,6 +259,17 @@ export function useOrgState() {
     }
   }
 
+  async function updateMemberRole(organisationId: string, memberId: string, role: string) {
+    try {
+      const { instance } = useApi()
+      const res = await instance.patch(`/organisations/${organisationId}/members/${memberId}/role`, { role })
+      return res.data?.data ?? res.data
+    } catch (e) {
+      console.error('Failed to update member role:', e)
+      throw e
+    }
+  }
+
   return {
     hasActiveOrg,
     activeOrgId,
@@ -268,6 +287,7 @@ export function useOrgState() {
     inviteMember,
     revokeMember,
     resendInvite,
+    updateMemberRole,
     searchUsers,
     setActiveOrg,
     clearActiveOrg,

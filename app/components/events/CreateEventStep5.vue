@@ -6,188 +6,198 @@
       <p class="form-subtitle">Review your event before making it live.</p>
     </div>
 
-    <!-- 2-Column Grid -->
-    <div class="preview-body-grid">
-      <!-- ======================== -->
-      <!-- LEFT COLUMN: Event Preview -->
-      <!-- ======================== -->
-      <div class="preview-left-col">
-        <!-- Banner Image -->
-        <div class="cover-banner-wrapper">
-          <img
-            :src="coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=1200&auto=format&fit=crop'"
-            :alt="previewTitle"
-            class="cover-banner-img"
-          />
+    <div class="preview-content">
+      <div class="preview-gallery">
+        <img
+          :src="mainImage"
+          :alt="previewTitle"
+          class="preview-gallery-main"
+        />
+        <img
+          :src="mainImage"
+          :alt="previewTitle"
+          class="preview-gallery-side"
+        />
+      </div>
+
+      <section class="event-details-section">
+        <h1 class="event-preview-title">{{ previewTitle }}</h1>
+        <p class="event-preview-desc">
+          {{ eventDescription || "No description provided." }}
+        </p>
+
+        <div v-if="eventTags.length" class="event-tags">
+          <span v-for="tag in eventTags" :key="tag" class="event-tag">{{
+            tag
+          }}</span>
         </div>
 
-        <!-- Event Details -->
-        <div class="event-details-section">
-          <h2 class="event-preview-title">{{ previewTitle }}</h2>
-          <p class="event-preview-desc">
-            {{ eventDescription || 'No description provided.' }}
-          </p>
+        <div class="event-info-row">
+          <div class="event-info-item">
+            <span class="event-info-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M8 3v4m8-4v4M4 9h16M5 5h14a1 1 0 0 1 1 1v13H4V6a1 1 0 0 1 1-1Z"
+                />
+              </svg>
+            </span>
+            <span>{{ formattedDate || "Date TBD" }}</span>
+          </div>
+          <div class="event-info-item">
+            <span class="event-info-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+            </span>
+            <span
+              >{{ formattedStartTime || "Time TBD"
+              }}<template v-if="formattedEndTime">
+                – {{ formattedEndTime }}</template
+              ></span
+            >
+          </div>
+          <div class="event-info-item">
+            <span class="event-info-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12Z" />
+                <circle cx="12" cy="9" r="2.2" />
+              </svg>
+            </span>
+            <span
+              >{{ visibilityLabel
+              }}<span v-if="visibilityDesc" class="visibility-separator">·</span
+              >{{ visibilityDesc }}</span
+            >
+          </div>
+        </div>
+      </section>
 
-          <!-- 3 Info Cards Grid -->
-          <div class="info-cards-grid">
-            <!-- Date & Time Card -->
-            <div class="info-card">
-              <div class="card-icon-col">
-                <svg xmlns="http://www.w3.org/2000/svg" class="info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+      <section class="preview-ticket-section">
+        <h2 class="preview-section-title">Tickets</h2>
+        <div class="preview-schedule-list">
+          <article
+            v-for="group in ticketGroups"
+            :key="group.slotIndex"
+            class="preview-schedule"
+          >
+            <div class="preview-schedule-heading">
+              <div class="preview-schedule-title-group">
+                <h3>
+                  {{ group.name }}
+                  <span class="schedule-batch-label"
+                    >/ Batch {{ group.batch }}</span
+                  >
+                </h3>
+                <span class="preview-ticket-count"
+                  >{{ group.tickets.length }} ticket types</span
+                >
+                <p>These ticket types are available for this time slot.</p>
               </div>
-              <div class="card-text-col">
-                <span class="info-primary">{{ formattedDate || 'Date TBD' }}</span>
-                <span class="info-secondary">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="inline-clock" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <div class="preview-schedule-meta">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M8 3v4m8-4v4M4 9h16M5 5h14a1 1 0 0 1 1 1v13H4V6a1 1 0 0 1 1-1Z"
+                    />
                   </svg>
-                  {{ formattedStartTime }} – {{ formattedEndTime }}
+                  {{ group.date || "Date TBD" }}
+                </span>
+                <span v-if="group.time">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 2" />
+                  </svg>
+                  {{ group.time }}
                 </span>
               </div>
             </div>
 
-            <!-- Location Card -->
-            <div class="info-card">
-              <div class="card-icon-col">
-                <svg xmlns="http://www.w3.org/2000/svg" class="info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <div class="card-text-col">
-                <span class="info-primary">{{ locationName || 'Venue TBD' }}</span>
-                <span class="info-secondary">{{ locationCity || '' }}</span>
-              </div>
-            </div>
-
-            <!-- Visibility Card -->
-            <div class="info-card">
-              <div class="card-icon-col">
-                <svg xmlns="http://www.w3.org/2000/svg" class="info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </div>
-              <div class="card-text-col">
-                <span class="info-primary">{{ visibilityLabel || 'Visibility not set' }}</span>
-                <span class="info-secondary">{{ visibilityDesc || '' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Ticket Type Section -->
-          <div class="ticket-section" v-if="hasTicket">
-            <h4 class="ticket-section-label">Ticket Type</h4>
-            <div class="tickets-preview-row">
-              <div
-                v-for="(ticket, idx) in previewTickets"
-                :key="idx"
-                class="ticket-preview-card"
-                :class="ticketColorClass(idx)"
+            <div v-if="group.tickets.length" class="preview-ticket-grid">
+              <article
+                v-for="(ticket, index) in group.tickets"
+                :key="`${group.slotIndex}-${index}`"
+                class="preview-ticket-row"
               >
-                <span class="ticket-tag">{{ ticket.type }}</span>
-                <span class="ticket-price">{{ ticket.price }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ======================== -->
-      <!-- RIGHT COLUMN -->
-      <!-- ======================== -->
-      <div class="preview-right-col">
-        <!-- Event Media Card -->
-        <div class="media-box-card">
-          <h4 class="media-title">Event Media</h4>
-          <p class="media-sub">These images will be visible to attendees.</p>
-
-          <!-- 16:9 Upload -->
-          <div class="media-field">
-            <label class="media-label">
-              Landscape Image (16:9) <span class="required-star">*</span>
-            </label>
-            <div class="media-thumbnails-row">
-              <div class="thumb-preview thumb-preview--169">
-                <img
-                  :src="coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=300&auto=format&fit=crop'"
-                  alt="Thumbnail 16:9"
-                  class="thumb-img"
-                />
-              </div>
-              <div class="change-image-btn" @click="triggerImageSelect('16:9')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="plus-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  class="preview-ticket-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M3 8a2 2 0 0 0 0 4v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 1 0-4V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"
+                  />
+                  <path d="M13 5v2m0 2v2m0 2v2m0 2v2" />
                 </svg>
-                <span class="change-label">Change Image</span>
-                <span class="change-sub">1600 x 900px<br>JPG, PNG or WebP</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 4:5 Upload -->
-          <div class="media-field media-field--mt">
-            <label class="media-label">
-              Landscape Image (4:5) <span class="required-star">*</span>
-            </label>
-            <div class="media-thumbnails-row">
-              <div class="thumb-preview thumb-preview--45">
-                <img
-                  :src="coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=200&auto=format&fit=crop'"
-                  alt="Thumbnail 4:5"
-                  class="thumb-img"
-                />
-              </div>
-              <div class="change-image-btn" @click="triggerImageSelect('4:5')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="plus-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="change-label">Change Image</span>
-                <span class="change-sub">1080 x 1350px<br>JPG, PNG or WebP</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Review Checklist -->
-        <div class="checklist-card">
-          <h4 class="checklist-title">Review Checklist</h4>
-          <div class="checklist-list">
-            <div v-for="item in checklist" :key="item.label" class="checklist-item">
-              <div class="checklist-left">
-                <svg xmlns="http://www.w3.org/2000/svg" class="check-icon" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-                <div class="checklist-text">
-                  <span class="checklist-label">{{ item.label }}</span>
-                  <span class="checklist-status">{{ item.status }}</span>
+                <div class="preview-ticket-identity">
+                  <div class="preview-ticket-name-row">
+                    <span class="preview-ticket-name">{{ ticket.type }}</span>
+                    <span
+                      class="preview-ticket-tag"
+                      :class="ticketTagClass(ticket)"
+                      >{{ ticketTag(ticket) }}</span
+                    >
+                  </div>
+                  <span class="preview-ticket-price">{{
+                    ticket.price || "Free"
+                  }}</span>
                 </div>
-              </div>
-              <button type="button" class="edit-link">Edit</button>
+                <div class="preview-ticket-stat">
+                  <span>Quantity</span>
+                  <strong>{{ ticket.quantity || "0" }}</strong>
+                </div>
+                <div class="preview-ticket-stat">
+                  <span>Sold</span>
+                  <strong>{{ ticket.quantitySold || "0" }}</strong>
+                </div>
+              </article>
             </div>
-          </div>
+            <div v-else class="preview-no-tickets">
+              No tickets added for this schedule.
+            </div>
+          </article>
         </div>
+      </section>
 
-        <!-- Ready to Publish Banner -->
-        <div class="ready-banner">
-          <svg xmlns="http://www.w3.org/2000/svg" class="ready-check-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-          </svg>
-          <div class="ready-text">
-            <span class="ready-heading">Ready to Publish</span>
-            <span class="ready-sub">You can still go back and edit any information.</span>
+      <section class="preview-venue-section">
+        <div class="preview-venue-heading">
+          <h2 class="preview-section-title">Venue</h2>
+          <div class="preview-venue-address">
+            <span class="event-info-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12Z" />
+                <circle cx="12" cy="9" r="2.2" />
+              </svg>
+            </span>
+            <strong>{{ locationName || "Venue TBD" }}</strong>
+            <span>{{ locationCity }}</span>
           </div>
         </div>
-      </div>
+        <iframe
+          class="preview-venue-map"
+          title="Map showing the event venue"
+          src="https://www.openstreetmap.org/export/embed.html?bbox=3.382%2C6.423%2C3.458%2C6.485&layer=mapnik&marker=6.4541%2C3.4316"
+          loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"
+        />
+      </section>
     </div>
 
     <!-- Footer Actions -->
     <div class="form-footer">
       <button type="button" class="btn-back" @click="$emit('back')">
-        <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="btn-arrow"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+            clip-rule="evenodd"
+          />
         </svg>
         <span>Back</span>
       </button>
@@ -199,8 +209,17 @@
 
         <button type="button" class="btn-publish" @click="$emit('publish')">
           <span>Publish Event</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="btn-arrow"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
           </svg>
         </button>
       </div>
@@ -209,97 +228,181 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onUnmounted, ref, watch } from "vue";
 
 const props = defineProps<{
-  eventData: Record<string, unknown>
-}>()
+  eventData: Record<string, unknown>;
+}>();
 
 const emit = defineEmits<{
-  back: []
-  'save-draft': []
-  publish: []
-}>()
+  back: [];
+  "save-draft": [];
+  publish: [];
+}>();
 
-const s1 = computed(() => props.eventData.step1 as Record<string, unknown> | undefined)
-const s2 = computed(() => props.eventData.step2 as Record<string, unknown> | undefined)
-const s3 = computed(() => props.eventData.step3 as Array<Record<string, unknown>> | undefined)
-const s4 = computed(() => props.eventData.step4 as Record<string, unknown> | undefined)
-
-const previewTitle = computed(() => s1.value?.eventName || 'Untitled Event')
-const previewDesc = computed(() => s1.value?.description || '')
-const coverImage = computed(() => s1.value?.coverImage || null)
-
-const eventName = computed(() => s1.value?.eventName || '')
-const eventDescription = computed(() => s1.value?.description || '')
-
-const locationName = computed(() => s2.value?.venueName || '')
+const s1 = computed(
+  () => props.eventData.step1 as Record<string, unknown> | undefined,
+);
+const s2 = computed(
+  () => props.eventData.step2 as Record<string, unknown> | undefined,
+);
+const s3 = computed(
+  () => props.eventData.step3 as Array<Record<string, unknown>> | undefined,
+);
+const previewTitle = computed(() =>
+  String(s1.value?.eventName || "Untitled Event"),
+);
+const eventDescription = computed(() => String(s1.value?.description || ""));
+const locationName = computed(() => String(s2.value?.venueName || ""));
 const locationCity = computed(() => {
-  const parts: string[] = []
-  if (s2.value?.city) parts.push(s2.value.city as string)
-  if (s2.value?.state) parts.push(s2.value.state as string)
-  if (s2.value?.country) parts.push(s2.value.country as string)
-  return parts.join(', ') || ''
-})
+  const parts = [s2.value?.city, s2.value?.state, s2.value?.country]
+    .map((part) => String(part || "").trim())
+    .filter(Boolean);
+  return [...new Set(parts)].join(", ");
+});
 
-const formattedDate = computed(() => {
-  const d = s2.value?.startDate as string | undefined
-  if (!d) return ''
-  const date = new Date(d)
-  if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  })
-})
+const eventTags = computed(() => {
+  const parts = [
+    s1.value?.category,
+    s2.value?.city,
+    s2.value?.state,
+    s2.value?.country,
+  ]
+    .map((part) => String(part || "").trim())
+    .filter(Boolean);
+  return [...new Set(parts)];
+});
 
-const formattedStartTime = computed(() => s2.value?.startTime || '')
-const formattedEndTime = computed(() => s2.value?.endTime || '')
+function parseDate(value: unknown): Date | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatDate(value: unknown, withWeekday = false): string {
+  const date = parseDate(value);
+  if (!date) return "";
+  return date.toLocaleDateString("en-US", {
+    ...(withWeekday ? { weekday: "long" as const } : {}),
+    month: "long",
+    day: "numeric",
+    ...(withWeekday ? {} : { year: "numeric" as const }),
+  });
+}
+
+const formattedDate = computed(() => formatDate(s2.value?.startDate, true));
+const formattedStartTime = computed(() => String(s2.value?.startTime || ""));
+const formattedEndTime = computed(() => String(s2.value?.endTime || ""));
 
 const visibilityLabel = computed(() => {
-  const v = s1.value?.visibility as string | undefined
-  if (v === 'public') return 'Public Event'
-  if (v === 'unlisted') return 'Unlisted Event'
-  if (v === 'rsvp') return 'RSVP Event'
-  return v || ''
-})
+  const value = String(s1.value?.visibility || "");
+  if (value === "public") return "Public Event";
+  if (value === "unlisted") return "Unlisted Event";
+  if (value === "rsvp") return "RSVP Event";
+  return value || "Visibility not set";
+});
 
 const visibilityDesc = computed(() => {
-  const v = s1.value?.visibility as string | undefined
-  if (v === 'public') return 'Anyone can view'
-  if (v === 'unlisted') return 'Only people with the link'
-  if (v === 'rsvp') return 'Attendees must RSVP'
-  return ''
-})
+  const value = String(s1.value?.visibility || "");
+  if (value === "public") return "Anyone can attend";
+  if (value === "unlisted") return "Anyone with the link can attend";
+  if (value === "rsvp") return "Attendees must RSVP";
+  return "";
+});
 
-const previewTickets = computed(() => {
-  const tickets = s3.value || []
-  return tickets.map((t) => ({
-    type: t.type as string || 'General Admission',
-    price: (t.price as string) || 'Free',
-    color: (t.color as string) || '',
-  }))
-})
+const ticketGroups = computed(() => {
+  const savedSlots = props.eventData.eventSlots;
+  const schedules =
+    Array.isArray(savedSlots) && savedSlots.length
+      ? savedSlots
+      : [
+          {
+            name: "Event Schedule",
+            dateObj: s2.value?.startDate,
+            startTime: s2.value?.startTime,
+            endTime: s2.value?.endTime,
+          },
+        ];
 
-const hasTicket = computed(() => previewTickets.value.length > 0)
+  return schedules.map((value, slotIndex) => {
+    const schedule = value as Record<string, unknown>;
+    const tickets = (s3.value || []).filter(
+      (ticket) =>
+        (typeof ticket.slotIndex === "number" ? ticket.slotIndex : 0) ===
+        slotIndex,
+    );
+    const startTime = String(schedule.startTime || s2.value?.startTime || "");
+    const endTime = String(schedule.endTime || s2.value?.endTime || "");
 
-const checklist = computed(() => [
-  { label: 'Event Details', status: s1.value && s1.value.eventName ? 'Completed' : 'Incomplete', step: 1 },
-  { label: 'Venue & Schedule', status: s2.value && s2.value.venueName ? 'Completed' : 'Incomplete', step: 2 },
-  { label: 'Ticket Types', status: s3.value && s3.value.length > 0 ? 'Completed' : 'Incomplete', step: 3 },
-  { label: 'Sales Settings', status: s4.value && Object.keys(s4.value).length > 0 ? 'Completed' : 'Incomplete', step: 4 },
-])
+    return {
+      slotIndex,
+      name: String(schedule.name || `Schedule ${slotIndex + 1}`),
+      batch: String.fromCharCode(65 + slotIndex),
+      tickets,
+      date: formatDate(schedule.dateObj || s2.value?.startDate),
+      time:
+        startTime && endTime
+          ? `${startTime} – ${endTime}`
+          : startTime || endTime,
+    };
+  });
+});
 
-function triggerImageSelect(_ratio: string) {
-  // Future: open file picker for the given aspect ratio
+function ticketTag(ticket: Record<string, unknown>): string {
+  const type = String(ticket.type || "").toLowerCase();
+  if (type.includes("vip") || type.includes("premium")) return "Premium Access";
+  if (type.includes("diamond") || type.includes("exclusive"))
+    return "Exclusive Access";
+  return "General Admission";
 }
 
-const ticketColorClasses = ['ticket--purple', 'ticket--green', 'ticket--yellow']
-function ticketColorClass(idx: number): string {
-  return ticketColorClasses[idx % ticketColorClasses.length]
+function ticketTagClass(ticket: Record<string, unknown>): string {
+  const type = String(ticket.type || "").toLowerCase();
+  if (type.includes("vip") || type.includes("premium"))
+    return "preview-ticket-tag--premium";
+  if (type.includes("diamond") || type.includes("exclusive"))
+    return "preview-ticket-tag--exclusive";
+  return "preview-ticket-tag--general";
 }
+
+const coverImageUrl = ref("");
+let coverImageObjectUrl: string | null = null;
+
+watch(
+  () => s1.value?.coverImage,
+  (image) => {
+    if (coverImageObjectUrl && import.meta.client) {
+      URL.revokeObjectURL(coverImageObjectUrl);
+      coverImageObjectUrl = null;
+    }
+
+    if (typeof image === "string") {
+      coverImageUrl.value = image;
+    } else if (
+      import.meta.client &&
+      typeof File !== "undefined" &&
+      image instanceof File
+    ) {
+      coverImageObjectUrl = URL.createObjectURL(image);
+      coverImageUrl.value = coverImageObjectUrl;
+    } else {
+      coverImageUrl.value = "";
+    }
+  },
+  { immediate: true },
+);
+
+onUnmounted(() => {
+  if (coverImageObjectUrl && import.meta.client) {
+    URL.revokeObjectURL(coverImageObjectUrl);
+  }
+});
+
+const mainImage = computed(
+  () =>
+    coverImageUrl.value ||
+    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=1500&auto=format&fit=crop",
+);
 </script>
 
 <style scoped>
@@ -315,7 +418,7 @@ function ticketColorClass(idx: number): string {
 .form-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.25rem;
 }
 
@@ -367,7 +470,7 @@ function ticketColorClass(idx: number): string {
 .event-preview-title {
   font-size: 1.35rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.45rem;
 }
 
@@ -433,7 +536,7 @@ function ticketColorClass(idx: number): string {
 .info-primary {
   font-size: 0.775rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -457,7 +560,7 @@ function ticketColorClass(idx: number): string {
 .ticket-section-label {
   font-size: 0.925rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0;
 }
 
@@ -477,17 +580,35 @@ function ticketColorClass(idx: number): string {
   gap: 0.3rem;
 }
 
-.ticket--purple { background: #F3E8FF; }
-.ticket--purple .ticket-tag { color: #7E22CE; }
-.ticket--purple .ticket-price { color: #6B21A8; }
+.ticket--purple {
+  background: #f3e8ff;
+}
+.ticket--purple .ticket-tag {
+  color: #7e22ce;
+}
+.ticket--purple .ticket-price {
+  color: #6b21a8;
+}
 
-.ticket--green { background: #DCFCE7; }
-.ticket--green .ticket-tag { color: #15803D; }
-.ticket--green .ticket-price { color: #166534; }
+.ticket--green {
+  background: #dcfce7;
+}
+.ticket--green .ticket-tag {
+  color: #15803d;
+}
+.ticket--green .ticket-price {
+  color: #166534;
+}
 
-.ticket--yellow { background: #FEF3C7; }
-.ticket--yellow .ticket-tag { color: #B45309; }
-.ticket--yellow .ticket-price { color: #92400E; }
+.ticket--yellow {
+  background: #fef3c7;
+}
+.ticket--yellow .ticket-tag {
+  color: #b45309;
+}
+.ticket--yellow .ticket-price {
+  color: #92400e;
+}
 
 .ticket-tag {
   font-size: 0.8rem;
@@ -519,7 +640,7 @@ function ticketColorClass(idx: number): string {
 .media-title {
   font-size: 0.925rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 0.2rem;
 }
 
@@ -541,12 +662,14 @@ function ticketColorClass(idx: number): string {
 .media-label {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
   margin-bottom: 0.6rem;
   display: block;
 }
 
-.required-star { color: #ef4444; }
+.required-star {
+  color: #ef4444;
+}
 
 .media-thumbnails-row {
   display: flex;
@@ -593,7 +716,7 @@ function ticketColorClass(idx: number): string {
 }
 
 .change-image-btn:hover {
-  border-color: #3FD246;
+  border-color: #3fd246;
   background: #f0fdf1;
 }
 
@@ -606,7 +729,7 @@ function ticketColorClass(idx: number): string {
 .change-label {
   font-size: 0.725rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .change-sub {
@@ -626,7 +749,7 @@ function ticketColorClass(idx: number): string {
 .checklist-title {
   font-size: 0.875rem;
   font-weight: 800;
-  color: #0E2615;
+  color: #0e2615;
   margin: 0 0 1rem;
 }
 
@@ -652,7 +775,7 @@ function ticketColorClass(idx: number): string {
 .check-icon {
   width: 1.25rem;
   height: 1.25rem;
-  color: #3FD246;
+  color: #3fd246;
   flex-shrink: 0;
 }
 
@@ -665,7 +788,7 @@ function ticketColorClass(idx: number): string {
 .checklist-label {
   font-size: 0.825rem;
   font-weight: 700;
-  color: #0E2615;
+  color: #0e2615;
 }
 
 .checklist-status {
@@ -676,7 +799,7 @@ function ticketColorClass(idx: number): string {
 .edit-link {
   font-size: 0.775rem;
   font-weight: 700;
-  color: #3FD246;
+  color: #3fd246;
   background: none;
   border: none;
   cursor: pointer;
@@ -685,7 +808,9 @@ function ticketColorClass(idx: number): string {
   flex-shrink: 0;
 }
 
-.edit-link:hover { opacity: 0.75; }
+.edit-link:hover {
+  opacity: 0.75;
+}
 
 /* Ready to Publish Banner */
 .ready-banner {
@@ -701,7 +826,7 @@ function ticketColorClass(idx: number): string {
 .ready-check-icon {
   width: 1.35rem;
   height: 1.35rem;
-  color: #3FD246;
+  color: #3fd246;
   flex-shrink: 0;
   margin-top: 1px;
 }
@@ -743,7 +868,7 @@ function ticketColorClass(idx: number): string {
   padding: 0.65rem 1.75rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  color: #0E2615;
+  color: #0e2615;
   font-weight: 700;
   font-size: 0.85rem;
   border-radius: 0.65rem;
@@ -751,7 +876,9 @@ function ticketColorClass(idx: number): string {
   transition: all 0.15s ease;
 }
 
-.btn-back:hover { background: #f9fafb; }
+.btn-back:hover {
+  background: #f9fafb;
+}
 
 .footer-right-group {
   display: flex;
@@ -771,14 +898,16 @@ function ticketColorClass(idx: number): string {
   transition: all 0.15s ease;
 }
 
-.btn-draft:hover { background: #f9fafb; }
+.btn-draft:hover {
+  background: #f9fafb;
+}
 
 .btn-publish {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.75rem;
-  background: #3FD246;
+  background: #3fd246;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -789,8 +918,14 @@ function ticketColorClass(idx: number): string {
   transition: all 0.15s ease;
 }
 
-.btn-publish:hover { background: #34c03b; transform: translateY(-1px); }
-.btn-arrow { width: 1rem; height: 1rem; }
+.btn-publish:hover {
+  background: #34c03b;
+  transform: translateY(-1px);
+}
+.btn-arrow {
+  width: 1rem;
+  height: 1rem;
+}
 
 @media (max-width: 900px) {
   .preview-body-grid {
@@ -799,6 +934,403 @@ function ticketColorClass(idx: number): string {
 
   .info-cards-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+.preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  margin-bottom: 2rem;
+}
+
+.preview-gallery {
+  display: grid;
+  height: 17.5rem;
+  min-height: 0;
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 0.9fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+.preview-gallery-main,
+.preview-gallery-side {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 0.6rem;
+  object-fit: cover;
+}
+
+.preview-gallery-main {
+  object-position: center 55%;
+}
+
+.preview-gallery-side {
+  object-position: center;
+}
+
+.event-details-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-preview-title {
+  margin: 0 0 0.45rem;
+  color: #0e2615;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.event-preview-desc {
+  max-width: 58rem;
+  margin: 0 0 1rem;
+  color: #627067;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.event-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.event-tag {
+  padding: 0.35rem 0.65rem;
+  border-radius: 99px;
+  background: #eef4fd;
+  color: #53677f;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.event-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem 2rem;
+  color: #53665a;
+  font-size: 0.72rem;
+}
+
+.event-info-item {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.event-info-icon {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.35rem;
+  background: #f0f5f1;
+  color: #36c946;
+}
+
+.event-info-icon svg {
+  width: 1rem;
+  height: 1rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.visibility-separator {
+  margin-inline: 0.4rem;
+}
+
+.preview-ticket-section,
+.preview-venue-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.preview-section-title {
+  margin: 0;
+  color: #0e2615;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.preview-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.preview-schedule {
+  padding-bottom: 0.15rem;
+}
+
+.preview-schedule-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.preview-schedule-title-group {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+}
+
+.preview-schedule-title-group h3 {
+  margin: 0;
+  color: #17231a;
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.schedule-batch-label {
+  font-weight: 650;
+}
+
+.preview-schedule-title-group p {
+  flex-basis: 100%;
+  margin: -0.1rem 0 0;
+  color: #65756b;
+  font-size: 0.68rem;
+}
+
+.preview-ticket-count {
+  padding: 0.28rem 0.55rem;
+  border-radius: 99px;
+  background: #dcfce3;
+  color: #1b8730;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.preview-schedule-meta {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.8rem 1.2rem;
+  color: #53665a;
+  font-size: 0.68rem;
+}
+
+.preview-schedule-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.preview-schedule-meta svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+.preview-ticket-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(4.4rem, auto);
+  gap: 0.65rem;
+}
+
+.preview-ticket-row {
+  display: grid;
+  min-width: 0;
+  min-height: 4.4rem;
+  grid-template-columns: 1.25rem minmax(0, 1fr) 3.7rem 2.8rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid #d5deeb;
+  border-radius: 0.6rem;
+  background: #fff;
+}
+
+.preview-ticket-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  color: #90a0b8;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.preview-ticket-identity {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.preview-ticket-name-row {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.preview-ticket-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #1a231d;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-ticket-tag {
+  padding: 0.2rem 0.45rem;
+  border-radius: 99px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-ticket-tag--general {
+  background: #edf5ff;
+  color: #1680e5;
+}
+
+.preview-ticket-tag--premium {
+  background: #ffeaf4;
+  color: #d93e91;
+}
+
+.preview-ticket-tag--exclusive {
+  background: #fff3e3;
+  color: #c87517;
+}
+
+.preview-ticket-price {
+  color: #8b99b0;
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.preview-ticket-stat {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.preview-ticket-stat span {
+  color: #53665a;
+  font-size: 0.62rem;
+}
+
+.preview-ticket-stat strong {
+  color: #111a14;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.preview-no-tickets {
+  padding: 1rem;
+  border: 1px solid #d5deeb;
+  border-radius: 0.6rem;
+  color: #65756b;
+  font-size: 0.72rem;
+}
+
+.preview-venue-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.preview-venue-address {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.6rem;
+  color: #53665a;
+  font-size: 0.7rem;
+}
+
+.preview-venue-address strong {
+  color: #26372b;
+  font-weight: 700;
+}
+
+.preview-venue-map {
+  display: block;
+  width: 100%;
+  height: 14rem;
+  border: 0;
+  border-radius: 0.6rem;
+}
+
+@media (max-width: 760px) {
+  .preview-gallery {
+    height: 14rem;
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  }
+
+  .preview-schedule-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .preview-schedule-meta {
+    justify-content: flex-start;
+  }
+
+  .preview-ticket-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .preview-gallery {
+    height: 12rem;
+    grid-template-columns: 1fr;
+  }
+
+  .preview-gallery-side {
+    display: none;
+  }
+
+  .preview-ticket-row {
+    grid-template-columns: 1.1rem minmax(0, 1fr) 3.4rem 2.6rem;
+    gap: 0.5rem;
+    padding-inline: 0.55rem;
+  }
+
+  .preview-ticket-stat {
+    min-width: 0;
+  }
+
+  .preview-venue-heading,
+  .preview-venue-address {
+    align-items: flex-start;
+  }
+
+  .preview-venue-heading {
+    flex-direction: column;
   }
 }
 </style>
