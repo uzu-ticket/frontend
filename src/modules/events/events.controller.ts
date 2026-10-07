@@ -8,6 +8,7 @@ import { CreateEventDto } from "./dto/create-event.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { CreateTicketTypeDto, UpdateTicketTypeDto } from "./dto/ticket-type.dto";
 import { AddEventImageDto } from "./dto/add-image.dto";
+import { PresignEventUploadDto } from "./dto/presign-event-upload.dto";
 
 @ApiTags("events")
 @Controller("organisations/:organisationId/events")
@@ -122,6 +123,16 @@ export class EventsController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.eventsService.uploadImage(organisationId, eventId, user.id, file);
+  }
+
+  @Post(":eventId/uploads/presign")
+  presignUpload(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("eventId") eventId: string,
+    @Body() dto: PresignEventUploadDto,
+  ) {
+    return this.eventsService.presignUpload(organisationId, eventId, user.id, dto);
   }
 
   @Delete(":eventId/images/:imageId")

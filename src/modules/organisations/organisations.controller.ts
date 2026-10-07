@@ -10,7 +10,9 @@ import { OrganisationsService } from "./organisations.service";
 import { CreateOrganisationDto } from "./dto/create-organisation.dto";
 import { UpdateOrganisationDto } from "./dto/update-organisation.dto";
 import { InviteMemberDto } from "./dto/invite-member.dto";
+import { UpdateMemberRoleDto } from "./dto/update-member-role.dto";
 import { SubmitKybDto } from "./dto/submit-kyb.dto";
+import { PresignOrgUploadDto } from "./dto/presign-org-upload.dto";
 import { CacService } from "./cac.service";
 import { IsOptional, IsString, Matches, MinLength } from "class-validator";
 import { CAC_NUMBER_PATTERN, normalizeCacNumber } from "../../common/cac/cac-number";
@@ -101,6 +103,15 @@ export class OrganisationsController {
     return this.organisationsService.uploadAssets(organisationId, user.id, files);
   }
 
+  @Post(":organisationId/uploads/presign")
+  presignUpload(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Body() dto: PresignOrgUploadDto,
+  ) {
+    return this.organisationsService.presignUpload(organisationId, user.id, dto);
+  }
+
   @Get(":organisationId/members")
   listMembers(@CurrentUser() user: AuthenticatedUser, @Param("organisationId") organisationId: string) {
     return this.organisationsService.listMembers(organisationId, user.id);
@@ -149,6 +160,16 @@ export class OrganisationsController {
     @Param("memberId") memberId: string,
   ) {
     return this.organisationsService.resendInvite(organisationId, memberId, user.id);
+  }
+
+  @Patch(":organisationId/members/:memberId/role")
+  updateMemberRole(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("memberId") memberId: string,
+    @Body() dto: UpdateMemberRoleDto,
+  ) {
+    return this.organisationsService.updateMemberRole(organisationId, memberId, user.id, dto.role);
   }
 
   @Post(":organisationId/kyb")

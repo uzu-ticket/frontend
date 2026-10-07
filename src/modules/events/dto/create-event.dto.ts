@@ -9,8 +9,10 @@ import {
   IsString,
   IsUUID,
   MinLength,
+  ValidateNested,
 } from "class-validator";
 import { EventVisibility, ScannerMeshMode } from "@prisma/client";
+import { EventScheduleDto } from "./event-schedule.dto";
 
 export class CreateEventDto {
   @IsString()
@@ -55,7 +57,9 @@ export class CreateEventDto {
 
   @IsOptional()
   @IsArray()
-  slots?: unknown[];
+  @ValidateNested({ each: true })
+  @Type(() => EventScheduleDto)
+  slots?: EventScheduleDto[];
 
   @IsOptional()
   @Type(() => Number)

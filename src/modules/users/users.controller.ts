@@ -1,11 +1,13 @@
 import { Body, Controller, Get, Patch, Put, Query } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { CurrentUser, AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { UsersService } from "./users.service";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { SetInterestsDto } from "./dto/set-interests.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 
 @ApiTags("users")
+@ApiBearerAuth()
 @Controller("users")
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -25,8 +27,17 @@ export class UsersController {
     return this.usersService.updateProfile(user.id, dto);
   }
 
+  @Patch("me/password")
+  @ApiOperation({ summary: "Change account password" })
+  @ApiResponse({ status: 200, description: "Password updated successfully" })
+  @ApiResponse({ status: 400, description: "Current password incorrect" })
+  changePassword(@CurrentUser() user: AuthenticatedUser, @Body() dto: ChangePasswordDto) {
+    return this.usersService.changePassword(user.id, dto);
+  }
+
   @Put("me/interests")
   setInterests(@CurrentUser() user: AuthenticatedUser, @Body() dto: SetInterestsDto) {
     return this.usersService.setInterests(user.id, dto.categoryIds);
   }
 }
+

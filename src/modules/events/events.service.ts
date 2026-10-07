@@ -7,10 +7,40 @@ import { PermissionsService } from "../../common/auth/permissions.service";
 import { Permission } from "../../common/auth/permissions";
 import { newId } from "../../common/id";
 import { CreateEventDto } from "./dto/create-event.dto";
+import { EventScheduleDto } from "./dto/event-schedule.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { CreateTicketTypeDto, UpdateTicketTypeDto } from "./dto/ticket-type.dto";
 import { AddEventImageDto } from "./dto/add-image.dto";
 import { StorageService } from "../../common/storage/storage.service";
+import { PresignEventUploadDto } from "./dto/presign-event-upload.dto";
+
+function toScheduleDate(value?: string | null): Date | undefined {
+  if (!value) return undefined;
+  const date = new Date(`${value.slice(0, 10)}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function scheduleData(schedule: EventScheduleDto, position: number) {
+  return {
+    name: schedule.name.trim(),
+    scheduleDate: toScheduleDate(schedule.dateObj),
+    startTime: schedule.startTime,
+    endTime: schedule.endTime,
+    position,
+  };
+}
+
+function scheduleJson(slots?: EventScheduleDto[]): Prisma.InputJsonValue | undefined {
+  if (!slots) return undefined;
+  const values: Prisma.InputJsonObject[] = slots.map((schedule) => ({
+    id: schedule.id ?? null,
+    name: schedule.name,
+    dateObj: schedule.dateObj ?? null,
+    startTime: schedule.startTime ?? null,
+    endTime: schedule.endTime ?? null,
+  }));
+  return values;
+}
 
 @Injectable()
 export class EventsService {
@@ -42,15 +72,24 @@ export class EventsService {
         country: dto.country,
         state: dto.state,
         eventSlot: dto.eventSlot,
-        slots: dto.slots as Prisma.InputJsonValue,
+        slots: scheduleJson(dto.slots),
         latitude: dto.latitude,
         longitude: dto.longitude,
         city: dto.city,
         startsAt: new Date(dto.startsAt),
         endsAt: dto.endsAt ? new Date(dto.endsAt) : undefined,
         salesCloseAt: new Date(dto.salesCloseAt),
+        schedules: dto.slots?.length
+          ? {
+              create: dto.slots.map((schedule, position) => ({
+                id: newId(),
+                ...scheduleData(schedule, position),
+              })),
+            }
+          : undefined,
         createdBy: userId,
       },
+      include: { schedules: { orderBy: { position: "asc" } } },
     });
     await this.audit.log({
       organisationId,
@@ -67,7 +106,12 @@ export class EventsService {
     return this.prisma.event.findMany({
       where: { organisationId },
       orderBy: { startsAt: "desc" },
-      include: { ticketTypes: true, category: true, images: true },
+      include: {
+        ticketTypes: true,
+        schedules: { orderBy: { position: "asc" } },
+        category: true,
+        images: true,
+      },
     });
   }
 
@@ -76,7 +120,13 @@ export class EventsService {
     const event = await this.loadEventOrThrow(eventId, organisationId);
     return this.prisma.event.findUnique({
       where: { id: event.id },
-      include: { ticketTypes: true, images: true, category: true, signingKeys: { where: { isActive: true } } },
+      include: {
+        ticketTypes: true,
+        schedules: { orderBy: { position: "asc" } },
+        images: true,
+        category: true,
+        signingKeys: { where: { isActive: true } },
+      },
     });
   }
 
@@ -93,31 +143,70 @@ export class EventsService {
     const salesCloseChanged = dto.salesCloseAt && newSalesCloseAt.getTime() !== event.salesCloseAt.getTime();
     const manifestAlreadyDownloaded = event.manifestSealedAt !== null;
 
-    const updated = await this.prisma.event.update({
-      where: { id: eventId },
-      data: {
-        categoryId: dto.categoryId,
-        title: dto.title,
-        description: dto.description,
-        visibility: dto.visibility,
-        scannerMeshMode: dto.scannerMeshMode,
-        venueName: dto.venueName,
-        venueAddress: dto.venueAddress,
-        country: dto.country,
-        state: dto.state,
-        eventSlot: dto.eventSlot,
-        slots: dto.slots as Prisma.InputJsonValue,
-        latitude: dto.latitude,
-        longitude: dto.longitude,
-        city: dto.city,
-        startsAt: dto.startsAt ? newStartsAt : undefined,
-        endsAt: dto.endsAt ? new Date(dto.endsAt) : undefined,
-        salesCloseAt: newSalesCloseAt,
-        // PRD §3.2: "edits after manifest download trigger forced re-sync of
-        // scanner devices" — bumping the version makes every assigned
-        // device's cached manifestVersionDownloaded stale on next poll.
-        manifestVersion: salesCloseChanged && manifestAlreadyDownloaded ? { increment: 1 } : undefined,
-      },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      if (dto.slots !== undefined) {
+        const existingSchedules = await tx.eventSchedule.findMany({
+          where: { eventId },
+          select: { id: true },
+        });
+        const existingIds = new Set(existingSchedules.map((schedule) => schedule.id));
+        const requestedIds = new Set(dto.slots.flatMap((schedule) => (schedule.id ? [schedule.id] : [])));
+
+        for (const [position, schedule] of dto.slots.entries()) {
+          const data = scheduleData(schedule, position);
+          if (schedule.id) {
+            if (!existingIds.has(schedule.id)) {
+              throw new BadRequestException("Schedule does not belong to this event");
+            }
+            await tx.eventSchedule.update({ where: { id: schedule.id }, data });
+          } else {
+            await tx.eventSchedule.create({
+              data: { id: newId(), eventId, ...data },
+            });
+          }
+        }
+
+        const removedIds = [...existingIds].filter((id) => !requestedIds.has(id));
+        if (removedIds.length) {
+          const linkedTicketCount = await tx.ticketType.count({
+            where: { eventId, scheduleId: { in: removedIds } },
+          });
+          if (linkedTicketCount) {
+            throw new BadRequestException("Remove or reassign ticket types before deleting their schedule");
+          }
+          await tx.eventSchedule.deleteMany({
+            where: { eventId, id: { in: removedIds } },
+          });
+        }
+      }
+
+      return tx.event.update({
+        where: { id: eventId },
+        data: {
+          categoryId: dto.categoryId,
+          title: dto.title,
+          description: dto.description,
+          visibility: dto.visibility,
+          scannerMeshMode: dto.scannerMeshMode,
+          venueName: dto.venueName,
+          venueAddress: dto.venueAddress,
+          country: dto.country,
+          state: dto.state,
+          eventSlot: dto.eventSlot,
+          slots: scheduleJson(dto.slots),
+          latitude: dto.latitude,
+          longitude: dto.longitude,
+          city: dto.city,
+          startsAt: dto.startsAt ? newStartsAt : undefined,
+          endsAt: dto.endsAt ? new Date(dto.endsAt) : undefined,
+          salesCloseAt: newSalesCloseAt,
+          // PRD §3.2: "edits after manifest download trigger forced re-sync of
+          // scanner devices" — bumping the version makes every assigned
+          // device's cached manifestVersionDownloaded stale on next poll.
+          manifestVersion: salesCloseChanged && manifestAlreadyDownloaded ? { increment: 1 } : undefined,
+        },
+        include: { schedules: { orderBy: { position: "asc" } } },
+      });
     });
 
     await this.audit.log({
@@ -190,12 +279,27 @@ export class EventsService {
     await this.permissions.assertPermission(userId, organisationId, Permission.EventEdit);
     const event = await this.loadEventOrThrow(eventId, organisationId);
 
+    if (dto.perOrderLimit !== undefined && dto.perOrderLimit > dto.quantityTotal) {
+      throw new BadRequestException("Per-order limit cannot exceed available quantity");
+    }
+
+    if (dto.scheduleId) {
+      const schedule = await this.prisma.eventSchedule.findUnique({
+        where: { id: dto.scheduleId },
+        select: { eventId: true },
+      });
+      if (!schedule || schedule.eventId !== eventId) {
+        throw new BadRequestException("Schedule does not belong to this event");
+      }
+    }
+
     await this.assertPaidGuardrail(event.id, organisationId, event.status, BigInt(dto.priceMinor));
 
     const ticketType = await this.prisma.ticketType.create({
       data: {
         id: newId(),
         eventId,
+        scheduleId: dto.scheduleId,
         name: dto.name,
         priceMinor: BigInt(dto.priceMinor),
         quantityTotal: dto.quantityTotal,
@@ -229,17 +333,33 @@ export class EventsService {
       throw new NotFoundException("Ticket type not found");
     }
 
+    if (dto.scheduleId) {
+      const schedule = await this.prisma.eventSchedule.findUnique({
+        where: { id: dto.scheduleId },
+        select: { eventId: true },
+      });
+      if (!schedule || schedule.eventId !== eventId) {
+        throw new BadRequestException("Schedule does not belong to this event");
+      }
+    }
+
     if (dto.priceMinor !== undefined) {
       await this.assertPaidGuardrail(event.id, organisationId, event.status, BigInt(dto.priceMinor));
     }
     if (dto.quantityTotal !== undefined && dto.quantityTotal < ticketType.quantitySold) {
       throw new BadRequestException("New quantity cannot be lower than tickets already sold");
     }
+    const nextQuantity = dto.quantityTotal ?? ticketType.quantityTotal;
+    const nextPerOrderLimit = dto.perOrderLimit ?? ticketType.perOrderLimit;
+    if (nextPerOrderLimit !== null && nextPerOrderLimit !== undefined && nextPerOrderLimit > nextQuantity) {
+      throw new BadRequestException("Per-order limit cannot exceed available quantity");
+    }
 
     const updated = await this.prisma.ticketType.update({
       where: { id: ticketTypeId },
       data: {
         name: dto.name,
+        scheduleId: dto.scheduleId,
         priceMinor: dto.priceMinor !== undefined ? BigInt(dto.priceMinor) : undefined,
         quantityTotal: dto.quantityTotal,
         perOrderLimit: dto.perOrderLimit,
@@ -304,6 +424,18 @@ export class EventsService {
         isCover: true,
       },
     });
+  }
+
+  async presignUpload(organisationId: string, eventId: string, userId: string, dto: PresignEventUploadDto) {
+    await this.permissions.assertPermission(userId, organisationId, Permission.EventEdit);
+    await this.loadEventOrThrow(eventId, organisationId);
+    return this.storage.presignEventAsset(
+      organisationId,
+      eventId,
+      dto.assetType,
+      dto.fileName,
+      dto.contentType,
+    );
   }
 
   async removeImage(organisationId: string, eventId: string, imageId: string, userId: string) {

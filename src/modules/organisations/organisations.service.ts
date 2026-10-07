@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { OrgRole } from "@prisma/client";
 import "multer";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AuditService } from "../../common/audit/audit.service";
@@ -12,6 +13,7 @@ import { UpdateOrganisationDto } from "./dto/update-organisation.dto";
 import { InviteMemberDto } from "./dto/invite-member.dto";
 import { SubmitKybDto } from "./dto/submit-kyb.dto";
 import { StorageService } from "../../common/storage/storage.service";
+import { PresignOrgUploadDto } from "./dto/presign-org-upload.dto";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Owner",
@@ -263,6 +265,16 @@ export class OrganisationsService {
     return organisation;
   }
 
+  async presignUpload(organisationId: string, userId: string, dto: PresignOrgUploadDto) {
+    await this.permissions.assertPermission(userId, organisationId, Permission.OrgEditProfile);
+    return this.storage.presignOrganisationAsset(
+      organisationId,
+      dto.assetType,
+      dto.fileName,
+      dto.contentType,
+    );
+  }
+
   async listMembers(organisationId: string, userId: string) {
     await this.assertMember(organisationId, userId);
     return this.prisma.organisationMember.findMany({
@@ -460,6 +472,28 @@ export class OrganisationsService {
       action: "organisation.member_revoked",
       entityType: "organisation_member",
       entityId: memberId,
+    });
+    return updated;
+  }
+
+  async updateMemberRole(organisationId: string, memberId: string, actorUserId: string, role: OrgRole) {
+    await this.permissions.assertPermission(actorUserId, organisationId, Permission.OrgManageRoles);
+    const member = await this.prisma.organisationMember.findUnique({ where: { id: memberId } });
+    if (!member || member.organisationId !== organisationId || member.revokedAt) {
+      throw new NotFoundException("Member not found or revoked");
+    }
+    const updated = await this.prisma.organisationMember.update({
+      where: { id: memberId },
+      data: { role },
+      include: { user: { select: { id: true, email: true, fullName: true } } },
+    });
+    await this.audit.log({
+      organisationId,
+      actorUserId,
+      action: "organisation.member_role_updated",
+      entityType: "organisation_member",
+      entityId: memberId,
+      metadata: { role },
     });
     return updated;
   }

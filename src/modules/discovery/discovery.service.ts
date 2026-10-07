@@ -70,6 +70,7 @@ export class DiscoveryService {
         category: true,
         images: true,
         ticketTypes: true,
+        schedules: { orderBy: { position: "asc" } },
         organisation: { select: { name: true, logoUrl: true } },
       },
     });

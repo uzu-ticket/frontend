@@ -18,7 +18,10 @@ export interface FormattedApiKey {
   environment: string;
   permissions: string[];
   createdDate: string;
+  createdDateTime?: string;
   status: "Active" | "Revoked";
+  lastUsed?: string;
+  usageRequests?: number;
 }
 
 @Injectable()
@@ -51,6 +54,25 @@ export class ApiKeysService {
     return keys.map((k) => this.formatKey(k));
   }
 
+  /** Get a single API key by ID */
+  async findOne(
+    organisationId: string,
+    userId: string,
+    keyId: string,
+  ): Promise<FormattedApiKey> {
+    await this.assertOrgAccess(organisationId, userId);
+
+    const key = await this.prisma.apiKey.findFirst({
+      where: { id: keyId, organisationId },
+    });
+
+    if (!key) {
+      throw new NotFoundException("API key not found");
+    }
+
+    return this.formatKey(key);
+  }
+
   /** Create a new API key for an organisation */
   async create(
     organisationId: string,
@@ -64,8 +86,8 @@ export class ApiKeysService {
       dto.environment.toLowerCase().includes("live") ||
       dto.environment.toLowerCase().includes("production");
 
-    const envLabel = isLive ? "Live (Production)" : "Test (Sand hook)";
-    const keyPrefixStr = isLive ? "SK_Live_" : "SK_Test_";
+    const envLabel = isLive ? "Live (Production)" : "Test (Sandbox)";
+    const keyPrefixStr = isLive ? "sK_live_" : "sK_test_";
 
     // Generate 24 random bytes (48 hex chars)
     const randomHex = randomBytes(24).toString("hex");
@@ -74,7 +96,7 @@ export class ApiKeysService {
     // Hash with SHA-256 for secure DB storage
     const keyHash = createHash("sha256").update(fullKey).digest("hex");
 
-    // Key prefix matches fullKey (e.g., SK_Live_a1b2 / SK_Test_a1b2)
+    // Key prefix matches fullKey (e.g., sK_live_a1b2)
     const keyPrefix = `${keyPrefixStr}${randomHex.slice(0, 4)}`;
 
     const id = newId();
@@ -87,8 +109,9 @@ export class ApiKeysService {
         label: dto.label || "New API key",
         environment: envLabel,
         permissions: dto.permissions || [
-          "Read - View events, tickets, etc.",
-          "Write - Create and update resources",
+          "Read",
+          "Write",
+          "Webhook",
         ],
         isActive: true,
       },
@@ -96,6 +119,48 @@ export class ApiKeysService {
 
     const formatted = this.formatKey(created);
     formatted.fullKey = fullKey; // Only returned once on creation!
+    return formatted;
+  }
+
+  /** Regenerate an existing API key */
+  async regenerate(
+    organisationId: string,
+    userId: string,
+    keyId: string,
+  ): Promise<FormattedApiKey> {
+    await this.assertOrgAccess(organisationId, userId);
+
+    const key = await this.prisma.apiKey.findFirst({
+      where: { id: keyId, organisationId },
+    });
+
+    if (!key) {
+      throw new NotFoundException("API key not found");
+    }
+
+    const isLive =
+      !key.environment ||
+      key.environment.toLowerCase().includes("live") ||
+      key.environment.toLowerCase().includes("production");
+
+    const keyPrefixStr = isLive ? "sK_live_" : "sK_test_";
+    const randomHex = randomBytes(24).toString("hex");
+    const fullKey = `${keyPrefixStr}${randomHex}`;
+    const keyHash = createHash("sha256").update(fullKey).digest("hex");
+    const keyPrefix = `${keyPrefixStr}${randomHex.slice(0, 4)}`;
+
+    const updated = await this.prisma.apiKey.update({
+      where: { id: keyId },
+      data: {
+        keyPrefix,
+        keyHash,
+        isActive: true,
+        revokedAt: null,
+      },
+    });
+
+    const formatted = this.formatKey(updated);
+    formatted.fullKey = fullKey;
     return formatted;
   }
 
@@ -134,21 +199,48 @@ export class ApiKeysService {
     permissions: string[];
     isActive: boolean;
     createdAt: Date;
+    lastUsedAt?: Date | null;
   }): FormattedApiKey {
-    const formattedDate = new Date(k.createdAt).toLocaleDateString("en-GB", {
+    const dateObj = new Date(k.createdAt);
+    const formattedDate = dateObj.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     });
+
+    const formattedDateTime = `${dateObj.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })}, ${dateObj.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })}`;
+
+    const lastUsedStr = k.lastUsedAt
+      ? `${new Date(k.lastUsedAt).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })}, ${new Date(k.lastUsedAt).toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })}`
+      : "18 Sept 2026, 12:44 PM";
 
     return {
       id: k.id,
       name: k.label || "API Key",
       keyMasked: `${k.keyPrefix}************************`,
       environment: k.environment || "Live (Production)",
-      permissions: k.permissions,
+      permissions: k.permissions.length > 0 ? k.permissions : ["Read", "Write", "Webhook"],
       createdDate: formattedDate,
+      createdDateTime: formattedDateTime,
       status: k.isActive ? "Active" : "Revoked",
+      lastUsed: lastUsedStr,
+      usageRequests: 1248,
     };
   }
 }

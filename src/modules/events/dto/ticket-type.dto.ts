@@ -1,10 +1,14 @@
 import { Type } from "class-transformer";
-import { IsDateString, IsInt, IsOptional, IsPositive, IsString, Min, MinLength } from "class-validator";
+import { IsDateString, IsInt, IsOptional, IsPositive, IsString, IsUUID, Min, MinLength } from "class-validator";
 
 export class CreateTicketTypeDto {
   @IsString()
   @MinLength(1)
   name!: string;
+
+  @IsOptional()
+  @IsUUID()
+  scheduleId?: string;
 
   /** Minor units (kobo). 0 = free/RSVP. */
   @Type(() => Number)
@@ -37,6 +41,10 @@ export class UpdateTicketTypeDto {
   @IsString()
   @MinLength(1)
   name?: string;
+
+  @IsOptional()
+  @IsUUID()
+  scheduleId?: string;
 
   @IsOptional()
   @Type(() => Number)

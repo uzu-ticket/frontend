@@ -10,8 +10,45 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get("dashboard")
-  getOrgRollup(@CurrentUser() user: AuthenticatedUser, @Param("organisationId") organisationId: string) {
-    return this.dashboardService.getOrgRollup(organisationId, user.id);
+  getOrgRollup(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Query("days") days?: string,
+    @Query("upcomingTake") upcomingTake?: string,
+    @Query("upcomingSkip") upcomingSkip?: string,
+    @Query("activityTake") activityTake?: string,
+    @Query("activitySkip") activitySkip?: string,
+  ) {
+    const daysNum = days ? parseInt(days, 10) : 7;
+    const uTake = upcomingTake ? parseInt(upcomingTake, 10) : 10;
+    const uSkip = upcomingSkip ? parseInt(upcomingSkip, 10) : 0;
+    const aTake = activityTake ? parseInt(activityTake, 10) : 10;
+    const aSkip = activitySkip ? parseInt(activitySkip, 10) : 0;
+    return this.dashboardService.getOrgRollup(organisationId, user.id, daysNum, uTake, uSkip, aTake, aSkip);
+  }
+
+  @Get("dashboard/upcoming-events")
+  getUpcomingEvents(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Query("skip") skip?: string,
+    @Query("take") take?: string,
+  ) {
+    const s = skip ? parseInt(skip, 10) : 0;
+    const t = take ? parseInt(take, 10) : 10;
+    return this.dashboardService.getUpcomingEvents(organisationId, user.id, s, t);
+  }
+
+  @Get("dashboard/activities")
+  getActivities(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Query("skip") skip?: string,
+    @Query("take") take?: string,
+  ) {
+    const s = skip ? parseInt(skip, 10) : 0;
+    const t = take ? parseInt(take, 10) : 10;
+    return this.dashboardService.getActivities(organisationId, user.id, s, t);
   }
 
   @Get("events/:eventId/dashboard")

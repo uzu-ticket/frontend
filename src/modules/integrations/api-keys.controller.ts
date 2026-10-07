@@ -21,6 +21,16 @@ export class ApiKeysController {
     return this.apiKeysService.list(organisationId, user.id);
   }
 
+  /** Get a single API key by ID */
+  @Get(":keyId")
+  findOne(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("keyId") keyId: string,
+  ) {
+    return this.apiKeysService.findOne(organisationId, user.id, keyId);
+  }
+
   /** Generate a new API key for an organisation */
   @Post()
   create(
@@ -29,6 +39,16 @@ export class ApiKeysController {
     @Body() dto: CreateApiKeyDto,
   ) {
     return this.apiKeysService.create(organisationId, user.id, dto);
+  }
+
+  /** Regenerate an existing API key */
+  @Post(":keyId/regenerate")
+  regenerate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("keyId") keyId: string,
+  ) {
+    return this.apiKeysService.regenerate(organisationId, user.id, keyId);
   }
 
   /** Revoke an API key */

@@ -76,8 +76,93 @@ export class DashboardService {
     };
   }
 
-  async getOrgRollup(organisationId: string, userId: string): Promise<OrgRollup> {
+  async getUpcomingEvents(organisationId: string, userId: string, skip = 0, take = 10) {
     await this.permissions.assertMembership(userId, organisationId);
+
+    let items = await this.prisma.event.findMany({
+      where: {
+        organisationId,
+        status: { in: ["draft", "published", "sales_closed", "live"] },
+        startsAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      },
+      select: { id: true, title: true, startsAt: true, venueName: true, city: true, status: true },
+      orderBy: { startsAt: "asc" },
+      skip,
+      take,
+    });
+
+    if (items.length === 0 && skip === 0) {
+      items = await this.prisma.event.findMany({
+        where: { organisationId },
+        select: { id: true, title: true, startsAt: true, venueName: true, city: true, status: true },
+        orderBy: { startsAt: "desc" },
+        skip: 0,
+        take,
+      });
+    }
+
+    return items.map((e) => ({
+      id: e.id,
+      title: e.title,
+      startsAt: e.startsAt,
+      venueName: e.venueName,
+      city: e.city,
+      status: e.status,
+    }));
+  }
+
+  async getActivities(organisationId: string, userId: string, skip = 0, take = 10) {
+    await this.permissions.assertMembership(userId, organisationId);
+
+    const auditActivities = await this.prisma.auditLog.findMany({
+      where: { organisationId },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take,
+      select: { id: true, action: true, entityType: true, createdAt: true, actor: { select: { fullName: true } } },
+    });
+
+    let activities = auditActivities.map((a) => ({
+      id: a.id,
+      action: a.action,
+      entityType: a.entityType,
+      createdAt: a.createdAt,
+      actorName: a.actor?.fullName ?? null,
+    }));
+
+    if (activities.length === 0 && skip === 0) {
+      const recentOrders = await this.prisma.order.findMany({
+        where: { event: { organisationId } },
+        orderBy: { createdAt: "desc" },
+        skip: 0,
+        take,
+        include: { buyer: { select: { fullName: true } }, event: { select: { title: true } } },
+      });
+      activities = recentOrders.map((o) => ({
+        id: o.id,
+        action: "order.created",
+        entityType: "order",
+        createdAt: o.createdAt,
+        actorName: o.buyer?.fullName ?? "Customer",
+      }));
+    }
+
+    return activities;
+  }
+
+  async getOrgRollup(
+    organisationId: string,
+    userId: string,
+    days = 7,
+    upcomingTake = 10,
+    upcomingSkip = 0,
+    activityTake = 10,
+    activitySkip = 0,
+  ): Promise<OrgRollup> {
+    await this.permissions.assertMembership(userId, organisationId);
+
+    const fromDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
     const [events, revenue, ordersOverTime, upcomingEvents, recentActivities] = await Promise.all([
       this.prisma.event.count({ where: { organisationId } }),
       this.prisma.order.aggregate({
@@ -88,20 +173,10 @@ export class DashboardService {
         SELECT date_trunc('day', o.created_at) AS day, count(*)::bigint AS orders, sum(o.total_minor)::bigint AS revenue_minor
         FROM orders o
         JOIN events e ON o.event_id = e.id
-        WHERE e.organisation_id = ${organisationId}::uuid AND o.status = 'paid'
+        WHERE e.organisation_id = ${organisationId}::uuid AND o.status = 'paid' AND o.created_at >= ${fromDate}
         GROUP BY 1 ORDER BY 1`,
-      this.prisma.event.findMany({
-        where: { organisationId, status: { in: ["published", "sales_closed", "live"] }, startsAt: { gt: new Date() } },
-        select: { id: true, title: true, startsAt: true, venueName: true, city: true, status: true },
-        orderBy: { startsAt: "asc" },
-        take: 3,
-      }),
-      this.prisma.auditLog.findMany({
-        where: { organisationId },
-        orderBy: { createdAt: "desc" },
-        take: 10,
-        select: { id: true, action: true, entityType: true, createdAt: true, actor: { select: { fullName: true } } },
-      }),
+      this.getUpcomingEvents(organisationId, userId, upcomingSkip, upcomingTake),
+      this.getActivities(organisationId, userId, activitySkip, activityTake),
     ]);
 
     return {
@@ -112,21 +187,8 @@ export class DashboardService {
         orders: Number(r.orders),
         revenueMinor: r.revenue_minor,
       })),
-      upcomingEvents: upcomingEvents.map((e) => ({
-        id: e.id,
-        title: e.title,
-        startsAt: e.startsAt,
-        venueName: e.venueName,
-        city: e.city,
-        status: e.status,
-      })),
-      recentActivities: recentActivities.map((a) => ({
-        id: a.id,
-        action: a.action,
-        entityType: a.entityType,
-        createdAt: a.createdAt,
-        actorName: a.actor?.fullName ?? null,
-      })),
+      upcomingEvents,
+      recentActivities,
     };
   }
 
