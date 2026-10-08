@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../../prisma/prisma.service";
+import { newId } from "../../common/id";
+import { ClientDeviceInfo } from "../../common/utils/device-detector.util";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 
@@ -77,5 +79,85 @@ export class UsersService {
       },
     });
     return users;
+  }
+
+  async getSessions(userId: string, currentSessionId?: string, clientInfo?: ClientDeviceInfo) {
+    let sessions = await this.prisma.userSession.findMany({
+      where: { userId, revokedAt: null },
+      orderBy: { lastActiveAt: "desc" },
+    });
+
+    if (sessions.length === 0 && clientInfo) {
+      const created = await this.prisma.userSession.create({
+        data: {
+          id: newId(),
+          userId,
+          device: clientInfo.device,
+          browser: clientInfo.browser,
+          os: clientInfo.os,
+          ipAddress: clientInfo.ipAddress,
+          location: clientInfo.location,
+          userAgent: clientInfo.userAgent,
+          lastActiveAt: new Date(),
+        },
+      });
+      sessions = [created];
+    }
+
+    return sessions.map((s, index) => ({
+      id: s.id,
+      device: s.device || "Desktop",
+      browser: s.browser || "Unknown Browser",
+      os: s.os || "Unknown OS",
+      ipAddress: s.ipAddress || "127.0.0.1",
+      location: s.location || "Lagos, Nigeria",
+      lastActiveAt: s.lastActiveAt,
+      createdAt: s.createdAt,
+      isCurrent: currentSessionId ? s.id === currentSessionId : index === 0,
+    }));
+  }
+
+  async revokeSession(userId: string, sessionId: string) {
+    const session = await this.prisma.userSession.findFirst({
+      where: { id: sessionId, userId },
+    });
+    if (!session) throw new NotFoundException("Session not found");
+
+    await this.prisma.userSession.update({
+      where: { id: sessionId },
+      data: { revokedAt: new Date() },
+    });
+    return { message: "Session revoked successfully" };
+  }
+
+  async revokeAllOtherSessions(userId: string, currentSessionId?: string) {
+    await this.prisma.userSession.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+        ...(currentSessionId ? { NOT: { id: currentSessionId } } : {}),
+      },
+      data: { revokedAt: new Date() },
+    });
+    return { message: "All other sessions revoked successfully" };
+  }
+
+  async getLoginActivity(userId: string, limit = 20) {
+    const activities = await this.prisma.loginActivity.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+
+    return activities.map((a) => ({
+      id: a.id,
+      device: a.device || "Desktop",
+      browser: a.browser || "Unknown Browser",
+      os: a.os || "Unknown OS",
+      ipAddress: a.ipAddress || "127.0.0.1",
+      location: a.location || "Lagos, Nigeria",
+      status: a.status || "success",
+      createdAt: a.createdAt,
+    }));
   }
 }

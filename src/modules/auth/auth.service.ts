@@ -1,5 +1,6 @@
-import { ConflictException, Injectable, Inject, Logger, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, Inject, Logger, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
+import axios from "axios";
 import * as bcrypt from "bcryptjs";
 import { randomInt } from "crypto";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -9,6 +10,7 @@ import { REDIS_CLIENT } from "../../common/redis/redis.module";
 import type Redis from "ioredis";
 import { NOTIFICATION_PROVIDER, NotificationProvider } from "../../common/notifications/notification-provider";
 import { OtpService } from "./otp.service";
+import { ClientDeviceInfo } from "../../common/utils/device-detector.util";
 
 export interface TokenPair {
   accessToken: string;
@@ -28,7 +30,13 @@ export class AuthService {
 
   private readonly logger = new Logger(AuthService.name);
 
-  async register(email: string, password: string, fullName?: string, phone?: string): Promise<TokenPair> {
+  async register(
+    email: string,
+    password: string,
+    fullName?: string,
+    phone?: string,
+    clientInfo?: ClientDeviceInfo,
+  ): Promise<TokenPair> {
     const normalizedEmail = email.trim().toLowerCase();
     const existing = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) {
@@ -44,27 +52,36 @@ export class AuthService {
     // Send email verification link
     await this.requestEmailVerification(normalizedEmail);
 
-    return this.issueTokens(user.id, user.email);
+    const session = await this.createSession(user.id, clientInfo);
+    await this.recordLoginActivity(user.id, clientInfo, "success");
+
+    return this.issueTokens(user.id, user.email, session?.id);
   }
 
-  async login(email: string, password: string): Promise<TokenPair> {
+  async login(email: string, password: string, clientInfo?: ClientDeviceInfo): Promise<TokenPair> {
     const normalizedEmail = email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user || !user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
+      if (user) {
+        await this.recordLoginActivity(user.id, clientInfo, "failed");
+      }
       throw new UnauthorizedException("Invalid credentials");
     }
     if (user.status !== "active") {
       throw new UnauthorizedException("Account is not active");
     }
     await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-    return this.issueTokens(user.id, user.email);
+    const session = await this.createSession(user.id, clientInfo);
+    await this.recordLoginActivity(user.id, clientInfo, "success");
+
+    return this.issueTokens(user.id, user.email, session?.id);
   }
 
   async requestOtp(email: string): Promise<void> {
     await this.otpService.requestOtp(email);
   }
 
-  async verifyOtpAndLogin(email: string, code: string): Promise<TokenPair> {
+  async verifyOtpAndLogin(email: string, code: string, clientInfo?: ClientDeviceInfo): Promise<TokenPair> {
     const valid = await this.otpService.verifyOtp(email, code);
     if (!valid) {
       throw new UnauthorizedException("Invalid or expired code");
@@ -78,26 +95,199 @@ export class AuthService {
       user = await this.prisma.user.update({ where: { id: user.id }, data: { isEmailVerified: true } });
     }
     await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-    return this.issueTokens(user.id, user.email);
+    const session = await this.createSession(user.id, clientInfo);
+    await this.recordLoginActivity(user.id, clientInfo, "success");
+
+    return this.issueTokens(user.id, user.email, session?.id);
   }
 
   async refresh(refreshToken: string): Promise<TokenPair> {
     try {
-      const payload = await this.jwt.verifyAsync<{ sub: string; email: string }>(refreshToken, {
+      const payload = await this.jwt.verifyAsync<{ sub: string; email: string; sessionId?: string }>(refreshToken, {
         secret: this.config.jwtRefreshSecret,
       });
       const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
       if (!user || user.status !== "active") {
         throw new UnauthorizedException();
       }
-      return this.issueTokens(user.id, user.email);
+      if (payload.sessionId) {
+        const session = await this.prisma.userSession.findUnique({ where: { id: payload.sessionId } });
+        if (session?.revokedAt) {
+          throw new UnauthorizedException("Session has been revoked");
+        }
+        await this.prisma.userSession.update({
+          where: { id: payload.sessionId },
+          data: { lastActiveAt: new Date() },
+        });
+      }
+      return this.issueTokens(user.id, user.email, payload.sessionId);
     } catch {
       throw new UnauthorizedException("Invalid refresh token");
     }
   }
 
-  private async issueTokens(userId: string, email: string): Promise<TokenPair> {
-    const payload = { sub: userId, email };
+  getGoogleAuthUrl(redirectUri?: string): string {
+    const clientId = this.config.googleClientId;
+    if (!clientId) {
+      throw new BadRequestException(
+        "Google OAuth is not configured on the server. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.",
+      );
+    }
+    const redirect = redirectUri || this.config.googleCallbackUrl;
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirect,
+      response_type: "code",
+      scope: "openid email profile",
+      access_type: "offline",
+      prompt: "select_account",
+    });
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+  }
+
+  async loginWithGoogle(
+    code: string,
+    redirectUri?: string,
+    clientInfo?: ClientDeviceInfo,
+  ): Promise<TokenPair & { user: any }> {
+    const clientId = this.config.googleClientId;
+    const clientSecret = this.config.googleClientSecret;
+    if (!clientId || !clientSecret) {
+      throw new BadRequestException(
+        "Google OAuth is not configured on the server. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.",
+      );
+    }
+    const redirect = redirectUri || this.config.googleCallbackUrl;
+
+    let tokenRes;
+    try {
+      tokenRes = await axios.post(
+        "https://oauth2.googleapis.com/token",
+        new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirect,
+          grant_type: "authorization_code",
+        }).toString(),
+        {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        },
+      );
+    } catch (err: any) {
+      const detail = err.response?.data?.error_description || err.response?.data?.error || err.message;
+      this.logger.error(`Google token exchange failed: ${detail}`, err.stack);
+      throw new UnauthorizedException(`Failed to exchange Google authorization code: ${detail}`);
+    }
+
+    const accessToken = tokenRes.data?.access_token;
+    if (!accessToken) {
+      throw new UnauthorizedException("Google did not return an access token");
+    }
+
+    let userRes;
+    try {
+      userRes = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch (err: any) {
+      this.logger.error("Failed to fetch Google user profile", err);
+      throw new UnauthorizedException("Failed to fetch Google user profile");
+    }
+
+    const { email, name, picture, email_verified } = userRes.data;
+    if (!email) {
+      throw new UnauthorizedException("No email returned by Google account");
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    let user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+
+    if (!user) {
+      // Sign Up: New user from Google
+      user = await this.linkGuestOrdersOnCreate(
+        await this.prisma.user.create({
+          data: {
+            id: newId(),
+            email: normalizedEmail,
+            fullName: name || undefined,
+            avatarUrl: picture || undefined,
+            isEmailVerified: Boolean(email_verified),
+            status: "active",
+          },
+        }),
+      );
+    } else {
+      // Sign In: Existing user, update profile details if missing
+      const updateData: any = {};
+      if (!user.fullName && name) updateData.fullName = name;
+      if (!user.avatarUrl && picture) updateData.avatarUrl = picture;
+      if (!user.isEmailVerified && email_verified) updateData.isEmailVerified = true;
+
+      if (Object.keys(updateData).length > 0) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: updateData,
+        });
+      }
+    }
+
+    if (user.status !== "active") {
+      throw new UnauthorizedException("Account is not active");
+    }
+
+    await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+    const session = await this.createSession(user.id, clientInfo);
+    await this.recordLoginActivity(user.id, clientInfo, "success");
+
+    const tokens = await this.issueTokens(user.id, user.email, session?.id);
+    const { passwordHash: _, totpSecret: __, ...safeUser } = user;
+    return { ...tokens, user: safeUser };
+  }
+
+  private async createSession(userId: string, clientInfo?: ClientDeviceInfo) {
+    try {
+      return await this.prisma.userSession.create({
+        data: {
+          id: newId(),
+          userId,
+          device: clientInfo?.device || "Desktop",
+          browser: clientInfo?.browser || "Unknown Browser",
+          os: clientInfo?.os || "Unknown OS",
+          ipAddress: clientInfo?.ipAddress || "127.0.0.1",
+          location: clientInfo?.location || "Lagos, Nigeria",
+          userAgent: clientInfo?.userAgent || "",
+          lastActiveAt: new Date(),
+        },
+      });
+    } catch (e) {
+      this.logger.error("Failed to create user session", e);
+      return null;
+    }
+  }
+
+  private async recordLoginActivity(userId: string, clientInfo?: ClientDeviceInfo, status = "success") {
+    try {
+      await this.prisma.loginActivity.create({
+        data: {
+          id: newId(),
+          userId,
+          device: clientInfo?.device || "Desktop",
+          browser: clientInfo?.browser || "Unknown Browser",
+          os: clientInfo?.os || "Unknown OS",
+          ipAddress: clientInfo?.ipAddress || "127.0.0.1",
+          location: clientInfo?.location || "Lagos, Nigeria",
+          userAgent: clientInfo?.userAgent || "",
+          status,
+        },
+      });
+    } catch (e) {
+      this.logger.error("Failed to record login activity", e);
+    }
+  }
+
+  private async issueTokens(userId: string, email: string, sessionId?: string): Promise<TokenPair> {
+    const payload = { sub: userId, email, sessionId };
     const [accessToken, refreshToken] = await Promise.all([
       this.jwt.signAsync(payload, { secret: this.config.jwtAccessSecret, expiresIn: this.config.jwtAccessTtl }),
       this.jwt.signAsync(payload, { secret: this.config.jwtRefreshSecret, expiresIn: this.config.jwtRefreshTtl }),

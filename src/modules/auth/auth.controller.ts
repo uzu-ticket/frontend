@@ -1,16 +1,23 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   NotImplementedException,
   Param,
   Post,
+  Query,
+  Req,
+  Res,
   UnauthorizedException,
 } from "@nestjs/common";
+import { Request, Response } from "express";
+import { GoogleCallbackDto } from "./dto/google-auth.dto";
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
 import { Public } from "../../common/decorators/public.decorator";
 import { CurrentUser, AuthenticatedUser } from "../../common/decorators/current-user.decorator";
+import { parseClientDeviceInfo } from "../../common/utils/device-detector.util";
 import { AuthService } from "./auth.service";
 import { TwoFactorService } from "./two-factor.service";
 import { RegisterDto } from "./dto/register.dto";
@@ -39,8 +46,9 @@ export class AuthController {
   })
   @ApiResponse({ status: 201, description: "Account created successfully", type: TokenPairResponse })
   @ApiResponse({ status: 409, description: "An account with this email already exists" })
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto.email, dto.password, dto.fullName, dto.phone);
+  register(@Body() dto: RegisterDto, @Req() req: Request) {
+    const clientInfo = parseClientDeviceInfo(req);
+    return this.authService.register(dto.email, dto.password, dto.fullName, dto.phone, clientInfo);
   }
 
   @Public()
@@ -52,8 +60,9 @@ export class AuthController {
   })
   @ApiResponse({ status: 200, description: "Login successful", type: TokenPairResponse })
   @ApiResponse({ status: 401, description: "Invalid credentials or account not active" })
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto.email, dto.password);
+  login(@Body() dto: LoginDto, @Req() req: Request) {
+    const clientInfo = parseClientDeviceInfo(req);
+    return this.authService.login(dto.email, dto.password, clientInfo);
   }
 
   @Public()
@@ -91,8 +100,9 @@ export class AuthController {
   })
   @ApiResponse({ status: 200, description: "OTP verified and authenticated", type: TokenPairResponse })
   @ApiResponse({ status: 401, description: "Invalid or expired code" })
-  verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.authService.verifyOtpAndLogin(dto.email, dto.code);
+  verifyOtp(@Body() dto: VerifyOtpDto, @Req() req: Request) {
+    const clientInfo = parseClientDeviceInfo(req);
+    return this.authService.verifyOtpAndLogin(dto.email, dto.code, clientInfo);
   }
 
   @Public()
@@ -173,14 +183,39 @@ export class AuthController {
   }
 
   @Public()
-  @Post("social/:provider")
+  @Get("google/url")
   @ApiOperation({
-    summary: "Social login (stub)",
-    description: "Social login via OAuth provider. Not yet implemented.",
+    summary: "Get Google OAuth authorization URL",
+    description: "Returns the Google OAuth consent URL to redirect the user to.",
   })
-  @ApiResponse({ status: 501, description: "Social login is not yet implemented for this provider" })
-  socialLogin(@Param("provider") _provider: string) {
-    throw new NotImplementedException("Social login is not yet implemented for this provider");
+  getGoogleAuthUrl(@Query("redirectUri") redirectUri?: string) {
+    const url = this.authService.getGoogleAuthUrl(redirectUri);
+    return { url };
+  }
+
+  @Public()
+  @Get("google")
+  @ApiOperation({
+    summary: "Redirect to Google OAuth",
+    description: "Redirects directly to Google OAuth consent page.",
+  })
+  redirectToGoogle(@Res() res: Response, @Query("redirectUri") redirectUri?: string) {
+    const url = this.authService.getGoogleAuthUrl(redirectUri);
+    return res.redirect(url);
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post("google/callback")
+  @ApiOperation({
+    summary: "Verify Google OAuth callback code",
+    description: "Exchanges Google authorization code for tokens, signs user in or creates new account.",
+  })
+  @ApiResponse({ status: 200, description: "Authenticated successfully with Google", type: TokenPairResponse })
+  @ApiResponse({ status: 401, description: "Invalid code or failed Google verification" })
+  googleCallback(@Body() dto: GoogleCallbackDto, @Req() req: Request) {
+    const clientInfo = parseClientDeviceInfo(req);
+    return this.authService.loginWithGoogle(dto.code, dto.redirectUri, clientInfo);
   }
 
   @HttpCode(HttpStatus.OK)

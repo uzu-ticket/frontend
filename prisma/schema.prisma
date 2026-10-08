@@ -241,6 +241,8 @@ model User {
   emailCampaignsCreated               EmailCampaign[]     @relation("EmailCampaignCreatedBy")
   campaignRecipientRecords             CampaignRecipient[]
   auditLogsAsActor                      AuditLog[]
+  sessions                              UserSession[]
+  loginActivities                       LoginActivity[]
 
   @@map("users")
 }
@@ -1137,4 +1139,46 @@ model AuditLog {
   @@index([actorUserId])
   @@index([entityType, entityId])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------
+// SESSIONS & LOGIN ACTIVITY
+// ---------------------------------------------------------------------
+
+model UserSession {
+  id           String    @id @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  tokenHash    String?   @map("token_hash")
+  device       String?
+  browser      String?
+  os           String?
+  ipAddress    String?   @map("ip_address")
+  location     String?
+  userAgent    String?   @map("user_agent")
+  lastActiveAt DateTime  @default(now()) @map("last_active_at")
+  revokedAt    DateTime? @map("revoked_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_sessions")
+}
+
+model LoginActivity {
+  id        String   @id @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  ipAddress String?  @map("ip_address")
+  device    String?
+  browser   String?
+  os        String?
+  location  String?
+  userAgent String?  @map("user_agent")
+  status    String   @default("success")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("login_activities")
 }

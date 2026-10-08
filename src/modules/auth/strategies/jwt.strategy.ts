@@ -7,6 +7,7 @@ import { PrismaService } from "../../../prisma/prisma.service";
 export interface JwtAccessPayload {
   sub: string;
   email: string;
+  sessionId?: string;
 }
 
 @Injectable()
@@ -27,6 +28,21 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
     if (!user || user.status !== "active") {
       throw new UnauthorizedException();
     }
-    return { id: user.id, email: user.email };
+    if (payload.sessionId) {
+      const session = await this.prisma.userSession.findUnique({
+        where: { id: payload.sessionId },
+      });
+      if (session?.revokedAt) {
+        throw new UnauthorizedException("Session has been revoked");
+      }
+      // Update lastActiveAt non-blockingly
+      this.prisma.userSession
+        .update({
+          where: { id: payload.sessionId },
+          data: { lastActiveAt: new Date() },
+        })
+        .catch(() => {});
+    }
+    return { id: user.id, email: user.email, sessionId: payload.sessionId };
   }
 }

@@ -58,6 +58,10 @@ export const envSchema = z.object({
   MAILGUN_API_KEY: z.string().min(1),
   MAILGUN_DOMAIN: z.string().min(1),
   MAILGUN_FROM: z.string().default(""),
+
+  GOOGLE_CLIENT_ID: z.string().default(""),
+  GOOGLE_CLIENT_SECRET: z.string().default(""),
+  GOOGLE_CALLBACK_URL: z.string().default(""),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -149,4 +149,19 @@ export class AppConfigService {
       from: this.config.get("MAILGUN_FROM", { infer: true }) || this.smtp.from,
     };
   }
+
+  get googleClientId(): string {
+    return this.config.get("GOOGLE_CLIENT_ID", { infer: true }) || "";
+  }
+
+  get googleClientSecret(): string {
+    return this.config.get("GOOGLE_CLIENT_SECRET", { infer: true }) || "";
+  }
+
+  get googleCallbackUrl(): string {
+    const custom = this.config.get("GOOGLE_CALLBACK_URL", { infer: true });
+    if (custom) return custom;
+    // Default to frontend callback URL
+    return `${this.appBaseUrl.replace(/\/+$/, "")}/auth/callback/google`;
+  }
 }
