@@ -353,6 +353,49 @@ export const useAuth = () => {
     }
   }
 
+  const getGoogleAuthUrl = async (redirectUri?: string): Promise<string> => {
+    try {
+      loading.value = true
+      error.value = null
+      const res = await instance.get<{ url: string }>('/auth/google/url', {
+        params: redirectUri ? { redirectUri } : undefined,
+      })
+      return res.data?.url
+    } catch (e) {
+      error.value = extractErrorMessage(e, 'Failed to initialize Google authentication')
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const loginWithGoogle = async (code: string, redirectUri?: string) => {
+    try {
+      loading.value = true
+      error.value = null
+      const res = await instance.post<AuthResponse>('/auth/google/callback', {
+        code,
+        redirectUri,
+      })
+      const tokens = extractTokenPair(res.data)
+      persistTokens(tokens)
+      await fetchUser()
+      return tokens
+    } catch (e) {
+      error.value = extractErrorMessage(e, 'Failed to authenticate with Google')
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const initiateGoogleLogin = async (redirectUri?: string) => {
+    const url = await getGoogleAuthUrl(redirectUri)
+    if (url && typeof window !== 'undefined') {
+      window.location.href = url
+    }
+  }
+
   return {
     user,
     loading,
@@ -375,5 +418,8 @@ export const useAuth = () => {
     setupTwoFactor,
     enableTwoFactor,
     disableTwoFactor,
+    getGoogleAuthUrl,
+    loginWithGoogle,
+    initiateGoogleLogin,
   }
 }

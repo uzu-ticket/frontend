@@ -150,12 +150,17 @@ async function handleSubmit() {
   }
 }
 
-function handleGoogle() {
-  toast.show({
-    title: 'Google Sign In',
-    message: 'Google OAuth is not yet available',
-    type: 'info',
-  })
+async function handleGoogle() {
+  try {
+    const callbackUri = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback/google` : undefined
+    await auth.initiateGoogleLogin(callbackUri)
+  } catch (err: any) {
+    toast.show({
+      title: 'Google Sign In',
+      message: err.message || 'Unable to connect to Google at this time.',
+      type: 'error',
+    })
+  }
 }
 </script>
 

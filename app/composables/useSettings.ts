@@ -17,6 +17,29 @@ export interface UpdateOrgPayload {
   description?: string
 }
 
+export interface UserSessionItem {
+  id: string
+  device: string
+  browser: string
+  os: string
+  ipAddress: string
+  location: string
+  lastActiveAt: string
+  createdAt: string
+  isCurrent: boolean
+}
+
+export interface LoginActivityItem {
+  id: string
+  device: string
+  browser: string
+  os: string
+  ipAddress: string
+  location: string
+  status: string
+  createdAt: string
+}
+
 export function useSettings() {
   const { instance } = useApi()
   const { fetchUser } = useAuth()
@@ -69,9 +92,69 @@ export function useSettings() {
     }
   }
 
+  async function fetchSessions(): Promise<UserSessionItem[]> {
+    try {
+      const res = await instance.get('/users/me/sessions')
+      return res.data?.data ?? res.data ?? []
+    } catch (e: any) {
+      const message =
+        e.response?.data?.message ||
+        (Array.isArray(e.response?.data?.message) ? e.response.data.message.join(', ') : null) ||
+        e.message ||
+        'Failed to fetch sessions'
+      throw new Error(message)
+    }
+  }
+
+  async function revokeSession(sessionId: string) {
+    try {
+      const res = await instance.delete(`/users/me/sessions/${sessionId}`)
+      return res.data?.data ?? res.data
+    } catch (e: any) {
+      const message =
+        e.response?.data?.message ||
+        (Array.isArray(e.response?.data?.message) ? e.response.data.message.join(', ') : null) ||
+        e.message ||
+        'Failed to revoke session'
+      throw new Error(message)
+    }
+  }
+
+  async function revokeAllOtherSessions() {
+    try {
+      const res = await instance.delete('/users/me/sessions')
+      return res.data?.data ?? res.data
+    } catch (e: any) {
+      const message =
+        e.response?.data?.message ||
+        (Array.isArray(e.response?.data?.message) ? e.response.data.message.join(', ') : null) ||
+        e.message ||
+        'Failed to revoke other sessions'
+      throw new Error(message)
+    }
+  }
+
+  async function fetchLoginActivity(): Promise<LoginActivityItem[]> {
+    try {
+      const res = await instance.get('/users/me/login-activity')
+      return res.data?.data ?? res.data ?? []
+    } catch (e: any) {
+      const message =
+        e.response?.data?.message ||
+        (Array.isArray(e.response?.data?.message) ? e.response.data.message.join(', ') : null) ||
+        e.message ||
+        'Failed to fetch login activity'
+      throw new Error(message)
+    }
+  }
+
   return {
     updateProfile,
     updateOrg,
     changePassword,
+    fetchSessions,
+    revokeSession,
+    revokeAllOtherSessions,
+    fetchLoginActivity,
   }
 }

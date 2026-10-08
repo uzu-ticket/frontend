@@ -31,9 +31,12 @@
         <div class="row-between">
           <div class="text-group">
             <span class="row-label">Active Sessions</span>
-            <span class="row-subtitle">1 Desktop (Current Session)</span>
+            <span class="row-subtitle">
+              {{ activeSessionsCount }} Active {{ activeSessionsCount === 1 ? 'Session' : 'Sessions' }}
+              <span v-if="currentDeviceText">({{ currentDeviceText }})</span>
+            </span>
           </div>
-          <button class="link-green" @click="viewSessions">View All</button>
+          <button class="link-green" @click="openSessionsModal">View All</button>
         </div>
       </div>
 
@@ -51,9 +54,9 @@
         <h3 class="section-title">Login Activity</h3>
         <div class="row-between">
           <span class="row-subtitle">
-            {{ user?.lastLoginAt ? `Last active: ${new Date(user.lastLoginAt).toLocaleDateString()}` : 'View recent login activity and locations' }}
+            {{ user?.lastLoginAt ? `Last active: ${new Date(user.lastLoginAt).toLocaleString()}` : 'View recent login activity and locations' }}
           </span>
-          <button class="btn-outline" @click="viewLoginActivity">View Activity</button>
+          <button class="btn-outline" @click="openLoginActivityModal">View Activity</button>
         </div>
       </div>
     </div>
@@ -170,17 +173,197 @@
         </div>
       </div>
     </div>
+
+    <!-- Session Management Modal -->
+    <div v-if="showSessionsModal" class="modal-overlay" @click.self="showSessionsModal = false">
+      <div class="wide-modal">
+        <div class="modal-header-row">
+          <div>
+            <h3 class="modal-title">Active Sessions</h3>
+            <p class="modal-desc">Manage the devices and browsers currently signed in to your account.</p>
+          </div>
+          <button class="btn-close-x" @click="showSessionsModal = false">✕</button>
+        </div>
+
+        <div v-if="isLoadingSessions" class="modal-state-box">
+          <div class="loading-spinner"></div>
+          <span class="state-text">Loading active sessions...</span>
+        </div>
+
+        <div v-else-if="sessions.length === 0" class="modal-state-box">
+          <span class="empty-icon">💻</span>
+          <p class="empty-desc">No active sessions found.</p>
+        </div>
+
+        <div v-else class="sessions-list">
+          <div
+            v-for="session in sessions"
+            :key="session.id"
+            class="session-item"
+            :class="{ 'session-item--current': session.isCurrent }"
+          >
+            <div class="session-device-icon">
+              <!-- Mobile Icon -->
+              <svg
+                v-if="session.device === 'Mobile'"
+                xmlns="http://www.w3.org/2000/svg"
+                class="device-svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <!-- Tablet Icon -->
+              <svg
+                v-else-if="session.device === 'Tablet'"
+                xmlns="http://www.w3.org/2000/svg"
+                class="device-svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <!-- Desktop Icon -->
+              <svg
+                v-else
+                xmlns="http://www.w3.org/2000/svg"
+                class="device-svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+
+            <div class="session-info">
+              <div class="session-title-row">
+                <span class="session-name">{{ session.browser }} on {{ session.os }}</span>
+                <span v-if="session.isCurrent" class="current-badge">Current Session</span>
+              </div>
+              <div class="session-meta">
+                <span>{{ session.location }}</span>
+                <span class="meta-dot">•</span>
+                <span class="mono-ip">{{ session.ipAddress }}</span>
+                <span class="meta-dot">•</span>
+                <span>{{ formatTimeAgo(session.lastActiveAt) }}</span>
+              </div>
+            </div>
+
+            <div class="session-actions">
+              <button
+                v-if="!session.isCurrent"
+                class="btn-revoke-item"
+                :disabled="revokingSessionId === session.id"
+                @click="handleRevokeSession(session.id)"
+              >
+                {{ revokingSessionId === session.id ? 'Revoking...' : 'Revoke' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer-between">
+          <button
+            v-if="otherSessionsCount > 0"
+            class="btn-revoke-all"
+            :disabled="isRevokingAll"
+            @click="handleRevokeAllOtherSessions"
+          >
+            {{ isRevokingAll ? 'Revoking...' : `Log out of other ${otherSessionsCount} sessions` }}
+          </button>
+          <div v-else></div>
+          <button class="btn-cancel" @click="showSessionsModal = false">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Activity Modal -->
+    <div v-if="showLoginActivityModal" class="modal-overlay" @click.self="showLoginActivityModal = false">
+      <div class="wide-modal">
+        <div class="modal-header-row">
+          <div>
+            <h3 class="modal-title">Login Activity History</h3>
+            <p class="modal-desc">Recent sign-in attempts recorded on your account.</p>
+          </div>
+          <button class="btn-close-x" @click="showLoginActivityModal = false">✕</button>
+        </div>
+
+        <div v-if="isLoadingActivity" class="modal-state-box">
+          <div class="loading-spinner"></div>
+          <span class="state-text">Loading login activity...</span>
+        </div>
+
+        <div v-else-if="loginActivities.length === 0" class="modal-state-box">
+          <span class="empty-icon">🛡️</span>
+          <p class="empty-desc">No login activity history available.</p>
+        </div>
+
+        <div v-else class="activity-table-wrapper">
+          <table class="activity-table">
+            <thead>
+              <tr>
+                <th>STATUS</th>
+                <th>DEVICE & BROWSER</th>
+                <th>LOCATION & IP</th>
+                <th>TIME</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="act in loginActivities" :key="act.id">
+                <td>
+                  <span
+                    class="status-pill"
+                    :class="act.status === 'success' ? 'status-pill--success' : 'status-pill--failed'"
+                  >
+                    {{ act.status === 'success' ? 'Successful' : 'Failed' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="activity-device-cell">
+                    <span class="act-device">{{ act.browser }} ({{ act.os }})</span>
+                    <span class="act-type">{{ act.device }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="activity-location-cell">
+                    <span>{{ act.location }}</span>
+                    <span class="mono-ip">{{ act.ipAddress }}</span>
+                  </div>
+                </td>
+                <td class="activity-time-cell">
+                  {{ formatDateTime(act.createdAt) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="modal-footer-end">
+          <button class="btn-cancel" @click="showLoginActivityModal = false">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useAuth } from '~/composables/useAuth'
-import { useSettings } from '~/composables/useSettings'
+import { useSettings, type UserSessionItem, type LoginActivityItem } from '~/composables/useSettings'
 import { useToast } from '~/composables/useToast'
 
 const toast = useToast()
 const { user, setupTwoFactor, enableTwoFactor, disableTwoFactor } = useAuth()
-const { changePassword } = useSettings()
+const {
+  changePassword,
+  fetchSessions,
+  revokeSession,
+  revokeAllOtherSessions,
+  fetchLoginActivity,
+} = useSettings()
 
 const is2FAEnabled = computed(() => !!user.value?.isTotpEnabled)
 const is2FALoading = ref(false)
@@ -198,6 +381,116 @@ const pwdForm = reactive({
   newPwd: '',
   confirm: '',
 })
+
+// Session Management State
+const showSessionsModal = ref(false)
+const isLoadingSessions = ref(false)
+const sessions = ref<UserSessionItem[]>([])
+const revokingSessionId = ref<string | null>(null)
+const isRevokingAll = ref(false)
+
+const activeSessionsCount = computed(() => sessions.value.length || 1)
+const otherSessionsCount = computed(() => sessions.value.filter((s) => !s.isCurrent).length)
+const currentDeviceText = computed(() => {
+  const current = sessions.value.find((s) => s.isCurrent)
+  if (current) return `${current.device} • Current Session`
+  return 'Current Session'
+})
+
+// Login Activity State
+const showLoginActivityModal = ref(false)
+const isLoadingActivity = ref(false)
+const loginActivities = ref<LoginActivityItem[]>([])
+
+onMounted(() => {
+  loadSessionsSilently()
+})
+
+async function loadSessionsSilently() {
+  try {
+    const list = await fetchSessions()
+    if (Array.isArray(list)) {
+      sessions.value = list
+    }
+  } catch {
+    // Keep quiet on background preload
+  }
+}
+
+async function openSessionsModal() {
+  showSessionsModal.value = true
+  isLoadingSessions.value = true
+  try {
+    const list = await fetchSessions()
+    sessions.value = Array.isArray(list) ? list : []
+  } catch (e: any) {
+    toast.error(e.message || 'Failed to load sessions.')
+  } finally {
+    isLoadingSessions.value = false
+  }
+}
+
+async function handleRevokeSession(sessionId: string) {
+  revokingSessionId.value = sessionId
+  try {
+    await revokeSession(sessionId)
+    sessions.value = sessions.value.filter((s) => s.id !== sessionId)
+    toast.success('Session revoked successfully!')
+  } catch (e: any) {
+    toast.error(e.message || 'Failed to revoke session.')
+  } finally {
+    revokingSessionId.value = null
+  }
+}
+
+async function handleRevokeAllOtherSessions() {
+  isRevokingAll.value = true
+  try {
+    await revokeAllOtherSessions()
+    sessions.value = sessions.value.filter((s) => s.isCurrent)
+    toast.success('Logged out of all other sessions!')
+  } catch (e: any) {
+    toast.error(e.message || 'Failed to revoke other sessions.')
+  } finally {
+    isRevokingAll.value = false
+  }
+}
+
+async function openLoginActivityModal() {
+  showLoginActivityModal.value = true
+  isLoadingActivity.value = true
+  try {
+    const list = await fetchLoginActivity()
+    loginActivities.value = Array.isArray(list) ? list : []
+  } catch (e: any) {
+    toast.error(e.message || 'Failed to load login activity.')
+  } finally {
+    isLoadingActivity.value = false
+  }
+}
+
+function formatTimeAgo(dateStr: string): string {
+  if (!dateStr) return 'Active recently'
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000)
+  if (diffSec < 60) return 'Active just now'
+  if (diffSec < 3600) return `Active ${Math.floor(diffSec / 60)}m ago`
+  if (diffSec < 86400) return `Active ${Math.floor(diffSec / 3600)}h ago`
+  return `Last seen ${date.toLocaleDateString()}`
+}
+
+function formatDateTime(dateStr: string): string {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
 async function handle2FAClick() {
   totpCode.value = ''
@@ -288,18 +581,6 @@ async function updatePassword() {
     toast.error(e.message || 'Failed to update password.')
   } finally {
     isUpdatingPassword.value = false
-  }
-}
-
-function viewSessions() {
-  toast.info('Active session: Web client (Online)')
-}
-
-function viewLoginActivity() {
-  if (user.value?.lastLoginAt) {
-    toast.info(`Last login recorded on ${new Date(user.value.lastLoginAt).toLocaleString()}`)
-  } else {
-    toast.info('Current session is active.')
   }
 }
 </script>
@@ -455,7 +736,7 @@ function viewLoginActivity() {
   border-color: #D1D5DB;
 }
 
-/* Modal */
+/* Modals */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -480,9 +761,49 @@ function viewLoginActivity() {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
+.wide-modal {
+  background: #ffffff;
+  border-radius: 1.25rem;
+  padding: 2rem;
+  max-width: 620px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.16);
+}
+
+.modal-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.btn-close-x {
+  background: #F3F4F6;
+  border: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  color: #6B7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: background 0.15s;
+}
+.btn-close-x:hover {
+  background: #E5E7EB;
+  color: #111827;
+}
+
 .modal-title {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: #0E2615;
   margin: 0;
 }
@@ -490,7 +811,7 @@ function viewLoginActivity() {
 .modal-desc {
   font-size: 0.85rem;
   color: #6B7280;
-  margin: -0.5rem 0 0 0;
+  margin: 0.35rem 0 0 0;
   line-height: 1.4;
 }
 
@@ -573,6 +894,24 @@ function viewLoginActivity() {
   margin-top: 0.5rem;
 }
 
+.modal-footer-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #F3F4F6;
+}
+
+.modal-footer-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #F3F4F6;
+}
+
 .btn-cancel {
   padding: 0.65rem 1.25rem;
   background: #F9FAFB;
@@ -610,5 +949,253 @@ function viewLoginActivity() {
 }
 .btn-danger:hover:not(:disabled) {
   background: #B91C1C !important;
+}
+
+/* Session Items */
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  background: #FAFAFA;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.85rem;
+  transition: border-color 0.15s;
+}
+
+.session-item--current {
+  background: #F0FDF4;
+  border-color: #BBF7D0;
+}
+
+.session-device-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.65rem;
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.device-svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  color: #374151;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.session-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.session-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.current-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #DCFCE7;
+  color: #166534;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.session-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #6B7280;
+}
+
+.meta-dot {
+  color: #D1D5DB;
+}
+
+.mono-ip {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #4B5563;
+}
+
+.btn-revoke-item {
+  padding: 0.45rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid #FCA5A5;
+  color: #DC2626;
+  border-radius: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-revoke-item:hover:not(:disabled) {
+  background: #FEE2E2;
+}
+.btn-revoke-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-revoke-all {
+  padding: 0.65rem 1.15rem;
+  background: #FFF1F2;
+  border: 1px solid #FECDD3;
+  color: #E11D48;
+  border-radius: 0.65rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-revoke-all:hover:not(:disabled) {
+  background: #FFE4E6;
+}
+.btn-revoke-all:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Activity Table */
+.activity-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.75rem;
+}
+
+.activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.825rem;
+}
+
+.activity-table th {
+  padding: 0.75rem 1rem;
+  background: #F9FAFB;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #4B5563;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.activity-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #F3F4F6;
+  vertical-align: middle;
+}
+
+.activity-table tr:last-child td {
+  border-bottom: none;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.status-pill--success {
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.status-pill--failed {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.activity-device-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.act-device {
+  font-weight: 600;
+  color: #111827;
+}
+
+.act-type {
+  font-size: 0.75rem;
+  color: #6B7280;
+}
+
+.activity-location-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  color: #374151;
+}
+
+.activity-time-cell {
+  color: #6B7280;
+  white-space: nowrap;
+}
+
+/* State Box */
+.modal-state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid #E5E7EB;
+  border-top-color: #3FD246;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.state-text {
+  font-size: 0.85rem;
+  color: #6B7280;
+}
+
+.empty-icon {
+  font-size: 2rem;
+}
+
+.empty-desc {
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin: 0;
 }
 </style>
