@@ -462,8 +462,20 @@
 
       <!-- Navigation Footer -->
       <div class="form-footer">
-        <button type="button" class="btn-back" @click="$emit('cancel')">
-          <span>Cancel</span>
+        <button type="button" class="btn-back" @click="$emit('back')">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="btn-arrow"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span>Back</span>
         </button>
 
         <button type="button" class="btn-next" @click="handleNextStep">
@@ -499,9 +511,11 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   eventData?: Record<string, unknown>;
+  initialData?: unknown;
 }>();
 
 interface TicketItem {
+  id?: string;
   type: string;
   price: string;
   quantity: string;
@@ -628,45 +642,93 @@ function formatTicketPrice(priceMinor: string | number): string {
   })}`;
 }
 
+function parseTicketDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+  const parsed = new Date(String(value));
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function hydrateTickets(value: unknown) {
   if (!Array.isArray(value)) return;
 
   tickets.value = value.map((ticket, index) => {
     const item = ticket as Record<string, unknown>;
-    const startDate = item.saleStartsAt
-      ? new Date(String(item.saleStartsAt))
-      : null;
-    const endDate = item.saleEndsAt ? new Date(String(item.saleEndsAt)) : null;
-    return {
-      type: String(item.name || "GENERAL").toUpperCase(),
-      price: formatTicketPrice(String(item.priceMinor || "0")),
-      quantity: Number(item.quantityTotal || 0).toLocaleString("en-US"),
-      maxPerOrder:
-        item.perOrderLimit == null
+    const hasComponentProps =
+      item.type !== undefined ||
+      item.price !== undefined ||
+      item.quantity !== undefined;
+
+    const startDate = parseTicketDate(item.startDateObj ?? item.saleStartsAt);
+    const endDate = parseTicketDate(item.endDateObj ?? item.saleEndsAt);
+
+    const type = String(item.type || item.name || "GENERAL").toUpperCase();
+
+    const price =
+      hasComponentProps && typeof item.price === "string" && item.price.trim()
+        ? item.price
+        : formatTicketPrice(String(item.priceMinor || "0"));
+
+    const quantity =
+      hasComponentProps &&
+      typeof item.quantity === "string" &&
+      item.quantity.trim()
+        ? item.quantity
+        : Number(item.quantityTotal || 0).toLocaleString("en-US");
+
+    const maxPerOrder =
+      hasComponentProps &&
+      typeof item.maxPerOrder === "string" &&
+      item.maxPerOrder.trim()
+        ? item.maxPerOrder
+        : item.perOrderLimit == null
           ? "1"
-          : Number(item.perOrderLimit).toLocaleString("en-US"),
-      color: getEventTicketColor(index),
-      salesStart: startDate
+          : Number(item.perOrderLimit).toLocaleString("en-US");
+
+    const salesStart =
+      (item.salesStart as string) ||
+      (startDate
         ? `${formatDateStr(startDate)} • ${startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
-        : "",
-      salesEnd: endDate
+        : "");
+
+    const salesEnd =
+      (item.salesEnd as string) ||
+      (endDate
         ? `${formatDateStr(endDate)} • ${endDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
-        : "",
+        : "");
+
+    const startTimeStr =
+      (item.startTimeStr as string) ||
+      (startDate?.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }) ||
+        "");
+
+    const endTimeStr =
+      (item.endTimeStr as string) ||
+      (endDate?.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }) ||
+        "");
+
+    return {
+      id: item.id ? String(item.id) : undefined,
+      type,
+      price,
+      quantity,
+      maxPerOrder,
+      color: (item.color as string) || getEventTicketColor(index),
+      salesStart,
+      salesEnd,
       startDateObj: startDate,
-      startTimeStr:
-        startDate?.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }) || "",
+      startTimeStr,
       endDateObj: endDate,
-      endTimeStr:
-        endDate?.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }) || "",
-      description: "",
+      endTimeStr,
+      description: String(item.description || ""),
       slotIndex: typeof item.slotIndex === "number" ? item.slotIndex : 0,
       quantitySold: Number(item.quantitySold || 0),
     };
@@ -674,7 +736,7 @@ function hydrateTickets(value: unknown) {
 }
 
 watch(
-  () => props.eventData?.step3,
+  () => props.initialData ?? props.eventData?.step3,
   (value) => hydrateTickets(value),
   { immediate: true, deep: true },
 );
@@ -836,6 +898,7 @@ function handleSaveTicket() {
   const endStr = `${formatDateStr(ticketForm.endDate)} • ${ticketForm.endTime || "10:00 AM"}`;
 
   const newTicket: TicketItem = {
+    id: existingTicket?.id,
     type: typeFormatted,
     price: ticketForm.price || "₦ 0",
     quantity: ticketForm.quantity || "0",

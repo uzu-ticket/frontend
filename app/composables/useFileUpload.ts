@@ -2,9 +2,9 @@
  * useFileUpload — reusable presigned-URL upload composable.
  *
  * Flow:
- *  1. POST /presign  → get { uploadUrl, fileUrl }
+ *  1. POST /presign  → get { uploadUrl, fileUrl, key }
  *  2. PUT uploadUrl  → send file binary directly to S3 (bypasses NestJS)
- *  3. Return fileUrl  → caller saves it to the relevant entity
+ *  3. Return { fileUrl, key }  → caller saves both to the relevant entity
  */
 
 export interface PresignResponse {
@@ -38,7 +38,7 @@ export const useFileUpload = () => {
     presignEndpoint: string,
     file: File,
     assetType: string,
-  ): Promise<string> => {
+  ): Promise<{ fileUrl: string; key: string }> => {
     uploading.value = true;
     uploadError.value = null;
     uploadProgress.value = null;
@@ -52,7 +52,7 @@ export const useFileUpload = () => {
         assetType,
       });
 
-      const { uploadUrl, fileUrl } = presignRes.data;
+      const { uploadUrl, fileUrl, key } = presignRes.data;
 
       // Step 2: PUT file binary directly to S3 — no multipart, no proxy
       await new Promise<void>((resolve, reject) => {
@@ -85,8 +85,8 @@ export const useFileUpload = () => {
         xhr.send(file);
       });
 
-      // Step 3: Return the permanent public URL — caller saves it to the entity
-      return fileUrl;
+      // Step 3: Return the permanent URL + S3 object key — caller saves both
+      return { fileUrl, key };
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Upload failed";
       uploadError.value = msg;

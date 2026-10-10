@@ -8,15 +8,17 @@
 
     <div class="preview-content">
       <div class="preview-gallery">
-        <img
+        <SecureImage
           :src="mainImage"
           :alt="previewTitle"
-          class="preview-gallery-main"
+          wrapper-class="preview-gallery-img-wrapper"
+          img-class="preview-gallery-main"
         />
-        <img
+        <SecureImage
           :src="mainImage"
           :alt="previewTitle"
-          class="preview-gallery-side"
+          wrapper-class="preview-gallery-img-wrapper"
+          img-class="preview-gallery-side"
         />
       </div>
 
@@ -229,6 +231,7 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from "vue";
+import SecureImage from "~/components/ui/SecureImage.vue";
 
 const props = defineProps<{
   eventData: Record<string, unknown>;
@@ -970,6 +973,13 @@ const mainImage = computed(
 
 .preview-gallery-side {
   object-position: center;
+}
+
+:deep(.preview-gallery-img-wrapper) {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.6rem;
+  overflow: hidden;
 }
 
 .event-details-section {

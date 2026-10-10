@@ -6,7 +6,12 @@
   >
     <!-- Event Image Thumbnail -->
     <div class="event-image-wrapper">
-      <img :src="imageUrl" :alt="title" class="event-image" />
+      <SecureImage
+        :src="imageUrl"
+        :alt="title"
+        wrapper-class="event-secure-img-wrapper"
+        img-class="event-image"
+      />
     </div>
 
     <!-- Event Info Stack -->
@@ -41,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+import SecureImage from "~/components/ui/SecureImage.vue";
 export interface EventItem {
   id: string | number
   title: string
@@ -105,6 +111,11 @@ defineEmits<{
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+:deep(.event-secure-img-wrapper) {
+  width: 100%;
+  height: 100%;
 }
 
 /* Info */

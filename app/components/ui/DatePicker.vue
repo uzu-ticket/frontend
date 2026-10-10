@@ -128,11 +128,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 
 const props = withDefaults(
   defineProps<{
-    modelValue?: Date | null;
+    modelValue?: Date | string | null;
     placeholder?: string;
     minDate?: Date;
     maxDate?: Date;
@@ -153,12 +153,27 @@ const wrapperRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
 const placement = ref<"down" | "up">("down");
 
+const parseDateValue = (val: unknown): Date | null => {
+  if (!val) return null;
+  const d = val instanceof Date ? val : new Date(String(val));
+  return isNaN(d.getTime()) ? null : d;
+};
+
 const today = new Date();
-const viewYear = ref(
-  props.modelValue ? props.modelValue.getFullYear() : today.getFullYear(),
-);
-const viewMonth = ref(
-  props.modelValue ? props.modelValue.getMonth() : today.getMonth(),
+const initialDate = parseDateValue(props.modelValue);
+const viewYear = ref(initialDate ? initialDate.getFullYear() : today.getFullYear());
+const viewMonth = ref(initialDate ? initialDate.getMonth() : today.getMonth());
+
+watch(
+  () => props.modelValue,
+  (val) => {
+    const d = parseDateValue(val);
+    if (d) {
+      viewYear.value = d.getFullYear();
+      viewMonth.value = d.getMonth();
+    }
+  },
+  { immediate: true },
 );
 
 const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -182,8 +197,9 @@ const monthYear = computed(
 );
 
 const displayValue = computed(() => {
-  if (!props.modelValue) return "";
-  return props.modelValue.toLocaleDateString("en-US", {
+  const d = parseDateValue(props.modelValue);
+  if (!d) return "";
+  return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -230,8 +246,8 @@ const calendarCells = computed<CalCell[]>(() => {
 });
 
 function isSelected(cell: CalCell) {
-  if (!props.modelValue || !cell.day) return false;
-  const mv = props.modelValue;
+  const mv = parseDateValue(props.modelValue);
+  if (!mv || !cell.day) return false;
   return (
     mv.getFullYear() === cell.year &&
     mv.getMonth() === cell.month &&

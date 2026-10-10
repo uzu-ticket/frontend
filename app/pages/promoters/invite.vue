@@ -82,11 +82,12 @@
           <!-- Event Card Box -->
           <div class="event-card-box">
             <div class="event-thumbnail">
-              <img
+              <SecureImage
                 v-if="eventImage"
                 :src="eventImage"
                 :alt="eventName"
-                class="thumb-img-cover"
+                wrapper-class="thumb-img-wrapper"
+                img-class="thumb-svg"
               />
               <svg v-else viewBox="0 0 100 100" class="thumb-svg">
                 <rect width="100" height="100" fill="#1e1b4b" rx="8" />
@@ -518,6 +519,11 @@ function goToDashboard() {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+:deep(.thumb-img-wrapper) {
+  width: 100%;
+  height: 100%;
 }
 
 .event-details {

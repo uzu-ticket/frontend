@@ -3,11 +3,13 @@
     <!-- Cover Image Header -->
     <div class="card-cover" :style="{ background: event.bgGradient }">
       <!-- Background Image if available -->
-      <img
-        v-if="event.coverImage"
+      <SecureImage
+        v-if="event.coverImageRecord || event.coverImage"
+        :image="event.coverImageRecord"
         :src="event.coverImage"
         :alt="event.title"
-        class="cover-img"
+        wrapper-class="card-cover-img-wrapper"
+        img-class="cover-img"
       />
 
       <!-- Top Right 3-Dots Action Button & Dropdown -->
@@ -204,6 +206,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
+import SecureImage from "~/components/ui/SecureImage.vue";
+import type { EventImage } from "~/types/event";
 
 export interface EventItem {
   id: string;
@@ -218,7 +222,9 @@ export interface EventItem {
   category?: string;
   eventType?: "paid" | "free";
   startsAt?: string;
+  /** Deprecated: raw URL. Use coverImageRecord where possible. */
   coverImage?: string;
+  coverImageRecord?: EventImage | null;
   bgGradient?: string;
 }
 
@@ -293,6 +299,17 @@ onUnmounted(() => {
   height: 100%;
   object-fit: cover;
   border-radius: 1.25rem 1.25rem 0 0;
+}
+
+/* Wrapper for SecureImage inside card-cover */
+.card-cover-img-wrapper,
+:deep(.card-cover-img-wrapper) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 1.25rem 1.25rem 0 0;
+  overflow: hidden;
 }
 
 /* Dots Action Button */

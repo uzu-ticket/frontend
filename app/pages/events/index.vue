@@ -287,11 +287,13 @@
               class="event-thumb-box"
               :style="{ background: item.bgGradient }"
             >
-              <img
-                v-if="item.coverImage"
+              <SecureImage
+                v-if="item.coverImageRecord || item.coverImage"
+                :image="item.coverImageRecord"
                 :src="item.coverImage"
                 :alt="item.title"
-                class="table-cover-img"
+                wrapper-class="table-secure-img-wrapper"
+                img-class="table-cover-img"
               />
               <svg
                 v-else
@@ -495,6 +497,7 @@ import AppDataTable, {
 } from "~/components/ui/AppDataTable.vue";
 import AppSelect from "~/components/ui/AppSelect.vue";
 import DatePicker from "~/components/ui/DatePicker.vue";
+import SecureImage from "~/components/ui/SecureImage.vue";
 import { useEvents } from "~/composables/useEvents";
 import { useToast } from "~/composables/useToast";
 import type { Event } from "~/types/event";
@@ -625,6 +628,7 @@ const tableEvents = computed(() => {
         e.ticketTypes[0]?.currency || "NGN",
       ),
       coverImage: e.images.find((img) => img.isCover)?.url || e.images[0]?.url,
+      coverImageRecord: e.images.find((img) => img.isCover) || e.images[0] || null,
       bgGradient: getGradient(e.category?.name),
       time: formatTime(e.startsAt),
     }),
@@ -1163,6 +1167,11 @@ useHead({
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+:deep(.table-secure-img-wrapper) {
+  width: 100%;
+  height: 100%;
 }
 
 .thumb-svg {

@@ -186,16 +186,21 @@ const props = defineProps<{
   initialData?: Partial<typeof formData>;
 }>();
 
-const stateOptions = [
-  { value: "Lagos", label: "Lagos" },
-  { value: "Abuja", label: "Abuja" },
-  { value: "Rivers", label: "Rivers" },
-  { value: "Ogun", label: "Ogun" },
-  { value: "Oyo", label: "Oyo" },
-  { value: "Kano", label: "Kano" },
-  { value: "Anambra", label: "Anambra" },
-  { value: "Enugu", label: "Enugu" },
+const NIGERIAN_STATES = [
+  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno",
+  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT", "Abuja", "Gombe",
+  "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos",
+  "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto",
+  "Taraba", "Yobe", "Zamfara",
 ];
+
+const stateOptions = computed(() => {
+  const options = NIGERIAN_STATES.map((s) => ({ value: s, label: s }));
+  if (formData.state && !options.some((o) => o.value.toLowerCase() === formData.state.toLowerCase())) {
+    options.unshift({ value: formData.state, label: formData.state });
+  }
+  return options;
+});
 
 const countryCodes =
   "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW"
@@ -210,8 +215,8 @@ function countryFlag(code: string) {
     .join("");
 }
 
-const countryOptions = computed(() =>
-  countryCodes
+const countryOptions = computed(() => {
+  const options = countryCodes
     .map((code) => {
       const name = regionNames.of(code);
       return name
@@ -220,8 +225,17 @@ const countryOptions = computed(() =>
     })
     .filter(
       (option): option is { value: string; label: string } => option !== null,
-    ),
-);
+    );
+  if (
+    formData.country &&
+    !options.some(
+      (o) => o.value.toLowerCase() === formData.country.toLowerCase(),
+    )
+  ) {
+    options.unshift({ value: formData.country, label: formData.country });
+  }
+  return options;
+});
 
 const formData = reactive({
   venueName: "",
@@ -238,7 +252,15 @@ const formData = reactive({
 watch(
   () => props.initialData,
   (data) => {
-    if (data) Object.assign(formData, data);
+    if (data) {
+      Object.assign(formData, data);
+      if (formData.startDate && !(formData.startDate instanceof Date)) {
+        formData.startDate = new Date(formData.startDate);
+      }
+      if (formData.endDate && !(formData.endDate instanceof Date)) {
+        formData.endDate = new Date(formData.endDate);
+      }
+    }
   },
   { immediate: true, deep: true },
 );

@@ -306,12 +306,16 @@ async function syncStepData(stepKey: string, data: unknown): Promise<boolean> {
             : Promise.resolve(null),
         ]);
 
-        const [logoUrl, coverUrl] = uploads;
+        const [logoUpload, coverUpload] = uploads;
 
-        // Persist the returned public URLs back to the organisation record
+        // Persist the returned S3 URLs back to the organisation record
         const urlPatch: Record<string, string> = {};
-        if (logoUrl) urlPatch.logoUrl = logoUrl;
-        if (coverUrl) urlPatch.coverUrl = coverUrl;
+        if (logoUpload) {
+          urlPatch.logoUrl = typeof logoUpload === "string" ? logoUpload : logoUpload.fileUrl;
+        }
+        if (coverUpload) {
+          urlPatch.coverUrl = typeof coverUpload === "string" ? coverUpload : coverUpload.fileUrl;
+        }
 
         if (Object.keys(urlPatch).length) {
           await instance.patch(`/organisations/${organisationId.value}`, urlPatch);

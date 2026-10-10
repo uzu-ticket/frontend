@@ -1,0 +1,10 @@
+node_modules
+.nuxt
+.output
+.data
+.env
+.env.*
+*.log
+.git
+.github
+*.md

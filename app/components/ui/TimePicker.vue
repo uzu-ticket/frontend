@@ -119,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -149,9 +149,9 @@ const minutes = Array.from({ length: 60 }, (_, i) =>
   String(i).padStart(2, "0"),
 );
 
-const parseInitial = () => {
-  if (props.modelValue) {
-    const match = props.modelValue.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+const parseInitial = (val?: string) => {
+  if (val) {
+    const match = val.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
     if (match) {
       return {
         h: String(parseInt(match[1])).padStart(2, "0"),
@@ -163,10 +163,21 @@ const parseInitial = () => {
   return { h: "09", m: "00", p: "AM" as "AM" | "PM" };
 };
 
-const initial = parseInitial();
+const initial = parseInitial(props.modelValue);
 const selectedHour = ref(initial.h);
 const selectedMinute = ref(initial.m);
 const period = ref<"AM" | "PM">(initial.p);
+
+watch(
+  () => props.modelValue,
+  (val) => {
+    const parsed = parseInitial(val);
+    selectedHour.value = parsed.h;
+    selectedMinute.value = parsed.m;
+    period.value = parsed.p;
+  },
+  { immediate: true },
+);
 
 const displayValue = computed(() => props.modelValue || "");
 

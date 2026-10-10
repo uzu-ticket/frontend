@@ -54,11 +54,13 @@
         <div class="hero-section">
           <!-- Left: Cover Banner -->
           <div class="banner-wrapper">
-            <img
-              v-if="coverImage"
+            <SecureImage
+              v-if="coverImage || coverImageRecord"
+              :image="coverImageRecord"
               :src="coverImage"
               :alt="eventName"
-              class="banner-image"
+              wrapper-class="banner-secure-wrapper"
+              img-class="banner-image"
             />
             <div v-else class="banner-placeholder">
               <svg
@@ -383,6 +385,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useEvents } from "~/composables/useEvents";
 import { useToast } from "~/composables/useToast";
+import SecureImage from "~/components/ui/SecureImage.vue";
 import type { Event } from "~/types/event";
 
 definePageMeta({
@@ -491,6 +494,12 @@ const coverImage = computed(
     event.value?.images.find((image) => image.isCover)?.url ||
     event.value?.images[0]?.url ||
     "",
+);
+const coverImageRecord = computed(
+  () =>
+    event.value?.images.find((image) => image.isCover) ||
+    event.value?.images[0] ||
+    null,
 );
 const doorsOpenTime = computed(() => {
   if (!eventDate.value) return "—";
@@ -666,6 +675,11 @@ useHead({
   border-radius: 1.25rem;
   overflow: hidden;
   background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+}
+
+:deep(.banner-secure-wrapper) {
+  width: 100%;
+  height: 100%;
 }
 
 .banner-placeholder {

@@ -10,11 +10,12 @@
           <div class="avatar-and-info">
             <!-- Profile Avatar -->
             <div class="profile-avatar">
-              <img
+              <SecureImage
                 v-if="user?.avatarUrl"
                 :src="user.avatarUrl"
                 alt="Profile Avatar"
-                class="avatar-img"
+                wrapper-class="profile-avatar-secure-wrapper"
+                img-class="avatar-img"
               />
               <div v-else class="avatar-fallback">
                 {{ userInitials }}
@@ -266,6 +267,11 @@ async function saveSettings() {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+:deep(.profile-avatar-secure-wrapper) {
+  width: 100%;
+  height: 100%;
 }
 
 .avatar-fallback {

@@ -157,7 +157,7 @@
       <!-- Right Column: Add Cover Image (Optional) -->
       <div class="form-right-col">
         <label class="field-label">Add cover Image (Optional)</label>
-        <div class="dropzone-box" @click="triggerFileInput">
+        <div class="dropzone-box" :class="{ 'has-preview': !!previewUrl }" @click="triggerFileInput">
           <input
             ref="fileInput"
             type="file"
@@ -166,7 +166,21 @@
             @change="handleFileSelect"
           />
 
-          <div class="dropzone-content">
+          <!-- Preview state when image is selected or existing -->
+          <div v-if="previewUrl" class="dropzone-preview">
+            <SecureImage
+              :src="previewUrl"
+              alt="Cover Preview"
+              wrapper-class="cover-preview-wrapper"
+              img-class="cover-preview-img"
+            />
+            <div class="preview-overlay">
+              <span class="change-prompt">Click to change cover image</span>
+            </div>
+          </div>
+
+          <!-- Empty state when no image selected -->
+          <div v-else class="dropzone-content">
             <div class="upload-icon-circle">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -223,8 +237,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from "vue";
+import { reactive, ref, computed, watch } from "vue";
 import AppSelect from "~/components/ui/AppSelect.vue";
+import SecureImage from "~/components/ui/SecureImage.vue";
+import type { EventCategory } from "~/types/event";
 
 const emit = defineEmits<{
   cancel: [];
@@ -233,32 +249,64 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   initialData?: Partial<typeof formData>;
+  categories?: EventCategory[];
 }>();
 
 const fileInput = ref<HTMLInputElement | null>(null);
 
-const categoryOptions = [
+const FALLBACK_CATEGORY_OPTIONS = [
   { value: "Technology", label: "Technology", subLabel: "Tech & Innovation" },
   { value: "Music", label: "Music & Concerts", subLabel: "Live performances" },
-  {
-    value: "Business",
-    label: "Business & Corporate",
-    subLabel: "Professional events",
-  },
+  { value: "Business", label: "Business & Corporate", subLabel: "Professional events" },
   { value: "Arts", label: "Arts & Culture", subLabel: "Creative events" },
   { value: "Sports", label: "Sports & Fitness", subLabel: "Active events" },
   { value: "Food", label: "Food & Drinks", subLabel: "Culinary experiences" },
   { value: "Comedy", label: "Comedy & Entertainment", subLabel: "Fun events" },
 ];
 
+const categoryOptions = computed(() => {
+  if (props.categories && props.categories.length > 0) {
+    const options = props.categories.map((c) => ({ value: c.name, label: c.name }));
+    if (
+      formData.category &&
+      !options.some(
+        (o) => String(o.value).toLowerCase() === String(formData.category).toLowerCase(),
+      )
+    ) {
+      options.unshift({ value: formData.category, label: formData.category });
+    }
+    return options;
+  }
+  const options = [...FALLBACK_CATEGORY_OPTIONS];
+  if (
+    formData.category &&
+    !options.some(
+      (o) => String(o.value).toLowerCase() === String(formData.category).toLowerCase(),
+    )
+  ) {
+    options.unshift({ value: formData.category, label: formData.category });
+  }
+  return options;
+});
+
 const formData = reactive({
-  eventName: "",
-  category: "",
-  description: "",
-  eventSlot: "multiple",
-  visibility: "public",
-  eventType: "paid",
-  coverImage: null as File | null,
+  eventName: (props.initialData?.eventName as string) || "",
+  category: (props.initialData?.category as string) || "",
+  description: (props.initialData?.description as string) || "",
+  eventSlot: (props.initialData?.eventSlot as string) || "multiple",
+  visibility: (props.initialData?.visibility as string) || "public",
+  eventType: (props.initialData?.eventType as string) || "paid",
+  coverImage: (props.initialData?.coverImage as File | string | null) || null,
+});
+
+const previewUrl = computed(() => {
+  if (formData.coverImage instanceof File) {
+    return URL.createObjectURL(formData.coverImage);
+  }
+  if (typeof formData.coverImage === "string" && formData.coverImage) {
+    return formData.coverImage;
+  }
+  return null;
 });
 
 const errors = reactive({
@@ -267,11 +315,24 @@ const errors = reactive({
   description: "",
 });
 
+function syncFromInitialData() {
+  if (props.initialData) {
+    Object.assign(formData, props.initialData);
+    if (formData.category && props.categories?.length) {
+      const match = props.categories.find(
+        (c) =>
+          c.id === formData.category ||
+          c.name.toLowerCase() === String(formData.category).toLowerCase(),
+      );
+      if (match) formData.category = match.name;
+    }
+  }
+}
+
 watch(
-  () => props.initialData,
-  (data) => {
-    if (!data) return;
-    Object.assign(formData, data);
+  () => [props.initialData, props.categories],
+  () => {
+    syncFromInitialData();
   },
   { immediate: true, deep: true },
 );
@@ -542,11 +603,67 @@ function handleSubmit() {
   cursor: pointer;
   transition: all 0.15s ease;
   margin-bottom: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.dropzone-box.has-preview {
+  padding: 0;
+  border-style: solid;
+  border-color: #e5e7eb;
 }
 
 .dropzone-box:hover {
   border-color: #3fd246;
   background: #f0fdf1;
+}
+
+.dropzone-preview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+}
+
+.cover-preview-wrapper,
+:deep(.cover-preview-wrapper) {
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+}
+
+.cover-preview-img {
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  max-height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.preview-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.dropzone-box:hover .preview-overlay {
+  opacity: 1;
+}
+
+.change-prompt {
+  color: #ffffff;
+  font-size: 0.825rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  backdrop-filter: blur(4px);
 }
 
 .file-input-hidden {

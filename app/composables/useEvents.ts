@@ -203,7 +203,58 @@ export const useEvents = () => {
   ): Promise<string> => {
     const { uploadFile } = useFileUpload();
     const presignEndpoint = `/organisations/${activeOrgId.value}/events/${eventId}/uploads/presign`;
-    return uploadFile(presignEndpoint, file, assetType);
+    const { fileUrl, key } = await uploadFile(presignEndpoint, file, assetType);
+
+    // Persist image record in PostgreSQL with the S3 key for presigned GET URLs
+    await instance.post(
+      `/organisations/${activeOrgId.value}/events/${eventId}/images`,
+      {
+        url: fileUrl,
+        s3Key: key,
+        isCover: assetType === "cover",
+        position: 0,
+      },
+    );
+
+    return fileUrl;
+  };
+
+  /**
+   * Fetch a time-limited presigned GET URL for displaying a private S3 event image.
+   * Call this whenever you need to render an image; cache the returned URL until
+   * expiresAt to avoid unnecessary requests.
+   *
+   * @returns { url, expiresAt } — render the url in an <img> tag
+   */
+  const fetchImageViewUrl = async (
+    eventId: string,
+    imageId: string,
+  ): Promise<{ url: string; expiresAt: string }> => {
+    const res = await instance.get<{ url: string; expiresAt: string }>(
+      `/organisations/${activeOrgId.value}/events/${eventId}/images/${imageId}/view`,
+    );
+    return res.data?.data ?? res.data;
+  };
+
+  const updateTicketType = async (
+    eventId: string,
+    ticketTypeId: string,
+    dto: Partial<CreateTicketTypeDto>,
+  ): Promise<TicketType> => {
+    try {
+      loading.value = true;
+      error.value = null;
+      const res = await instance.patch<TicketType>(
+        `/organisations/${activeOrgId.value}/events/${eventId}/ticket-types/${ticketTypeId}`,
+        dto,
+      );
+      return res.data?.data ?? res.data;
+    } catch (e) {
+      error.value = extractErrorMessage(e, "Failed to update ticket type");
+      throw e;
+    } finally {
+      loading.value = false;
+    }
   };
 
   const deleteTicketType = async (
@@ -236,7 +287,9 @@ export const useEvents = () => {
     publishEvent,
     cancelEvent,
     createTicketType,
+    updateTicketType,
     deleteTicketType,
     uploadEventImage,
+    fetchImageViewUrl,
   };
 };

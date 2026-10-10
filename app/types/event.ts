@@ -22,6 +22,8 @@ export interface EventImage {
   id: string;
   eventId: string;
   url: string;
+  /** S3 object key — present for images uploaded via the presigned PUT flow */
+  s3Key?: string | null;
   position: number;
   isCover: boolean;
   createdAt: string;

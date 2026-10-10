@@ -46,11 +46,12 @@
         class="avatar-pill-wrap"
       >
         <div class="avatar-pill">
-          <img
+          <SecureImage
             v-if="member.imageUrl"
             :src="member.imageUrl"
             :alt="member.name || 'Member avatar'"
-            class="avatar-img"
+            wrapper-class="avatar-secure-wrapper"
+            img-class="avatar-img"
           />
           <span
             v-else
@@ -115,6 +116,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import SecureImage from "~/components/ui/SecureImage.vue";
 import { useOrgState } from "~/composables/useOrgState";
 
 interface MemberAvatarItem {
@@ -367,6 +369,11 @@ function handleOpenDashboard() {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+:deep(.avatar-secure-wrapper) {
+  width: 100%;
+  height: 100%;
 }
 
 .avatar-fallback {

@@ -13,8 +13,16 @@
       <!-- Right Column / Main Form Card -->
       <main class="form-card-col">
         <div class="create-event-card">
+          <!-- LOADING STATE (edit mode) -->
+          <div v-if="isLoading" class="edit-loading-state">
+            <svg class="loading-spinner" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="32" stroke-dashoffset="12"/>
+            </svg>
+            <p>Loading event details…</p>
+          </div>
+
           <!-- SUCCESS STATE: YOUR EVENT IS LIVE! -->
-          <EventSuccessCard v-if="isLive" :event-id="createdEventId" />
+          <EventSuccessCard v-else-if="isLive" :event-id="createdEventId" />
 
           <!-- STEP FLOW WITH KEEPALIVE -->
           <KeepAlive v-else>
@@ -22,6 +30,7 @@
               :is="activeStepComponent"
               :key="currentStep"
               :event-data="eventData"
+              :categories="categories"
               :initial-data="
                 currentStep === 1
                   ? eventData.step1
@@ -29,9 +38,11 @@
                     ? eventData.eventSlots
                     : currentStep === 3
                       ? eventData.step2
-                      : currentStep === 5
-                        ? eventData.step4
-                        : undefined
+                      : currentStep === 4
+                        ? eventData.step3
+                        : currentStep === 5
+                          ? eventData.step4
+                          : undefined
               "
               :event-slot="selectedEventSlot"
               @cancel="handleCancel"
@@ -62,6 +73,7 @@ import { useToast } from "~/composables/useToast";
 import type {
   Event,
   CreateEventDto,
+  CreateTicketTypeDto,
   EventCategory,
   EventSchedule,
 } from "~/types/event";
@@ -77,8 +89,11 @@ const {
   fetchCategories,
   fetchEvent,
   createEvent,
+  updateEvent,
   publishEvent,
   createTicketType,
+  updateTicketType,
+  deleteTicketType,
   uploadEventImage,
   error,
 } = useEvents();
@@ -89,6 +104,7 @@ const eventData = ref<Record<string, unknown>>({});
 const createdEventId = ref<string | null>(null);
 const categories = ref<EventCategory[]>([]);
 const isSubmitting = ref(false);
+const isLoading = ref(false);
 const editEventId = computed(() => {
   const value = route.query.eventId;
   return typeof value === "string" ? value : null;
@@ -109,6 +125,7 @@ onMounted(async () => {
   categories.value = await fetchCategories();
 
   if (editEventId.value) {
+    isLoading.value = true;
     try {
       const existing = await fetchEvent(editEventId.value);
       hydrateEvent(existing);
@@ -118,6 +135,8 @@ onMounted(async () => {
         message: error.value || "Could not load the event for editing.",
         type: "error",
       });
+    } finally {
+      isLoading.value = false;
     }
   }
 });
@@ -157,15 +176,24 @@ function hydrateEvent(existing: Event) {
       ? existing.slots
       : undefined;
 
+  const existingCoverUrl =
+    existing.images?.find((img) => img.isCover)?.url ||
+    existing.images?.[0]?.url ||
+    null;
+
   eventData.value = {
     step1: {
       eventName: existing.title,
-      category: existing.category?.name || "",
+      category:
+        existing.category?.name ||
+        (existing.categoryId
+          ? categories.value.find((c) => c.id === existing.categoryId)?.name || existing.categoryId
+          : ""),
       description: existing.description || "",
       eventSlot: existing.eventSlot || "multiple",
       visibility: existing.visibility,
       eventType: existing.isPaid ? "paid" : "free",
-      coverImage: null,
+      coverImage: existingCoverUrl,
     },
     eventSlots,
     step2: {
@@ -241,7 +269,12 @@ function handleStep4Next(data: unknown) {
 }
 
 function resolveCategoryId(categoryName: string): string | undefined {
-  return categories.value.find((c) => c.name === categoryName)?.id;
+  if (!categoryName) return undefined;
+  return categories.value.find(
+    (c) =>
+      c.name.toLowerCase() === categoryName.trim().toLowerCase() ||
+      c.id === categoryName.trim(),
+  )?.id;
 }
 
 function buildCreateDto(): CreateEventDto {
@@ -269,7 +302,7 @@ function buildCreateDto(): CreateEventDto {
     title: s1.eventName as string,
     description: s1.description as string,
     categoryId: resolveCategoryId(s1.category as string),
-    visibility: "public" as Event["visibility"],
+    visibility: (s1.visibility as Event["visibility"]) || "public",
     venueName: s2.venueName as string,
     venueAddress: s2.address as string,
     country: s2.country as string,
@@ -317,36 +350,63 @@ function buildTicketDateTime(date: unknown, time: unknown): string | undefined {
   return result.toISOString();
 }
 
-async function createTicketsForEvent(
+function buildTicketDto(
+  t: Record<string, unknown>,
+  schedules: EventSchedule[],
+): CreateTicketTypeDto {
+  const rawPrice = String(t.price || "0").replace(/[^0-9.]/g, "");
+  const priceAmount = parseFloat(rawPrice) || 0;
+  const priceMinor = Math.round(priceAmount * 100);
+  return {
+    name: (t.type as string) || "General Admission",
+    priceMinor,
+    quantityTotal:
+      parseInt(String(t.quantity || "0").replace(/,/g, ""), 10) || 100,
+    perOrderLimit:
+      parseInt(String(t.maxPerOrder || "0").replace(/,/g, ""), 10) || 10,
+    saleStartsAt: buildTicketDateTime(t.startDateObj, t.startTimeStr),
+    saleEndsAt: buildTicketDateTime(t.endDateObj, t.endTimeStr),
+    scheduleId:
+      typeof t.slotIndex === "number"
+        ? schedules[t.slotIndex]?.id
+        : undefined,
+  };
+}
+
+async function syncTicketsForEvent(
   eventId: string,
   schedules: EventSchedule[] = [],
+  existingTicketIds: string[] = [],
 ) {
   const step3Tickets =
     (eventData.value.step3 as Array<Record<string, unknown>>) || [];
-  for (const t of step3Tickets) {
-    const rawPrice = String(t.price || "0").replace(/[^0-9.]/g, "");
-    const priceAmount = parseFloat(rawPrice) || 0;
-    const priceMinor = Math.round(priceAmount * 100);
 
-    const dto: CreateTicketTypeDto = {
-      name: (t.type as string) || "General Admission",
-      priceMinor,
-      quantityTotal:
-        parseInt(String(t.quantity || "0").replace(/,/g, ""), 10) || 100,
-      perOrderLimit:
-        parseInt(String(t.maxPerOrder || "0").replace(/,/g, ""), 10) || 10,
-      saleStartsAt: buildTicketDateTime(t.startDateObj, t.startTimeStr),
-      saleEndsAt: buildTicketDateTime(t.endDateObj, t.endTimeStr),
-      scheduleId:
-        typeof t.slotIndex === "number"
-          ? schedules[t.slotIndex]?.id
-          : undefined,
-    };
+  const keptIds = new Set<string>();
+
+  for (const t of step3Tickets) {
+    const dto = buildTicketDto(t, schedules);
+    const existingId = t.id as string | undefined;
 
     try {
-      await createTicketType(eventId, dto);
+      if (existingId) {
+        keptIds.add(existingId);
+        await updateTicketType(eventId, existingId, dto);
+      } else {
+        await createTicketType(eventId, dto);
+      }
     } catch (e) {
-      console.warn("Could not create ticket type:", e);
+      console.warn("Could not sync ticket type:", e);
+    }
+  }
+
+  // Delete tickets that were removed by the user in edit mode
+  for (const id of existingTicketIds) {
+    if (!keptIds.has(id)) {
+      try {
+        await deleteTicketType(eventId, id);
+      } catch (e) {
+        console.warn("Could not delete ticket type:", e);
+      }
     }
   }
 }
@@ -355,25 +415,41 @@ async function handleSaveDraft() {
   isSubmitting.value = true;
   try {
     const dto = buildCreateDto();
-    const created = await createEvent(dto);
+    let targetEventId: string;
+    const existingTicketIds = (eventData.value.step3 as Array<Record<string, unknown>> || [])
+      .filter((t) => t.id)
+      .map((t) => t.id as string);
+
+    if (editEventId.value) {
+      const updated = await updateEvent(editEventId.value, dto);
+      targetEventId = updated.id;
+      await syncTicketsForEvent(targetEventId, updated.schedules ?? [], existingTicketIds);
+    } else {
+      const created = await createEvent(dto);
+      targetEventId = created.id;
+      await syncTicketsForEvent(created.id, created.schedules ?? []);
+    }
+
     const coverFile = (
       eventData.value.step1 as Record<string, unknown> | undefined
-    )?.coverImage as File | undefined;
-    if (coverFile) {
-      await uploadEventImage(created.id, coverFile);
+    )?.coverImage;
+    if (coverFile instanceof File) {
+      await uploadEventImage(targetEventId, coverFile);
     }
-    await createTicketsForEvent(created.id, created.schedules);
+
     toast.show({
-      title: "Draft Saved",
-      message: "Your event draft has been saved successfully.",
+      title: editEventId.value ? "Event Updated" : "Draft Saved",
+      message: editEventId.value
+        ? "Your event changes have been saved."
+        : "Your event draft has been saved successfully.",
       type: "success",
     });
     router.push("/events");
   } catch {
     toast.show({
-      title: "Failed to Save Draft",
+      title: editEventId.value ? "Failed to Update Event" : "Failed to Save Draft",
       message:
-        error.value || "Could not save the event draft. Please try again.",
+        error.value || "Could not save the event. Please try again.",
       type: "error",
     });
   } finally {
@@ -385,26 +461,44 @@ async function handlePublish() {
   isSubmitting.value = true;
   try {
     const dto = buildCreateDto();
-    const created = await createEvent(dto);
-    createdEventId.value = created.id;
+    let targetEventId: string;
+    let eventTitle: string;
+    const existingTicketIds = (eventData.value.step3 as Array<Record<string, unknown>> || [])
+      .filter((t) => t.id)
+      .map((t) => t.id as string);
+
+    if (editEventId.value) {
+      const updated = await updateEvent(editEventId.value, dto);
+      targetEventId = updated.id;
+      eventTitle = updated.title;
+      await syncTicketsForEvent(targetEventId, updated.schedules ?? [], existingTicketIds);
+      await publishEvent(targetEventId);
+    } else {
+      const created = await createEvent(dto);
+      targetEventId = created.id;
+      eventTitle = created.title;
+      await syncTicketsForEvent(created.id, created.schedules ?? []);
+      await publishEvent(created.id);
+    }
+
+    createdEventId.value = targetEventId;
     const coverFile = (
       eventData.value.step1 as Record<string, unknown> | undefined
-    )?.coverImage as File | undefined;
-    if (coverFile) {
-      await uploadEventImage(created.id, coverFile);
+    )?.coverImage;
+    if (coverFile instanceof File) {
+      await uploadEventImage(targetEventId, coverFile);
     }
-    await createTicketsForEvent(created.id, created.schedules);
-    await publishEvent(created.id);
+
     isLive.value = true;
     toast.show({
-      title: "Event Published!",
-      message: `${created.title} is now live and accepting tickets.`,
+      title: editEventId.value ? "Event Updated!" : "Event Published!",
+      message: `${eventTitle} has been successfully ${editEventId.value ? "updated" : "published"}.`,
       type: "success",
     });
   } catch {
     toast.show({
-      title: "Failed to Publish",
-      message: error.value || "Could not publish the event. Please try again.",
+      title: editEventId.value ? "Failed to Update" : "Failed to Publish",
+      message: error.value || "Could not save the event. Please try again.",
       type: "error",
     });
   } finally {
