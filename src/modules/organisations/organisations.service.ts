@@ -275,6 +275,57 @@ export class OrganisationsService {
     );
   }
 
+  /**
+   * Generate a time-limited presigned GET URL for any private S3 asset belonging
+   * to this organisation (e.g. logos, covers, event media).
+   * Validates that the requested key/URL is strictly scoped to this organisation.
+   */
+  async presignView(
+    organisationId: string,
+    userId: string,
+    query: { key?: string; url?: string },
+    expiresIn = 3600,
+  ): Promise<{ url: string; key: string; expiresAt: string }> {
+    await this.assertMember(organisationId, userId);
+
+    let targetKey = query.key?.trim();
+    if (!targetKey && query.url) {
+      targetKey = this.extractS3Key(query.url) ?? undefined;
+    }
+
+    if (!targetKey) {
+      throw new BadRequestException("Object key or url is required");
+    }
+
+    // Security validation: object key MUST belong to this organisation or its events
+    const allowedPrefixes = [
+      `organisations/${organisationId}/`,
+      `events/${organisationId}/`,
+    ];
+    const isAllowed = allowedPrefixes.some((prefix) => targetKey!.startsWith(prefix));
+    if (!isAllowed) {
+      throw new ForbiddenException("Cannot access object outside organisation scope");
+    }
+
+    const signedUrl = await this.storage.presignGetUrl(targetKey, expiresIn);
+    return {
+      url: signedUrl,
+      key: targetKey,
+      expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
+    };
+  }
+
+  private extractS3Key(urlOrKey: string): string | null {
+    if (!urlOrKey) return null;
+    if (!urlOrKey.startsWith("http")) return urlOrKey.replace(/^\/+/, "");
+    try {
+      const parsed = new URL(urlOrKey);
+      return decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+    } catch {
+      return null;
+    }
+  }
+
   async listMembers(organisationId: string, userId: string) {
     await this.assertMember(organisationId, userId);
     return this.prisma.organisationMember.findMany({

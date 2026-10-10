@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# EC2 Staging — docker-compose.yml
+#
+# Deploy this file to ~/app/docker-compose.yml on the EC2 instance.
+# Environment variables are read from ~/app/.env on the host — never baked
+# into the image. The API_IMAGE variable is set by the GitHub Actions deploy
+# script before running `docker compose up -d`.
+#
+# Required on EC2 before first deploy:
+#   mkdir -p ~/app && cp docker-compose.ec2.yml ~/app/docker-compose.yml
+#   cp .env.staging.example ~/app/.env  # then fill in real values
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  api:
+    image: ${API_IMAGE}
+    container_name: uzuticket-api
+    restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+
+    # All secrets live in ~/app/.env on the EC2 host — never in this file
+    env_file: .env
+
+    # Health check: probe the Swagger JSON endpoint that NestJS mounts at
+    # startup. It only becomes available after the app fully boots (migrations
+    # included), so it's a reliable liveness signal. start_period gives Prisma
+    # migrations time to finish before health checks begin.
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - >-
+          node -e "
+          const http = require('http');
+          const port = process.env.PORT || 3000;
+          http.get('http://localhost:' + port + '/api/docs', (res) => {
+            process.exit(res.statusCode < 500 ? 0 : 1);
+          }).on('error', () => process.exit(1));
+          "
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"

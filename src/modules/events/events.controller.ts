@@ -144,4 +144,21 @@ export class EventsController {
   ) {
     return this.eventsService.removeImage(organisationId, eventId, imageId, user.id);
   }
+
+  /**
+   * GET /organisations/:organisationId/events/:eventId/images/:imageId/view
+   *
+   * Returns a short-lived presigned GET URL that the client can use to display
+   * the private S3 image. The URL expires in 1 hour by default.
+   * The service validates that the image belongs to this event/org before signing.
+   */
+  @Get(":eventId/images/:imageId/view")
+  presignImageView(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Param("eventId") eventId: string,
+    @Param("imageId") imageId: string,
+  ) {
+    return this.eventsService.presignImageView(organisationId, eventId, imageId, user.id);
+  }
 }

@@ -89,4 +89,4 @@ import { CustomersModule } from "./modules/customers/customers.module";
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
-export class AppModule {}
+export class AppModule { }

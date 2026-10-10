@@ -454,6 +454,7 @@ model EventImage {
   id          String   @id @db.Uuid
   eventId     String   @map("event_id") @db.Uuid
   url         String
+  s3Key       String?  @map("s3_key")
   position    Int      @default(0)
   isCover     Boolean  @default(false) @map("is_cover")
   aspectRatio String?  @default("16:9") @map("aspect_ratio")

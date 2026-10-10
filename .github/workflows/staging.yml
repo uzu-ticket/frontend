@@ -1,0 +1,166 @@
+name: Deploy Staging (Backend)
+
+on:
+  push:
+    branches:
+      - staging
+      - develop
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-api
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1 — Test & Build Check (unchanged)
+  # ─────────────────────────────────────────────
+  test:
+    name: Test & Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run Build
+        run: npm run build
+
+  # ─────────────────────────────────────────────
+  # Job 2 — Build image and push to GHCR
+  # ─────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push Staging Image
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    # Expose the exact tag so the deploy job can reference it for rollback
+    outputs:
+      image_tag: ${{ steps.tag.outputs.value }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Deterministic short-SHA tag — same formula used in the deploy script
+      - name: Compute image tag
+        id: tag
+        run: echo "value=staging-$(echo "$GITHUB_SHA" | cut -c1-7)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=staging
+            type=raw,value=${{ steps.tag.outputs.value }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─────────────────────────────────────────────
+  # Job 3 — SSH into EC2, pull image, restart
+  # ─────────────────────────────────────────────
+  deploy:
+    name: Deploy to EC2 (Staging)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          # Full image reference for this commit
+          DEPLOY_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}
+          # Long-lived GitHub PAT with read:packages scope (stored in repo secrets)
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          # Forward only the named env vars above into the remote shell
+          envs: DEPLOY_IMAGE,GHCR_TOKEN,GH_ACTOR
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            echo "==> Target image: $DEPLOY_IMAGE"
+
+            # --- Authenticate with GHCR (uses long-lived PAT) ---
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
+
+            # --- Record currently running image for rollback ---
+            PREVIOUS_IMAGE=$(docker inspect --format='{{.Config.Image}}' uzuticket-api 2>/dev/null || echo "")
+            echo "==> Previous image: ${PREVIOUS_IMAGE:-none}"
+
+            # --- Pull new image first; fail before touching the live container ---
+            docker pull "$DEPLOY_IMAGE"
+
+            # --- Restart with new image ---
+            cd ~/app
+            export API_IMAGE="$DEPLOY_IMAGE"
+            docker compose up -d --remove-orphans
+
+            # --- Wait for Docker health check (12 × 10 s = 2 min) ---
+            echo "==> Waiting for container to become healthy..."
+            HEALTHY=0
+            for i in $(seq 1 12); do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' uzuticket-api 2>/dev/null || echo "starting")
+              echo "    Attempt $i/12 — status: $STATUS"
+              if [ "$STATUS" = "healthy" ]; then
+                HEALTHY=1
+                break
+              fi
+              sleep 10
+            done
+
+            # --- Rollback on failure ---
+            if [ "$HEALTHY" != "1" ]; then
+              echo "ERROR: Container did not reach healthy status after 2 minutes."
+              echo "==> Last 80 log lines:"
+              docker logs uzuticket-api --tail=80 || true
+              if [ -n "$PREVIOUS_IMAGE" ]; then
+                echo "==> Rolling back to $PREVIOUS_IMAGE ..."
+                export API_IMAGE="$PREVIOUS_IMAGE"
+                docker compose up -d --remove-orphans || true
+              fi
+              exit 1
+            fi
+
+            # --- Prune images older than 72 h to save disk space ---
+            docker image prune -f --filter "until=72h" || true
+
+            echo "==> Deployment complete"
+            docker compose ps

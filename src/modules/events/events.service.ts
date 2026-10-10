@@ -404,9 +404,75 @@ export class EventsService {
   async addImage(organisationId: string, eventId: string, userId: string, dto: AddEventImageDto) {
     await this.permissions.assertPermission(userId, organisationId, Permission.EventEdit);
     await this.loadEventOrThrow(eventId, organisationId);
+
+    if (dto.isCover) {
+      await this.prisma.eventImage.updateMany({
+        where: { eventId, isCover: true },
+        data: { isCover: false },
+      });
+    }
+
     return this.prisma.eventImage.create({
-      data: { id: newId(), eventId, url: dto.url, position: dto.position ?? 0, isCover: dto.isCover ?? false },
+      data: {
+        id: newId(),
+        eventId,
+        url: dto.url,
+        s3Key: dto.s3Key ?? null,
+        position: dto.position ?? 0,
+        isCover: dto.isCover ?? false,
+      },
     });
+  }
+
+  /**
+   * Generate a time-limited presigned GET URL for a specific event image.
+   * Validates that the image belongs to the requested event/organisation before
+   * signing, so no arbitrary S3 key can be signed by the client.
+   */
+  async presignImageView(
+    organisationId: string,
+    eventId: string,
+    imageId: string,
+    userId: string,
+    expiresIn = 3600,
+  ): Promise<{ url: string; expiresAt: string }> {
+    await this.permissions.assertMembership(userId, organisationId);
+    await this.loadEventOrThrow(eventId, organisationId);
+
+    const image = await this.prisma.eventImage.findUnique({ where: { id: imageId } });
+    if (!image || image.eventId !== eventId) {
+      throw new NotFoundException("Image not found");
+    }
+
+    let key = image.s3Key;
+    if (!key && image.url) {
+      try {
+        const parsed = new URL(image.url);
+        const extracted = decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+        const expectedPrefix = `events/${organisationId}/${eventId}/`;
+        if (extracted.startsWith(expectedPrefix)) {
+          key = extracted;
+          // Persist the extracted key so subsequent requests don't need extraction
+          await this.prisma.eventImage.update({
+            where: { id: imageId },
+            data: { s3Key: key },
+          }).catch(() => {});
+        }
+      } catch {
+        // Not a valid URL
+      }
+    }
+
+    if (!key) {
+      // Non-S3 image (e.g. external link) — return stored URL as-is
+      return { url: image.url, expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString() };
+    }
+
+    const signedUrl = await this.storage.presignGetUrl(key, expiresIn);
+    return {
+      url: signedUrl,
+      expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
+    };
   }
 
   async uploadImage(organisationId: string, eventId: string, userId: string, file: Express.Multer.File) {

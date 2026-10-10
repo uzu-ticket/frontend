@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import "multer";
 import { ApiTags } from "@nestjs/swagger";
@@ -110,6 +110,22 @@ export class OrganisationsController {
     @Body() dto: PresignOrgUploadDto,
   ) {
     return this.organisationsService.presignUpload(organisationId, user.id, dto);
+  }
+
+  /**
+   * GET /organisations/:organisationId/uploads/view
+   *
+   * Generate a presigned GET URL for any private S3 asset (logo, cover, event image)
+   * belonging to this organisation. Key or URL is validated against the organisation scope.
+   */
+  @Get(":organisationId/uploads/view")
+  presignView(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("organisationId") organisationId: string,
+    @Query("key") key?: string,
+    @Query("url") url?: string,
+  ) {
+    return this.organisationsService.presignView(organisationId, user.id, { key, url });
   }
 
   @Get(":organisationId/members")
